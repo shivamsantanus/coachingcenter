@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CoachingCenterApi")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+40828edfd3018904c5b43b957d3bbf0f3fe09464")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+aedbdae4ec5d1a3c3cbbe90803d1bf8ca9bdcb5e")]
 [assembly: System.Reflection.AssemblyProductAttribute("CoachingCenterApi")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CoachingCenterApi")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
