@@ -1,0 +1,28 @@
+# Node dependencies for Angular
+/frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+
+# Angular build output
+frontend/out-tsc/
+frontend/.vscode/
+
+# .NET build output
+/backend/bin/
+backend/obj/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio files
+.vs/
+
+# Environment files
+*.env
+*.local
+
+# Logs
+*.log
