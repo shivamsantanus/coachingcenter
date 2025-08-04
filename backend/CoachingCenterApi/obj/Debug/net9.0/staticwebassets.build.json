@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "9rfteCRU2NaItP6dki+6lAVNSLfB3gSvj6NSCSmtEUM=",
+  "Source": "CoachingCenterApi",
+  "BasePath": "_content/CoachingCenterApi",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}

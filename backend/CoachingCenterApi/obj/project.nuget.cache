@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "A9V+4s8O0Z4=",
+  "success": true,
+  "projectFilePath": "D:\\Projects\\Coaching Centre App\\backend\\CoachingCenterApi\\CoachingCenterApi.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\svm\\.nuget\\packages\\microsoft.aspnetcore.openapi\\9.0.0\\microsoft.aspnetcore.openapi.9.0.0.nupkg.sha512",
+    "C:\\Users\\svm\\.nuget\\packages\\microsoft.openapi\\1.6.17\\microsoft.openapi.1.6.17.nupkg.sha512"
+  ],
+  "logs": []
+}
