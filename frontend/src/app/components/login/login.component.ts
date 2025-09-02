@@ -4,7 +4,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { ButtonModule } from 'primeng/button';
 import { CommonModule } from '@angular/common';
-import { Auth } from '../../services/auth.service';
+import { Auth as AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
 import { Auth, signInWithPopup, GoogleAuthProvider, UserCredential } from '@angular/fire/auth';
 
@@ -21,7 +21,12 @@ export class LoginComponent {
   loading: boolean = false;
   
 
-  constructor(private fb: FormBuilder,private authService:Auth,private router: Router,private auth: Auth ) {
+  constructor(
+    private fb: FormBuilder,
+    private authService: AuthService,  // your local auth service
+    private router: Router,
+    private auth: Auth                 // Firebase Auth
+  )  {
     this.loginForm = this.fb.group({
       usernameOrEmail: ['', Validators.required],
       password: ['', Validators.required]
