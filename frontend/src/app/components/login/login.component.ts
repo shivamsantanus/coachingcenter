@@ -7,11 +7,13 @@ import { CommonModule } from '@angular/common';
 import { Auth as AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
 import { Auth, signInWithPopup, GoogleAuthProvider, UserCredential } from '@angular/fire/auth';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, InputTextModule, PasswordModule, ButtonModule],
+  imports: [CommonModule, ReactiveFormsModule, InputTextModule, PasswordModule, ButtonModule, MatInputModule, MatButtonModule],
   templateUrl: './login.html',
   styleUrls: ['./login.scss']
 })
@@ -27,6 +29,13 @@ export class LoginComponent {
     private router: Router,
     private auth: Auth                 // Firebase Auth
   )  {
+    this.auth.onAuthStateChanged(user => {
+      if(user){
+        console.log('Logged in user:', user);
+      } else {
+        console.log('User not logged in');
+      }
+    });
     this.loginForm = this.fb.group({
       usernameOrEmail: ['', Validators.required],
       password: ['', Validators.required]

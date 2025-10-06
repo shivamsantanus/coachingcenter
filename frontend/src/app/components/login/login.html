@@ -2,15 +2,15 @@
     <h2>Login</h2>
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
       <div class="p-field">
-        <label for="usernameOrEmail">Username or Email</label>
+        
         <input id="usernameOrEmail" type="text" pInputText formControlName="usernameOrEmail" />
       </div>
       <div class="p-field">
-        <label for="password">Password</label>
+        
         <input id="password" type="password" pPassword formControlName="password" [feedback]="false" />
       </div>
       <p-button type="submit" label="Login" [loading]="loading" [disabled]="loginForm.invalid"></p-button>
-      <button type="button" (click)="loginWithGoogle()" class="google-signin-btn">
+      <div class="divider">or</div><button type="button" class="login-with-google-btn" >
         Sign in with Google
       </button>
     </form>
