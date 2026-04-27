@@ -21,7 +21,8 @@ builder.Services.AddCors(options =>
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+           .UseSnakeCaseNamingConvention());
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -58,7 +59,7 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 builder.Services.AddControllers();
-var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"]); // Use a strong secret and move it to configuration
+var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"]!);
 
 builder.Services.AddAuthentication(options =>
 {

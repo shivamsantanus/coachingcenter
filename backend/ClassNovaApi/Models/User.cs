@@ -2,10 +2,16 @@ namespace ClassNovaApi.Models
 {
     public class User
     {
-        public int Id { get; set; }  // Primary key
-        public string Username { get; set; }
-        public string Email { get; set; }
-        public string PasswordHash { get; set; }
-        public string Role { get; set; } // e.g., Student, Teacher, Admin
+        public Guid Id { get; set; }
+        public string FullName { get; set; } = string.Empty;
+        public string? Email { get; set; }
+        public string? Phone { get; set; }
+        public string PasswordHash { get; set; } = string.Empty;
+        public bool IsActive { get; set; } = true;
+        public DateTime? LastLoginAt { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
+
+        public ICollection<TenantUserRole> TenantUserRoles { get; set; } = [];
     }
 }
