@@ -1,4 +1,4 @@
-using CoachingCenterApi.Data;
+using ClassNovaApi.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -26,7 +26,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "CoachingCenter API", Version = "v1" });
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "ClassNova API", Version = "v1" });
     
     // Define the security scheme
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -87,7 +87,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "CoachingCenter API v1");
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "ClassNova API v1");
         // c.RoutePrefix = string.Empty; // Uncomment for Swagger on root
     });
 }

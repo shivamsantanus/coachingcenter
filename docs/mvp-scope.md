@@ -1,8 +1,8 @@
-# MVP Scope (v1)
+# ClassNova MVP Scope (v1)
 
 ## Goal
 
-Build the first usable version of a coaching center + school management app that supports daily operations:
+Build the first usable version of ClassNova, a coaching center + school management app that supports daily operations:
 - admissions and profile management
 - teacher and batch management
 - fees tracking

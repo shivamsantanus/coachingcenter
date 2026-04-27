@@ -3,7 +3,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace CoachingCenterApi.Migrations
+namespace ClassNovaApi.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration

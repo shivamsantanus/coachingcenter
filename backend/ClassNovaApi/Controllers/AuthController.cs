@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using CoachingCenterApi.Data;
-using CoachingCenterApi.Models;
+using ClassNovaApi.Data;
+using ClassNovaApi.Models;
 using BCrypt.Net;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -9,7 +9,7 @@ using System.Text;
 using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 
-namespace CoachingCenterApi.Controllers
+namespace ClassNovaApi.Controllers
 {
 
 

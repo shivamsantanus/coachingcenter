@@ -1,6 +1,0 @@
-@CoachingCenterApi_HostAddress = http://localhost:5188
-
-GET {{CoachingCenterApi_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

@@ -1,4 +1,4 @@
-namespace CoachingCenterApi.Models
+namespace ClassNovaApi.Models
 {
     public class LoginRequest
     {

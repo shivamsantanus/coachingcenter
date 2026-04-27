@@ -1,4 +1,4 @@
-# DB Design v1 (PostgreSQL)
+# ClassNova DB Design v1 (PostgreSQL)
 
 ## Design Principles
 

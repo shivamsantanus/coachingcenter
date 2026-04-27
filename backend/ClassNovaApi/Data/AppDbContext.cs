@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using CoachingCenterApi.Models;
+using ClassNovaApi.Models;
 
-namespace CoachingCenterApi.Data
+namespace ClassNovaApi.Data
 {
     public class AppDbContext : DbContext
     {

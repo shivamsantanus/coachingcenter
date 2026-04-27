@@ -10,9 +10,9 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/backend/CoachingCenterApi/bin/Debug/net9.0/CoachingCenterApi.dll",
+            "program": "${workspaceFolder}/backend/ClassNovaApi/bin/Debug/net9.0/ClassNovaApi.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/backend/CoachingCenterApi",
+            "cwd": "${workspaceFolder}/backend/ClassNovaApi",
             "stopAtEntry": false,
             // Enable launching a web browser when ASP.NET Core starts. For more information: https://aka.ms/VSCode-CS-LaunchJson-WebBrowser
             "serverReadyAction": {
