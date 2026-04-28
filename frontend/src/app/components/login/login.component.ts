@@ -1,63 +1,36 @@
 import { Component } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { ButtonModule } from 'primeng/button';
-import { CommonModule } from '@angular/common';
-import { Auth as AuthService } from '../../services/auth.service';
-import { Router } from '@angular/router';
-import { Auth, signInWithPopup, GoogleAuthProvider, UserCredential } from '@angular/fire/auth';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, InputTextModule, PasswordModule, ButtonModule, MatInputModule, MatButtonModule],
+  imports: [CommonModule, ReactiveFormsModule, InputTextModule, PasswordModule, ButtonModule],
   templateUrl: './login.html',
   styleUrls: ['./login.scss']
 })
 export class LoginComponent {
-  errorMessage: string | null = null;
   loginForm: FormGroup;
-  loading: boolean = false;
-  
+  loading = false;
+  errorMessage: string | null = null;
 
   constructor(
     private fb: FormBuilder,
-    private authService: AuthService,  // your local auth service
-    private router: Router,
-    private auth: Auth                 // Firebase Auth
-  )  {
-    this.auth.onAuthStateChanged(user => {
-      if(user){
-        console.log('Logged in user:', user);
-      } else {
-        console.log('User not logged in');
-      }
-    });
+    private authService: AuthService,
+    private router: Router
+  ) {
     this.loginForm = this.fb.group({
-      usernameOrEmail: ['', Validators.required],
-      password: ['', Validators.required]
+      tenantSlug: ['', Validators.required],
+      email:      ['', [Validators.required, Validators.email]],
+      password:   ['', Validators.required]
     });
   }
-  async loginWithGoogle() {
-    const provider = new GoogleAuthProvider();
-    try {
-      const result: UserCredential = await signInWithPopup(this.auth, provider);
 
-      // Get Firebase ID token
-      const idToken = await result.user.getIdToken();
-
-      // Optional: Send this idToken to your backend for verification/JWT/session
-      // Example:
-      // this.authService.loginWithFirebaseToken(idToken).subscribe(...);
-
-    } catch (error) {
-      console.error('Google login failed', error);
-      // Optionally show error to user
-    }
-  }
   onSubmit() {
     if (this.loginForm.invalid) return;
 
@@ -67,13 +40,12 @@ export class LoginComponent {
     this.authService.login(this.loginForm.value).subscribe({
       next: () => {
         this.loading = false;
-        this.router.navigate(['/dashboard']); // Change to your protected route
+        this.router.navigate(['/dashboard']);
       },
-      error: (err:any) => {
+      error: (err: any) => {
         this.loading = false;
-        this.errorMessage = 'Invalid username or password';
-      },
+        this.errorMessage = err.error?.error ?? 'Login failed. Please check your details.';
+      }
     });
-    // Your authentication logic here (call authService.login...)
   }
 }

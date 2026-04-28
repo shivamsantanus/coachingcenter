@@ -1,18 +1,75 @@
 <div class="login-container">
-    <h2>ClassNova Login</h2>
+  <div class="login-card">
+    <div class="login-header">
+      <h1 class="brand">ClassNova</h1>
+      <p class="subtitle">Sign in to your workspace</p>
+    </div>
+
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-      <div class="p-field">
-        
-        <input id="usernameOrEmail" type="text" pInputText formControlName="usernameOrEmail" />
+
+      <div class="field">
+        <label for="tenantSlug">Organization ID</label>
+        <input
+          id="tenantSlug"
+          type="text"
+          pInputText
+          formControlName="tenantSlug"
+          placeholder="e.g. bright-future"
+          autocomplete="organization"
+        />
+        <small
+          *ngIf="loginForm.get('tenantSlug')?.invalid && loginForm.get('tenantSlug')?.touched"
+          class="error-text">
+          Organization ID is required.
+        </small>
       </div>
-      <div class="p-field">
-        
-        <input id="password" type="password" pPassword formControlName="password" [feedback]="false" />
+
+      <div class="field">
+        <label for="email">Email</label>
+        <input
+          id="email"
+          type="email"
+          pInputText
+          formControlName="email"
+          placeholder="you@example.com"
+          autocomplete="email"
+        />
+        <small
+          *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
+          class="error-text">
+          Enter a valid email address.
+        </small>
       </div>
-      <p-button type="submit" label="Login" [loading]="loading" [disabled]="loginForm.invalid"></p-button>
-      <div class="divider">or</div><button type="button" class="login-with-google-btn" >
-        Sign in with Google
-      </button>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <p-password
+          inputId="password"
+          formControlName="password"
+          placeholder="Your password"
+          [feedback]="false"
+          [toggleMask]="true"
+          styleClass="w-full"
+        ></p-password>
+        <small
+          *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
+          class="error-text">
+          Password is required.
+        </small>
+      </div>
+
+      <div *ngIf="errorMessage" class="error-banner">
+        {{ errorMessage }}
+      </div>
+
+      <p-button
+        type="submit"
+        label="Sign in"
+        styleClass="w-full"
+        [loading]="loading"
+        [disabled]="loginForm.invalid">
+      </p-button>
+
     </form>
   </div>
-  
+</div>

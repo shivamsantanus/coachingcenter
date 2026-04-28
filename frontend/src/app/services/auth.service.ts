@@ -1,48 +1,77 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 
-interface RegisterRequest {
-  username: string;
+export interface LoginRequest {
   email: string;
   password: string;
-  role: string;
+  tenantSlug: string;
 }
 
-interface LoginRequest {
-  usernameOrEmail: string;
-  password: string;
-}
-
-interface LoginResponse {
+export interface LoginResponse {
   token: string;
+  role: string;
+  tenantSlug: string;
+  tenantName: string;
+  fullName: string;
 }
 
-@Injectable({
-  providedIn: 'root'
-})
-export class Auth {
-  private apiUrl = 'http://localhost:5188/api/auth'; // Your backend base URL
+export interface AuthContext {
+  token: string;
+  role: string;
+  tenantSlug: string;
+  tenantName: string;
+  fullName: string;
+}
+
+@Injectable({ providedIn: 'root' })
+export class AuthService {
+  private readonly apiUrl = 'http://localhost:5188/api/auth';
+  private readonly contextKey = 'auth_context';
 
   constructor(private http: HttpClient) {}
 
-  register(data: RegisterRequest): Observable<any> {
-    return this.http.post(`${this.apiUrl}/register`, data);
+  login(credentials: LoginRequest): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${this.apiUrl}/login`, credentials).pipe(
+      tap(response => this.saveContext(response))
+    );
   }
 
-  login(credentials: { usernameOrEmail: string; password: string }) {
-    return this.http.post<{ token: string }>(`${this.apiUrl}/login`, credentials);
-  }
-
-  logout() {
-    localStorage.removeItem('token');
-  }
-
-  getToken(): string | null {
-    return localStorage.getItem('token');
+  logout(): void {
+    localStorage.removeItem(this.contextKey);
   }
 
   isLoggedIn(): boolean {
-    return !!this.getToken();
+    return !!this.getContext()?.token;
+  }
+
+  getToken(): string | null {
+    return this.getContext()?.token ?? null;
+  }
+
+  getRole(): string | null {
+    return this.getContext()?.role ?? null;
+  }
+
+  getTenantSlug(): string | null {
+    return this.getContext()?.tenantSlug ?? null;
+  }
+
+  getFullName(): string | null {
+    return this.getContext()?.fullName ?? null;
+  }
+
+  getContext(): AuthContext | null {
+    const raw = localStorage.getItem(this.contextKey);
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw) as AuthContext;
+    } catch {
+      return null;
+    }
+  }
+
+  private saveContext(response: LoginResponse): void {
+    localStorage.setItem(this.contextKey, JSON.stringify(response));
   }
 }
