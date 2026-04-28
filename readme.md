@@ -2,13 +2,20 @@
 
 ## Overview
 
-ClassNova is a web application for managing coaching centers at scale. It is designed to help administrators, teachers, and students handle classes, schedules, payments, exams, results, and communication from one system.
+ClassNova is a configurable SaaS product for schools and coaching centres. It is being designed as a multi-tenant platform so different organizations can run their operations inside isolated workspaces with their own branding, settings, academic structure, and workflows.
 
 ## Current Stack
 
 - Frontend: Angular with PrimeNG, Angular Material, and Firebase Auth integration
 - Backend: ASP.NET Core Web API with JWT authentication
 - Database: PostgreSQL with Entity Framework Core
+
+## Product Direction
+
+- Multi-tenant architecture for many organizations
+- Configurable modules and workflows instead of hardcoded logic
+- Tenant-specific branding, settings, and academic setup
+- Scalable design for branches, users, records, and future plan tiers
 
 ## What Exists Today
 
