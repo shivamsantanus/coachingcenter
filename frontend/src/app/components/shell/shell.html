@@ -1,0 +1,52 @@
+<div class="shell">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <span class="brand-name">ClassNova</span>
+      <span class="tenant-name">{{ context?.tenantName }}</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a
+        *ngFor="let item of visibleNavItems"
+        [routerLink]="item.route"
+        routerLinkActive="active"
+        class="nav-item">
+        <i class="pi {{ item.icon }}"></i>
+        <span>{{ item.label }}</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="logout-btn" (click)="logout()">
+        <i class="pi pi-sign-out"></i>
+        <span>Log out</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main area -->
+  <div class="main">
+
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left"></div>
+      <div class="header-right">
+        <div class="user-info">
+          <span class="user-name">{{ context?.fullName }}</span>
+          <span class="user-role">{{ context?.role }}</span>
+        </div>
+        <div class="avatar">
+          {{ context?.fullName?.charAt(0) | uppercase }}
+        </div>
+      </div>
+    </header>
+
+    <!-- Page content -->
+    <main class="content">
+      <router-outlet></router-outlet>
+    </main>
+
+  </div>
+</div>

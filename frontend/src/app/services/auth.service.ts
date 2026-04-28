@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 
@@ -29,7 +30,12 @@ export class AuthService {
   private readonly apiUrl = 'http://localhost:5188/api/auth';
   private readonly contextKey = 'auth_context';
 
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
+  private platformId = inject(PLATFORM_ID);
+
+  private get storage(): Storage | null {
+    return isPlatformBrowser(this.platformId) ? localStorage : null;
+  }
 
   login(credentials: LoginRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.apiUrl}/login`, credentials).pipe(
@@ -38,7 +44,7 @@ export class AuthService {
   }
 
   logout(): void {
-    localStorage.removeItem(this.contextKey);
+    this.storage?.removeItem(this.contextKey);
   }
 
   isLoggedIn(): boolean {
@@ -62,7 +68,7 @@ export class AuthService {
   }
 
   getContext(): AuthContext | null {
-    const raw = localStorage.getItem(this.contextKey);
+    const raw = this.storage?.getItem(this.contextKey);
     if (!raw) return null;
     try {
       return JSON.parse(raw) as AuthContext;
@@ -72,6 +78,6 @@ export class AuthService {
   }
 
   private saveContext(response: LoginResponse): void {
-    localStorage.setItem(this.contextKey, JSON.stringify(response));
+    this.storage?.setItem(this.contextKey, JSON.stringify(response));
   }
 }
