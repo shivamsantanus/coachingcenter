@@ -111,11 +111,13 @@ namespace ClassNovaApi.Controllers
         [HttpGet("me")]
         public IActionResult GetMe()
         {
+            // With MapInboundClaims = false, JWT claim names are preserved as serialised:
+            // ClaimTypes.NameIdentifier → "nameid", ClaimTypes.Name → "unique_name"
             return Ok(new
             {
-                userId     = User.FindFirstValue(ClaimTypes.NameIdentifier),
-                fullName   = User.FindFirstValue(ClaimTypes.Name),
-                email      = User.FindFirstValue(ClaimTypes.Email),
+                userId     = User.FindFirstValue("nameid"),
+                fullName   = User.FindFirstValue("unique_name"),
+                email      = User.FindFirstValue("email"),
                 tenantId   = User.FindFirstValue("tenant_id"),
                 tenantSlug = User.FindFirstValue("tenant_slug"),
                 role       = User.FindFirstValue("role")
