@@ -1,5 +1,7 @@
+using ClassNovaApi;
 using ClassNovaApi.Data;
 using ClassNovaApi.Models;
+using ClassNovaApi.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -51,6 +53,17 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 builder.Services.AddControllers();
+
+// Email: console logger in dev, SendGrid in production
+if (builder.Environment.IsDevelopment())
+    builder.Services.AddTransient<IEmailService, ConsoleEmailService>();
+else
+    builder.Services.AddTransient<IEmailService, SendGridEmailService>();
+
+builder.Services.AddTransient<OtpService>();
+
+if (builder.Environment.IsDevelopment())
+    builder.Services.AddHostedService<AngularDevServerService>();
 
 var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"]!);
 builder.Services.AddAuthentication(options =>

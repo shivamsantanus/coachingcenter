@@ -6,16 +6,16 @@
   background: #f4f6f9;
 }
 
-.login-card {
+.register-card {
   width: 100%;
-  max-width: 420px;
+  max-width: 460px;
   padding: 2.5rem;
   border-radius: 12px;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
   background: #ffffff;
 }
 
-.login-header {
+.register-header {
   text-align: center;
   margin-bottom: 2rem;
 
@@ -46,7 +46,8 @@
   }
 
   input.p-inputtext,
-  p-password {
+  p-password,
+  p-select {
     width: 100%;
   }
 }
@@ -61,6 +62,16 @@
   background: #fef2f2;
   border: 1px solid #fecaca;
   color: #dc2626;
+  border-radius: 6px;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
+.success-banner {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #15803d;
   border-radius: 6px;
   padding: 0.6rem 0.9rem;
   font-size: 0.85rem;

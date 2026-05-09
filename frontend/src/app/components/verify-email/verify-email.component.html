@@ -1,0 +1,72 @@
+<div class="verify-container">
+  <div class="verify-card">
+    <div class="verify-header">
+      <h1 class="brand">ClassNova</h1>
+      <p class="subtitle">Verify your email</p>
+    </div>
+
+    <div *ngIf="!successMessage">
+      <p class="instruction">
+        We sent a 6-digit code to <strong>{{ maskedEmail }}</strong>.
+        Enter it below to activate your account.
+      </p>
+
+      <form [formGroup]="otpForm" (ngSubmit)="onSubmit()">
+
+        <div class="field">
+          <label for="otp">Verification Code</label>
+          <input
+            id="otp"
+            type="text"
+            pInputText
+            formControlName="otp"
+            placeholder="000000"
+            maxlength="6"
+            autocomplete="one-time-code"
+            inputmode="numeric"
+            class="otp-input"
+            (input)="onOtpInput($event)"
+          />
+          <small
+            *ngIf="otpForm.get('otp')?.invalid && otpForm.get('otp')?.touched"
+            class="error-text">
+            Enter the 6-digit code from your email.
+          </small>
+        </div>
+
+        <div *ngIf="errorMessage" class="error-banner">
+          {{ errorMessage }}
+        </div>
+
+        <p-button
+          type="submit"
+          label="Verify"
+          styleClass="w-full"
+          [loading]="verifying"
+          [disabled]="otpForm.invalid">
+        </p-button>
+
+      </form>
+
+      <div class="resend-row">
+        <span>Didn't receive it?</span>
+        <button
+          type="button"
+          class="resend-btn"
+          [disabled]="cooldown > 0 || resending"
+          (click)="onResend()">
+          {{ resendLabel }}
+        </button>
+      </div>
+
+      <p class="auth-link">
+        <a routerLink="/register">Back to sign up</a>
+      </p>
+    </div>
+
+    <div *ngIf="successMessage" class="success-banner">
+      {{ successMessage }}
+    </div>
+
+  </div>
+</div>

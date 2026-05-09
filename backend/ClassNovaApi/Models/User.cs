@@ -8,6 +8,7 @@ namespace ClassNovaApi.Models
         public string? Phone { get; set; }
         public string PasswordHash { get; set; } = string.Empty;
         public bool IsActive { get; set; } = true;
+        public bool IsEmailVerified { get; set; }
         public DateTime? LastLoginAt { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }

@@ -1,0 +1,135 @@
+<div class="register-container">
+  <div class="register-card">
+    <div class="register-header">
+      <h1 class="brand">ClassNova</h1>
+      <p class="subtitle">Create your account</p>
+    </div>
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+
+      <div class="field">
+        <label for="fullName">Full Name</label>
+        <input
+          id="fullName"
+          type="text"
+          pInputText
+          formControlName="fullName"
+          placeholder="Your full name"
+          autocomplete="name"
+        />
+        <small
+          *ngIf="registerForm.get('fullName')?.invalid && registerForm.get('fullName')?.touched"
+          class="error-text">
+          Full name is required.
+        </small>
+      </div>
+
+      <div class="field">
+        <label for="tenantSlug">Organization ID</label>
+        <input
+          id="tenantSlug"
+          type="text"
+          pInputText
+          formControlName="tenantSlug"
+          placeholder="e.g. bright-future"
+          autocomplete="organization"
+        />
+        <small
+          *ngIf="registerForm.get('tenantSlug')?.invalid && registerForm.get('tenantSlug')?.touched"
+          class="error-text">
+          Organization ID is required.
+        </small>
+      </div>
+
+      <div class="field">
+        <label for="email">Email</label>
+        <input
+          id="email"
+          type="email"
+          pInputText
+          formControlName="email"
+          placeholder="you@example.com"
+          autocomplete="email"
+        />
+        <small
+          *ngIf="registerForm.get('email')?.invalid && registerForm.get('email')?.touched"
+          class="error-text">
+          Enter a valid email address.
+        </small>
+      </div>
+
+      <div class="field">
+        <label for="role">Role</label>
+        <p-select
+          inputId="role"
+          formControlName="roleCode"
+          [options]="availableRoles"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select your role"
+          styleClass="w-full"
+        ></p-select>
+        <small
+          *ngIf="registerForm.get('roleCode')?.invalid && registerForm.get('roleCode')?.touched"
+          class="error-text">
+          Please select a role.
+        </small>
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <p-password
+          inputId="password"
+          formControlName="password"
+          placeholder="Minimum 8 characters"
+          [feedback]="true"
+          [toggleMask]="true"
+          styleClass="w-full"
+        ></p-password>
+        <small
+          *ngIf="registerForm.get('password')?.hasError('required') && registerForm.get('password')?.touched"
+          class="error-text">
+          Password is required.
+        </small>
+        <small
+          *ngIf="registerForm.get('password')?.hasError('minlength') && registerForm.get('password')?.touched"
+          class="error-text">
+          Password must be at least 8 characters.
+        </small>
+      </div>
+
+      <div class="field">
+        <label for="confirmPassword">Confirm Password</label>
+        <p-password
+          inputId="confirmPassword"
+          formControlName="confirmPassword"
+          placeholder="Re-enter your password"
+          [feedback]="false"
+          [toggleMask]="true"
+          styleClass="w-full"
+        ></p-password>
+        <small *ngIf="passwordsMismatch" class="error-text">
+          Passwords do not match.
+        </small>
+      </div>
+
+      <div *ngIf="errorMessage" class="error-banner">
+        {{ errorMessage }}
+      </div>
+
+      <p-button
+        type="submit"
+        label="Create account"
+        styleClass="w-full"
+        [loading]="loading"
+        [disabled]="registerForm.invalid">
+      </p-button>
+
+    </form>
+
+    <p class="auth-link">
+      Already have an account?
+      <a routerLink="/login">Sign in</a>
+    </p>
+  </div>
+</div>

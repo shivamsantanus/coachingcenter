@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using ClassNovaApi.Data;
 using ClassNovaApi.Models;
+using ClassNovaApi.Services;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -16,104 +17,176 @@ namespace ClassNovaApi.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IConfiguration _config;
+        private readonly OtpService _otpService;
+        private readonly ILogger<AuthController> _logger;
 
-        public AuthController(AppDbContext context, IConfiguration config)
+        public AuthController(
+            AppDbContext context,
+            IConfiguration config,
+            OtpService otpService,
+            ILogger<AuthController> logger)
         {
-            _context = context;
-            _config = config;
+            _context    = context;
+            _config     = config;
+            _otpService = otpService;
+            _logger     = logger;
         }
 
         [AllowAnonymous]
         [HttpPost("register")]
-        public IActionResult Register([FromBody] AuthRequest request)
+        public async Task<IActionResult> Register([FromBody] AuthRequest request)
         {
-            var tenant = _context.Tenants.FirstOrDefault(t => t.Slug == request.TenantSlug.ToLower());
-            if (tenant == null) return BadRequest(new { error = "Tenant not found." });
-            if (tenant.Status != "ACTIVE") return BadRequest(new { error = "Tenant is not active." });
+            var tenant = await _context.Tenants
+                .FirstOrDefaultAsync(t => t.Slug == request.TenantSlug.ToLower());
 
-            if (_context.Users.Any(u => u.Email == request.Email))
-                return BadRequest(new { error = "Email is already registered." });
+            if (tenant == null)
+                return BadRequest(new ApiResponse<object>(null, "Tenant not found."));
 
-            var role = _context.Roles.FirstOrDefault(r => r.Code == request.RoleCode);
-            if (role == null) return BadRequest(new { error = "Invalid role code." });
+            if (tenant.Status != "ACTIVE")
+                return BadRequest(new ApiResponse<object>(null, "Tenant is not active."));
 
-            var now = DateTime.UtcNow;
+            var emailExists = await _context.Users.AnyAsync(u => u.Email == request.Email);
+            if (emailExists)
+                return BadRequest(new ApiResponse<object>(null, "Email is already registered."));
+
+            var role = await _context.Roles.FirstOrDefaultAsync(r => r.Code == request.RoleCode);
+            if (role == null)
+                return BadRequest(new ApiResponse<object>(null, "Invalid role code."));
+
+            var now    = DateTime.UtcNow;
             var userId = Guid.NewGuid();
 
             var user = new User
             {
-                Id = userId,
-                FullName = request.FullName,
-                Email = request.Email,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                IsActive = true,
-                CreatedAt = now,
-                UpdatedAt = now
+                Id              = userId,
+                FullName        = request.FullName,
+                Email           = request.Email,
+                PasswordHash    = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                IsActive        = true,
+                IsEmailVerified = false,
+                CreatedAt       = now,
+                UpdatedAt       = now
             };
 
             var tenantUserRole = new TenantUserRole
             {
-                Id = Guid.NewGuid(),
+                Id       = Guid.NewGuid(),
                 TenantId = tenant.Id,
-                UserId = userId,
-                RoleId = role.Id,
-                Status = "ACTIVE"
+                UserId   = userId,
+                RoleId   = role.Id,
+                Status   = "ACTIVE"
             };
 
             _context.Users.Add(user);
             _context.TenantUserRoles.Add(tenantUserRole);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
-            return Ok(new { message = "User registered successfully." });
+            await _otpService.IssueOtpAsync(user);
+
+            _logger.LogInformation("New user registered. Email: {Email}, Tenant: {Slug}, Role: {Role}",
+                request.Email, tenant.Slug, role.Code);
+
+            return Ok(new ApiResponse<object>(new { message = "Registration successful. Please check your email for a verification code." }));
         }
 
         [AllowAnonymous]
         [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginRequest request)
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            var tenant = _context.Tenants.FirstOrDefault(t => t.Slug == request.TenantSlug.ToLower());
-            if (tenant == null) return Unauthorized(new { error = "Tenant not found." });
-            if (tenant.Status != "ACTIVE") return Unauthorized(new { error = "Tenant is not active." });
+            var tenant = await _context.Tenants
+                .FirstOrDefaultAsync(t => t.Slug == request.TenantSlug.ToLower());
 
-            var user = _context.Users.FirstOrDefault(u => u.Email == request.Email);
+            if (tenant == null)
+                return Unauthorized(new ApiResponse<object>(null, "Tenant not found."));
+
+            if (tenant.Status != "ACTIVE")
+                return Unauthorized(new ApiResponse<object>(null, "Tenant is not active."));
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+            const string invalidCredentials = "Invalid email or password.";
+
             if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
-                return Unauthorized(new { error = "Invalid email or password." });
+                return Unauthorized(new ApiResponse<object>(null, invalidCredentials));
 
             if (!user.IsActive)
-                return Unauthorized(new { error = "Account is inactive." });
+                return Unauthorized(new ApiResponse<object>(null, "Account is inactive."));
 
-            var tenantUserRole = _context.TenantUserRoles
+            // Block login until email is verified
+            if (!user.IsEmailVerified)
+                return StatusCode(403, new ApiResponse<object>(null, "Please verify your email before signing in."));
+
+            var tenantUserRole = await _context.TenantUserRoles
                 .Include(tur => tur.Role)
-                .FirstOrDefault(tur =>
+                .FirstOrDefaultAsync(tur =>
                     tur.TenantId == tenant.Id &&
-                    tur.UserId == user.Id &&
-                    tur.Status == "ACTIVE");
+                    tur.UserId   == user.Id   &&
+                    tur.Status   == "ACTIVE");
 
             if (tenantUserRole == null)
-                return Unauthorized(new { error = "User does not have access to this tenant." });
+                return Unauthorized(new ApiResponse<object>(null, invalidCredentials));
 
             user.LastLoginAt = DateTime.UtcNow;
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
             var token = GenerateToken(user, tenant, tenantUserRole.Role.Code);
 
-            return Ok(new
+            _logger.LogInformation("User logged in. Email: {Email}, Tenant: {Slug}, Role: {Role}",
+                user.Email, tenant.Slug, tenantUserRole.Role.Code);
+
+            return Ok(new ApiResponse<object>(new
             {
                 token,
-                role = tenantUserRole.Role.Code,
+                role       = tenantUserRole.Role.Code,
                 tenantSlug = tenant.Slug,
                 tenantName = tenant.Name,
-                fullName = user.FullName
-            });
+                fullName   = user.FullName
+            }));
+        }
+
+        [AllowAnonymous]
+        [HttpPost("verify-email")]
+        public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailRequest request)
+        {
+            var user = await ResolveUserForTenant(request.Email, request.TenantSlug);
+
+            // Return the same response whether email exists or not — avoids user enumeration
+            if (user == null)
+                return BadRequest(new ApiResponse<object>(null, "Invalid or expired verification code."));
+
+            if (user.IsEmailVerified)
+                return Ok(new ApiResponse<object>(new { message = "Email is already verified. You can sign in." }));
+
+            var (success, error, _) = await _otpService.VerifyOtpAsync(user.Id, request.Otp);
+
+            if (!success)
+                return BadRequest(new ApiResponse<object>(null, error));
+
+            return Ok(new ApiResponse<object>(new { message = "Email verified successfully. You can now sign in." }));
+        }
+
+        [AllowAnonymous]
+        [HttpPost("resend-otp")]
+        public async Task<IActionResult> ResendOtp([FromBody] ResendOtpRequest request)
+        {
+            var user = await ResolveUserForTenant(request.Email, request.TenantSlug);
+
+            // Always return success shape — never confirm whether email is registered
+            if (user == null || user.IsEmailVerified)
+                return Ok(new ApiResponse<object>(new { message = "If your email is registered and unverified, a new code has been sent." }));
+
+            var (success, error) = await _otpService.ResendOtpAsync(user);
+
+            if (!success)
+                return StatusCode(429, new ApiResponse<object>(null, error));
+
+            return Ok(new ApiResponse<object>(new { message = "A new verification code has been sent to your email." }));
         }
 
         [Authorize]
         [HttpGet("me")]
         public IActionResult GetMe()
         {
-            // With MapInboundClaims = false, JWT claim names are preserved as serialised:
-            // ClaimTypes.NameIdentifier → "nameid", ClaimTypes.Name → "unique_name"
-            return Ok(new
+            return Ok(new ApiResponse<object>(new
             {
                 userId     = User.FindFirstValue("nameid"),
                 fullName   = User.FindFirstValue("unique_name"),
@@ -121,12 +194,30 @@ namespace ClassNovaApi.Controllers
                 tenantId   = User.FindFirstValue("tenant_id"),
                 tenantSlug = User.FindFirstValue("tenant_slug"),
                 role       = User.FindFirstValue("role")
-            });
+            }));
+        }
+
+        private async Task<User?> ResolveUserForTenant(string email, string tenantSlug)
+        {
+            var tenant = await _context.Tenants
+                .FirstOrDefaultAsync(t => t.Slug == tenantSlug.ToLower() && t.Status == "ACTIVE");
+            if (tenant == null) return null;
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null) return null;
+
+            var linked = await _context.TenantUserRoles
+                .AnyAsync(tur => tur.TenantId == tenant.Id && tur.UserId == user.Id);
+
+            return linked ? user : null;
         }
 
         private string GenerateToken(User user, Tenant tenant, string roleCode)
         {
-            var key = Encoding.ASCII.GetBytes(_config["Jwt:Key"]!);
+            var jwtKey = _config["Jwt:Key"]
+                ?? throw new InvalidOperationException("JWT key is not configured.");
+
+            var key = Encoding.ASCII.GetBytes(jwtKey);
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(

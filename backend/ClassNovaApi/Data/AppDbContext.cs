@@ -29,6 +29,7 @@ namespace ClassNovaApi.Data
         public DbSet<Mark> Marks { get; set; }
         public DbSet<ClassSchedule> ClassSchedules { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
+        public DbSet<EmailVerification> EmailVerifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -130,6 +131,25 @@ namespace ClassNovaApi.Data
             modelBuilder.Entity<AuditLog>()
                 .Property(a => a.MetadataJson)
                 .HasColumnType("jsonb");
+
+            // User.IsEmailVerified — DB default true so existing rows are not locked out after migration
+            modelBuilder.Entity<User>()
+                .Property(u => u.IsEmailVerified)
+                .HasDefaultValue(true);
+
+            // EmailVerification — index for primary lookup (user_id)
+            modelBuilder.Entity<EmailVerification>()
+                .HasIndex(ev => ev.UserId);
+
+            modelBuilder.Entity<EmailVerification>()
+                .Property(ev => ev.OtpHash)
+                .HasMaxLength(64)
+                .IsRequired();
+
+            modelBuilder.Entity<EmailVerification>()
+                .Property(ev => ev.OtpSalt)
+                .HasMaxLength(32)
+                .IsRequired();
 
             // Restrict cascade deletes on all FKs to avoid accidental data loss
             foreach (var fk in modelBuilder.Model.GetEntityTypes()
