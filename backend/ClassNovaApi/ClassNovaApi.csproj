@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>ClassNovaApi</AssemblyName>
     <RootNamespace>ClassNovaApi</RootNamespace>
+    <UserSecretsId>ba18379f-ed64-4d02-8a04-f0191f8e73cc</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

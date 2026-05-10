@@ -29,7 +29,7 @@ namespace ClassNovaApi.Data
         public DbSet<Mark> Marks { get; set; }
         public DbSet<ClassSchedule> ClassSchedules { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
-        public DbSet<EmailVerification> EmailVerifications { get; set; }
+        public DbSet<PendingRegistration> PendingRegistrations { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -137,17 +137,18 @@ namespace ClassNovaApi.Data
                 .Property(u => u.IsEmailVerified)
                 .HasDefaultValue(true);
 
-            // EmailVerification — index for primary lookup (user_id)
-            modelBuilder.Entity<EmailVerification>()
-                .HasIndex(ev => ev.UserId);
+            // PendingRegistration — unique index on email (one pending per email at a time)
+            modelBuilder.Entity<PendingRegistration>()
+                .HasIndex(pr => pr.Email)
+                .IsUnique();
 
-            modelBuilder.Entity<EmailVerification>()
-                .Property(ev => ev.OtpHash)
+            modelBuilder.Entity<PendingRegistration>()
+                .Property(pr => pr.OtpHash)
                 .HasMaxLength(64)
                 .IsRequired();
 
-            modelBuilder.Entity<EmailVerification>()
-                .Property(ev => ev.OtpSalt)
+            modelBuilder.Entity<PendingRegistration>()
+                .Property(pr => pr.OtpSalt)
                 .HasMaxLength(32)
                 .IsRequired();
 

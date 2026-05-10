@@ -13,7 +13,7 @@ namespace ClassNovaApi.Services
         private const int MaxSendsPerHour    = 3;
         private const int ResendCooldownSecs = 60;
 
-        private readonly AppDbContext _context;
+        private readonly AppDbContext  _context;
         private readonly IEmailService _emailService;
         private readonly ILogger<OtpService> _logger;
 
@@ -24,121 +24,125 @@ namespace ClassNovaApi.Services
             _logger       = logger;
         }
 
-        public async Task IssueOtpAsync(User user)
+        // Called from Register — OTP data stored on the pending record itself
+        public async Task IssueOtpAsync(PendingRegistration pending)
         {
-            var existing = await _context.EmailVerifications
-                .FirstOrDefaultAsync(ev => ev.UserId == user.Id);
-
-            if (existing != null)
-                _context.EmailVerifications.Remove(existing);
-
             var otp  = GenerateOtp();
             var salt = GenerateSalt();
-            var now  = DateTime.UtcNow;
 
-            var record = new EmailVerification
+            pending.OtpHash   = HashOtp(otp, salt);
+            pending.OtpSalt   = salt;
+            pending.ExpiresAt = DateTime.UtcNow.AddMinutes(OtpExpiryMinutes);
+
+            await _context.SaveChangesAsync();
+            await _emailService.SendOtpAsync(pending.Email, pending.FullName, otp);
+        }
+
+        // Called from VerifyEmail — verifies OTP then promotes pending → real user
+        public async Task<(bool success, string error)> VerifyAndPromoteAsync(
+            string email, string tenantSlug, string submittedOtp)
+        {
+            var pending = await _context.PendingRegistrations
+                .Include(pr => pr.Tenant)
+                .Include(pr => pr.Role)
+                .FirstOrDefaultAsync(pr =>
+                    pr.Email == email &&
+                    pr.Tenant.Slug == tenantSlug.ToLower());
+
+            if (pending == null)
+                return (false, "No pending registration found. Please sign up again.");
+
+            if (DateTime.UtcNow > pending.ExpiresAt)
             {
-                Id           = Guid.NewGuid(),
-                UserId       = user.Id,
-                OtpHash      = HashOtp(otp, salt),
-                OtpSalt      = salt,
-                ExpiresAt    = now.AddMinutes(OtpExpiryMinutes),
-                AttemptCount = 0,
-                SendCount    = 1,
-                LastSentAt   = now,
-                CreatedAt    = now
+                _context.PendingRegistrations.Remove(pending);
+                await _context.SaveChangesAsync();
+                return (false, "OTP has expired. Please sign up again.");
+            }
+
+            if (pending.AttemptCount >= MaxAttempts)
+            {
+                _context.PendingRegistrations.Remove(pending);
+                await _context.SaveChangesAsync();
+                return (false, "Too many failed attempts. Please sign up again.");
+            }
+
+            if (HashOtp(submittedOtp, pending.OtpSalt) != pending.OtpHash)
+            {
+                pending.AttemptCount++;
+                await _context.SaveChangesAsync();
+
+                var remaining = MaxAttempts - pending.AttemptCount;
+                return (false, $"Invalid OTP. {remaining} attempt{(remaining == 1 ? "" : "s")} remaining.");
+            }
+
+            // OTP valid — promote to real verified user
+            var now    = DateTime.UtcNow;
+            var userId = Guid.NewGuid();
+
+            var user = new User
+            {
+                Id              = userId,
+                FullName        = pending.FullName,
+                Email           = pending.Email,
+                PasswordHash    = pending.PasswordHash,
+                IsActive        = true,
+                IsEmailVerified = true,
+                CreatedAt       = now,
+                UpdatedAt       = now
             };
 
-            _context.EmailVerifications.Add(record);
+            var tenantUserRole = new TenantUserRole
+            {
+                Id       = Guid.NewGuid(),
+                TenantId = pending.TenantId,
+                UserId   = userId,
+                RoleId   = pending.RoleId,
+                Status   = "ACTIVE"
+            };
+
+            _context.Users.Add(user);
+            _context.TenantUserRoles.Add(tenantUserRole);
+            _context.PendingRegistrations.Remove(pending);
             await _context.SaveChangesAsync();
 
-            await _emailService.SendOtpAsync(user.Email!, user.FullName, otp);
+            _logger.LogInformation("User promoted from pending registration. Email: {Email}", email);
+            return (true, string.Empty);
         }
 
-        public async Task<(bool success, string error, int remainingAttempts)> VerifyOtpAsync(
-            Guid userId, string submittedOtp)
+        // Called from ResendOtp — reissues a fresh OTP on the same pending record
+        public async Task<(bool success, string error)> ResendOtpAsync(string email, string tenantSlug)
         {
-            var record = await _context.EmailVerifications
-                .FirstOrDefaultAsync(ev => ev.UserId == userId);
+            var pending = await _context.PendingRegistrations
+                .Include(pr => pr.Tenant)
+                .FirstOrDefaultAsync(pr =>
+                    pr.Email == email &&
+                    pr.Tenant.Slug == tenantSlug.ToLower());
 
-            if (record == null)
-                return (false, "No pending verification found. Please request a new OTP.", 0);
-
-            if (DateTime.UtcNow > record.ExpiresAt)
-            {
-                _context.EmailVerifications.Remove(record);
-                await _context.SaveChangesAsync();
-                return (false, "OTP has expired. Please request a new one.", 0);
-            }
-
-            if (record.AttemptCount >= MaxAttempts)
-            {
-                _context.EmailVerifications.Remove(record);
-                await _context.SaveChangesAsync();
-                return (false, "Too many failed attempts. Please request a new OTP.", 0);
-            }
-
-            var hash = HashOtp(submittedOtp, record.OtpSalt);
-            if (hash != record.OtpHash)
-            {
-                record.AttemptCount++;
-                await _context.SaveChangesAsync();
-
-                var remaining = MaxAttempts - record.AttemptCount;
-                return (false, $"Invalid OTP. {remaining} attempt{(remaining == 1 ? "" : "s")} remaining.", remaining);
-            }
-
-            // Valid — mark verified and clean up
-            var user = await _context.Users.FindAsync(userId);
-            if (user != null)
-            {
-                user.IsEmailVerified = true;
-                user.UpdatedAt = DateTime.UtcNow;
-            }
-
-            _context.EmailVerifications.Remove(record);
-            await _context.SaveChangesAsync();
-
-            _logger.LogInformation("Email verified for user {UserId}", userId);
-            return (true, string.Empty, 0);
-        }
-
-        public async Task<(bool success, string error)> ResendOtpAsync(User user)
-        {
-            var existing = await _context.EmailVerifications
-                .FirstOrDefaultAsync(ev => ev.UserId == user.Id);
+            // Return success shape regardless — never reveal whether email is registered
+            if (pending == null)
+                return (true, string.Empty);
 
             var now = DateTime.UtcNow;
 
-            if (existing != null)
-            {
-                // Enforce per-resend cooldown
-                if ((now - existing.LastSentAt).TotalSeconds < ResendCooldownSecs)
-                    return (false, "Please wait before requesting another OTP.");
+            if ((now - pending.LastSentAt).TotalSeconds < ResendCooldownSecs)
+                return (false, "Please wait before requesting another OTP.");
 
-                // Enforce hourly send limit
-                if (existing.SendCount >= MaxSendsPerHour &&
-                    (now - existing.CreatedAt).TotalHours < 1)
-                    return (false, "Too many OTP requests. Please try again later.");
+            if (pending.SendCount >= MaxSendsPerHour &&
+                (now - pending.CreatedAt).TotalHours < 1)
+                return (false, "Too many OTP requests. Please try again later.");
 
-                // Reissue with fresh OTP and expiry
-                var otp  = GenerateOtp();
-                var salt = GenerateSalt();
+            var otp  = GenerateOtp();
+            var salt = GenerateSalt();
 
-                existing.OtpHash      = HashOtp(otp, salt);
-                existing.OtpSalt      = salt;
-                existing.ExpiresAt    = now.AddMinutes(OtpExpiryMinutes);
-                existing.AttemptCount = 0;
-                existing.SendCount++;
-                existing.LastSentAt   = now;
+            pending.OtpHash      = HashOtp(otp, salt);
+            pending.OtpSalt      = salt;
+            pending.ExpiresAt    = now.AddMinutes(OtpExpiryMinutes);
+            pending.AttemptCount = 0;
+            pending.SendCount++;
+            pending.LastSentAt   = now;
 
-                await _context.SaveChangesAsync();
-                await _emailService.SendOtpAsync(user.Email!, user.FullName, otp);
-            }
-            else
-            {
-                await IssueOtpAsync(user);
-            }
+            await _context.SaveChangesAsync();
+            await _emailService.SendOtpAsync(pending.Email, pending.FullName, otp);
 
             return (true, string.Empty);
         }

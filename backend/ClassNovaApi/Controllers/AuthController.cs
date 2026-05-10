@@ -45,48 +45,59 @@ namespace ClassNovaApi.Controllers
             if (tenant.Status != "ACTIVE")
                 return BadRequest(new ApiResponse<object>(null, "Tenant is not active."));
 
-            var emailExists = await _context.Users.AnyAsync(u => u.Email == request.Email);
-            if (emailExists)
-                return BadRequest(new ApiResponse<object>(null, "Email is already registered."));
-
             var role = await _context.Roles.FirstOrDefaultAsync(r => r.Code == request.RoleCode);
             if (role == null)
                 return BadRequest(new ApiResponse<object>(null, "Invalid role code."));
 
-            var now    = DateTime.UtcNow;
-            var userId = Guid.NewGuid();
+            // Block if a verified account already exists for this email
+            var verifiedExists = await _context.Users
+                .AnyAsync(u => u.Email == request.Email && u.IsEmailVerified);
+            if (verifiedExists)
+                return BadRequest(new ApiResponse<object>(null, "Email is already registered."));
 
-            var user = new User
+            // Clean up any leftover unverified user from old flow (safety net)
+            var staleUser = await _context.Users
+                .FirstOrDefaultAsync(u => u.Email == request.Email && !u.IsEmailVerified);
+            if (staleUser != null)
             {
-                Id              = userId,
-                FullName        = request.FullName,
-                Email           = request.Email,
-                PasswordHash    = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                IsActive        = true,
-                IsEmailVerified = false,
-                CreatedAt       = now,
-                UpdatedAt       = now
+                var staleRole = await _context.TenantUserRoles
+                    .FirstOrDefaultAsync(r => r.UserId == staleUser.Id);
+                if (staleRole != null) _context.TenantUserRoles.Remove(staleRole);
+                _context.Users.Remove(staleUser);
+            }
+
+            // Replace any previous unverified pending attempt for this email
+            var existingPending = await _context.PendingRegistrations
+                .FirstOrDefaultAsync(pr => pr.Email == request.Email);
+            if (existingPending != null)
+                _context.PendingRegistrations.Remove(existingPending);
+
+            var now = DateTime.UtcNow;
+            var pending = new PendingRegistration
+            {
+                Id           = Guid.NewGuid(),
+                FullName     = request.FullName,
+                Email        = request.Email,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                TenantId     = tenant.Id,
+                RoleId       = role.Id,
+                SendCount    = 1,
+                LastSentAt   = now,
+                CreatedAt    = now
             };
 
-            var tenantUserRole = new TenantUserRole
-            {
-                Id       = Guid.NewGuid(),
-                TenantId = tenant.Id,
-                UserId   = userId,
-                RoleId   = role.Id,
-                Status   = "ACTIVE"
-            };
-
-            _context.Users.Add(user);
-            _context.TenantUserRoles.Add(tenantUserRole);
+            _context.PendingRegistrations.Add(pending);
             await _context.SaveChangesAsync();
 
-            await _otpService.IssueOtpAsync(user);
+            await _otpService.IssueOtpAsync(pending);
 
-            _logger.LogInformation("New user registered. Email: {Email}, Tenant: {Slug}, Role: {Role}",
-                request.Email, tenant.Slug, role.Code);
+            _logger.LogInformation("Pending registration created. Email: {Email}, Tenant: {Slug}",
+                request.Email, tenant.Slug);
 
-            return Ok(new ApiResponse<object>(new { message = "Registration successful. Please check your email for a verification code." }));
+            return Ok(new ApiResponse<object>(new
+            {
+                message = "Registration started. Please check your email for a verification code."
+            }));
         }
 
         [AllowAnonymous]
@@ -111,9 +122,11 @@ namespace ClassNovaApi.Controllers
             if (!user.IsActive)
                 return Unauthorized(new ApiResponse<object>(null, "Account is inactive."));
 
-            // Block login until email is verified
+            // With pending-registration flow, users in the table are always verified.
+            // This guard handles any edge-case legacy unverified records.
             if (!user.IsEmailVerified)
-                return StatusCode(403, new ApiResponse<object>(null, "Please verify your email before signing in."));
+                return StatusCode(403, new ApiResponse<object>(null,
+                    "Please verify your email before signing in."));
 
             var tenantUserRole = await _context.TenantUserRoles
                 .Include(tur => tur.Role)
@@ -130,8 +143,8 @@ namespace ClassNovaApi.Controllers
 
             var token = GenerateToken(user, tenant, tenantUserRole.Role.Code);
 
-            _logger.LogInformation("User logged in. Email: {Email}, Tenant: {Slug}, Role: {Role}",
-                user.Email, tenant.Slug, tenantUserRole.Role.Code);
+            _logger.LogInformation("User logged in. Email: {Email}, Tenant: {Slug}",
+                user.Email, tenant.Slug);
 
             return Ok(new ApiResponse<object>(new
             {
@@ -147,39 +160,31 @@ namespace ClassNovaApi.Controllers
         [HttpPost("verify-email")]
         public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailRequest request)
         {
-            var user = await ResolveUserForTenant(request.Email, request.TenantSlug);
-
-            // Return the same response whether email exists or not — avoids user enumeration
-            if (user == null)
-                return BadRequest(new ApiResponse<object>(null, "Invalid or expired verification code."));
-
-            if (user.IsEmailVerified)
-                return Ok(new ApiResponse<object>(new { message = "Email is already verified. You can sign in." }));
-
-            var (success, error, _) = await _otpService.VerifyOtpAsync(user.Id, request.Otp);
+            var (success, error) = await _otpService.VerifyAndPromoteAsync(
+                request.Email, request.TenantSlug, request.Otp);
 
             if (!success)
                 return BadRequest(new ApiResponse<object>(null, error));
 
-            return Ok(new ApiResponse<object>(new { message = "Email verified successfully. You can now sign in." }));
+            return Ok(new ApiResponse<object>(new
+            {
+                message = "Email verified successfully. You can now sign in."
+            }));
         }
 
         [AllowAnonymous]
         [HttpPost("resend-otp")]
         public async Task<IActionResult> ResendOtp([FromBody] ResendOtpRequest request)
         {
-            var user = await ResolveUserForTenant(request.Email, request.TenantSlug);
-
-            // Always return success shape — never confirm whether email is registered
-            if (user == null || user.IsEmailVerified)
-                return Ok(new ApiResponse<object>(new { message = "If your email is registered and unverified, a new code has been sent." }));
-
-            var (success, error) = await _otpService.ResendOtpAsync(user);
+            var (success, error) = await _otpService.ResendOtpAsync(request.Email, request.TenantSlug);
 
             if (!success)
                 return StatusCode(429, new ApiResponse<object>(null, error));
 
-            return Ok(new ApiResponse<object>(new { message = "A new verification code has been sent to your email." }));
+            return Ok(new ApiResponse<object>(new
+            {
+                message = "If your email is pending verification, a new code has been sent."
+            }));
         }
 
         [Authorize]
@@ -195,21 +200,6 @@ namespace ClassNovaApi.Controllers
                 tenantSlug = User.FindFirstValue("tenant_slug"),
                 role       = User.FindFirstValue("role")
             }));
-        }
-
-        private async Task<User?> ResolveUserForTenant(string email, string tenantSlug)
-        {
-            var tenant = await _context.Tenants
-                .FirstOrDefaultAsync(t => t.Slug == tenantSlug.ToLower() && t.Status == "ACTIVE");
-            if (tenant == null) return null;
-
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-            if (user == null) return null;
-
-            var linked = await _context.TenantUserRoles
-                .AnyAsync(tur => tur.TenantId == tenant.Id && tur.UserId == user.Id);
-
-            return linked ? user : null;
         }
 
         private string GenerateToken(User user, Tenant tenant, string roleCode)

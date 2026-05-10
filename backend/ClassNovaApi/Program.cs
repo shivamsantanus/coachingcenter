@@ -54,11 +54,12 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddControllers();
 
-// Email: console logger in dev, SendGrid in production
-if (builder.Environment.IsDevelopment())
-    builder.Services.AddTransient<IEmailService, ConsoleEmailService>();
-else
+// Use SendGrid when an API key is configured; fall back to console logging otherwise
+var sendGridKey = builder.Configuration["SendGrid:ApiKey"];
+if (!string.IsNullOrWhiteSpace(sendGridKey))
     builder.Services.AddTransient<IEmailService, SendGridEmailService>();
+else
+    builder.Services.AddTransient<IEmailService, ConsoleEmailService>();
 
 builder.Services.AddTransient<OtpService>();
 
