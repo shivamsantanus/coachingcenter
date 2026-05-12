@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ClassNova — DB Relationship Arrows</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #fff;
+      padding: 24px;
+      color: #1a1a2e;
+    }
+
+    .page-title {
+      text-align: center;
+      margin-bottom: 6px;
+    }
+    .page-title h1 {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+    .page-title p {
+      font-size: 11px;
+      color: #777;
+      margin-top: 4px;
+    }
+
+    hr { border: none; border-top: 2px dashed #cbd5e1; margin: 16px 0; }
+
+    /* ── Legend ── */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 10px 16px;
+      margin-bottom: 18px;
+      font-size: 11px;
+    }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .l-box {
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 9.5px; font-weight: 700; border-radius: 4px;
+      padding: 2px 8px; white-space: nowrap;
+    }
+    .l-11  { background:#fef3c7; color:#92400e; border:1px solid #f59e0b; }
+    .l-1n  { background:#dbeafe; color:#1e40af; border:1px solid #3b82f6; }
+    .l-opt { background:#f3f4f6; color:#374151; border:1px solid #9ca3af; }
+
+    /* ── Mermaid wrapper ── */
+    .diagram-wrap {
+      background: #fff;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px;
+      overflow-x: auto;
+    }
+
+    .mermaid svg {
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* ── Relation Reference Table ── */
+    .ref-section {
+      margin-top: 24px;
+      page-break-before: always;
+    }
+    .ref-section h2 {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: #1a1a2e;
+    }
+    table.ref {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10.5px;
+    }
+    table.ref th {
+      background: #1a1a2e;
+      color: #fff;
+      padding: 5px 10px;
+      text-align: left;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+    }
+    table.ref td {
+      padding: 4px 10px;
+      border-bottom: 1px solid #e8ecf0;
+      vertical-align: middle;
+    }
+    table.ref tr:nth-child(even) td { background: #f7f9fc; }
+
+    .badge {
+      font-size: 9px; font-weight: 700; border-radius: 10px;
+      padding: 2px 7px; white-space: nowrap;
+    }
+    .b-11  { background:#fef3c7; color:#92400e; border:1px solid #f59e0b; }
+    .b-1n  { background:#dbeafe; color:#1e40af; border:1px solid #3b82f6; }
+    .b-opt { background:#f3f4f6; color:#374151; border:1px solid #9ca3af; }
+
+    .arrow-sym { color: #6366f1; font-weight: 700; font-size: 14px; }
+
+    /* ── Print ── */
+    @media print {
+      body { padding: 10px; }
+      .diagram-wrap { border: none; padding: 0; }
+      @page { size: A3 landscape; margin: 1.2cm; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-title">
+  <h1>ClassNova — Database Relationship Diagram</h1>
+  <p>19 entities &nbsp;|&nbsp; All relationships shown with arrows &nbsp;|&nbsp; Multi-tenant SaaS for coaching centres</p>
+</div>
+
+<hr />
+
+<div class="legend">
+  <div class="legend-item"><span class="l-box l-11">1 : 1</span> Exactly one parent → exactly one child (e.g. Tenant → TenantSettings)</div>
+  <div class="legend-item"><span class="l-box l-1n">1 : N</span> One parent → many children (e.g. Tenant → Branch)</div>
+  <div class="legend-item"><span class="l-box l-opt">OPT</span> Optional end — zero or one / zero or many (FK is nullable)</div>
+  <div class="legend-item">
+    <span style="font-size:11px">
+      <strong>||</strong> = exactly one &nbsp;&nbsp;
+      <strong>o|</strong> = zero or one &nbsp;&nbsp;
+      <strong>o{</strong> = zero or many &nbsp;&nbsp;
+      <strong>|{</strong> = one or many
+    </span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     MERMAID DIAGRAM
+═══════════════════════════════════════════════════════ -->
+<div class="diagram-wrap">
+<div class="mermaid">
+erDiagram
+
+    %% ── TENANT CORE ──────────────────────────────────────
+    TENANT {
+        uuid    id          PK  "T1"
+        string  name            "Sunrise Academy"
+        string  slug            "sunrise"
+        string  org_type        "COACHING_CENTRE"
+        string  status          "ACTIVE"
+        string  plan_code       "PRO"
+    }
+
+    TENANT_SETTINGS {
+        uuid    id          PK  "S1"
+        uuid    tenant_id   FK  "T1"
+        string  brand_name      "Sunrise Academy"
+        string  timezone        "Asia/Kolkata"
+        string  currency_code   "INR"
+        string  default_grading "PERCENTAGE"
+    }
+
+    TENANT_FEATURE {
+        uuid    id          PK  "F1"
+        uuid    tenant_id   FK  "T1"
+        string  feature_key     "FEES | EXAMS | ATTENDANCE"
+        bool    is_enabled      "true"
+    }
+
+    BRANCH {
+        uuid    id          PK  "B1"
+        uuid    tenant_id   FK  "T1"
+        string  name            "HQ Main Campus"
+        string  code            "HQ"
+        string  status          "ACTIVE"
+    }
+
+    USER {
+        uuid    id          PK  "U1"
+        string  full_name       "Ravi Sharma"
+        string  email           "ravi@sunrise.com"
+        bool    is_active       "true"
+        bool    is_email_verified "true"
+    }
+
+    ROLE {
+        uuid    id          PK  "RO1"
+        string  code            "ORG_ADMIN | TEACHER | STUDENT"
+        string  name            "Org Admin"
+    }
+
+    TENANT_USER_ROLE {
+        uuid    id          PK  "R1"
+        uuid    tenant_id   FK  "T1"
+        uuid    user_id     FK  "U1"
+        uuid    role_id     FK  "RO1"
+        uuid    branch_id   FK  "B1 (nullable)"
+        string  status          "ACTIVE | INVITED | DISABLED"
+    }
+
+    %% ── ACADEMIC ─────────────────────────────────────────
+    ACADEMIC_YEAR {
+        uuid    id          PK  "AY1"
+        uuid    tenant_id   FK  "T1"
+        string  name            "2025-2026"
+        date    start_date      "2025-04-01"
+        date    end_date        "2026-03-31"
+        bool    is_active       "true"
+    }
+
+    CLASS {
+        uuid    id          PK  "CL1"
+        uuid    tenant_id   FK  "T1"
+        uuid    academic_year_id FK "AY1"
+        uuid    branch_id   FK  "B1 (nullable)"
+        string  name            "Class 10"
+        int     sort_order      "10"
+        string  status          "ACTIVE"
+    }
+
+    BATCH {
+        uuid    id          PK  "BA1"
+        uuid    tenant_id   FK  "T1"
+        uuid    academic_year_id FK "AY1"
+        uuid    class_id    FK  "CL1 (nullable)"
+        string  name            "Section A"
+        string  status          "ACTIVE"
+    }
+
+    SUBJECT {
+        uuid    id          PK  "SUB1"
+        uuid    tenant_id   FK  "T1"
+        string  name            "Mathematics"
+        string  code            "MATH101"
+    }
+
+    %% ── PEOPLE ───────────────────────────────────────────
+    TEACHER {
+        uuid    id          PK  "TCH1"
+        uuid    tenant_id   FK  "T1"
+        uuid    user_id     FK  "U2 (nullable)"
+        uuid    branch_id   FK  "B1 (nullable)"
+        string  full_name       "Mr. Sharma"
+        string  employee_code   "TCH-001"
+        string  salary_type     "MONTHLY"
+        string  status          "ACTIVE"
+    }
+
+    STUDENT {
+        uuid    id          PK  "STU1"
+        uuid    tenant_id   FK  "T1"
+        uuid    user_id     FK  "U3 (nullable)"
+        uuid    branch_id   FK  "B1 (nullable)"
+        string  full_name       "Arjun Mehta"
+        string  admission_no    "SUN-2025-001"
+        string  status          "ACTIVE"
+    }
+
+    BATCH_SUBJECT_TEACHER {
+        uuid    id          PK  "BST1"
+        uuid    tenant_id   FK  "T1"
+        uuid    batch_id    FK  "BA1"
+        uuid    subject_id  FK  "SUB1"
+        uuid    teacher_id  FK  "TCH1"
+    }
+
+    CLASS_SCHEDULE {
+        uuid    id          PK  "CS1"
+        uuid    tenant_id   FK  "T1"
+        uuid    batch_id    FK  "BA1"
+        uuid    subject_id  FK  "SUB1"
+        uuid    teacher_id  FK  "TCH1"
+        short   day_of_week     "1 (Monday)"
+        time    start_time      "09:00"
+        time    end_time        "10:00"
+        string  room_no         "Room 4"
+    }
+
+    STUDENT_ENROLLMENT {
+        uuid    id          PK  "SE1"
+        uuid    tenant_id   FK  "T1"
+        uuid    student_id  FK  "STU1"
+        uuid    class_id    FK  "CL1 (nullable)"
+        uuid    batch_id    FK  "BA1 (nullable)"
+        date    enrolled_on     "2025-04-05"
+        bool    is_active       "true"
+    }
+
+    %% ── FEES ─────────────────────────────────────────────
+    FEE_PLAN {
+        uuid    id          PK  "FP1"
+        uuid    tenant_id   FK  "T1"
+        uuid    batch_id    FK  "BA1 (nullable)"
+        string  name            "Monthly Tuition"
+        string  category        "TUITION"
+        decimal amount          "3500.00"
+        string  frequency       "MONTHLY"
+        short   due_day         "5"
+        bool    is_active       "true"
+    }
+
+    PAYMENT {
+        uuid    id          PK  "PAY1"
+        uuid    tenant_id   FK  "T1"
+        uuid    student_id  FK  "STU1"
+        uuid    fee_plan_id FK  "FP1"
+        decimal amount_paid     "3500.00"
+        date    payment_date    "2025-05-05"
+        string  payment_method  "UPI"
+        string  reference_no    "UPI20250505XYZ"
+    }
+
+    %% ── EXAMS ────────────────────────────────────────────
+    EXAM {
+        uuid    id          PK  "EX1"
+        uuid    tenant_id   FK  "T1"
+        uuid    academic_year_id FK "AY1"
+        uuid    batch_id    FK  "BA1"
+        string  name            "Mid Term Exam"
+        string  exam_type       "MID_TERM"
+        date    exam_date       "2025-09-15"
+        string  status          "PUBLISHED"
+    }
+
+    EXAM_SUBJECT {
+        uuid    id          PK  "ES1"
+        uuid    tenant_id   FK  "T1"
+        uuid    exam_id     FK  "EX1"
+        uuid    subject_id  FK  "SUB1"
+        int     max_marks       "100"
+    }
+
+    MARK {
+        uuid    id          PK  "MK1"
+        uuid    tenant_id   FK  "T1"
+        uuid    exam_subject_id FK "ES1"
+        uuid    student_id  FK  "STU1"
+        decimal marks_obtained  "87.50"
+        string  remarks         "Well done"
+    }
+
+    %% ── SYSTEM ───────────────────────────────────────────
+    AUDIT_LOG {
+        uuid    id          PK  "AL1"
+        uuid    tenant_id   FK  "T1 (nullable)"
+        uuid    user_id     FK  "U1 (nullable)"
+        string  entity_name     "Student"
+        string  action          "CREATE"
+        string  metadata_json   "{...}"
+        datetime created_at     "2025-04-05 10:30"
+    }
+
+    EMAIL_VERIFICATION {
+        uuid    id          PK  "EV1"
+        uuid    user_id     FK  "U1"
+        string  otp_hash        "sha256..."
+        string  otp_salt        "base64..."
+        datetime expires_at     "2025-05-10 10:45"
+        int     attempt_count   "1"
+        int     send_count      "1"
+    }
+
+    PENDING_REGISTRATION {
+        uuid    id          PK  "PR1"
+        uuid    tenant_id   FK  "T1"
+        uuid    role_id     FK  "RO3"
+        string  full_name       "Neha Gupta"
+        string  email           "neha@sunrise.com"
+        string  otp_hash        "sha256..."
+        datetime expires_at     "2025-05-10 10:45"
+    }
+
+    %% ════════════════════════════════════════════════════
+    %% RELATIONSHIPS  (parent ||--cardinality child : "label")
+    %% ════════════════════════════════════════════════════
+
+    %% Tenant → core config
+    TENANT         ||--o|   TENANT_SETTINGS        : "1:1  has settings"
+    TENANT         ||--o{   TENANT_FEATURE          : "1:N  has features"
+    TENANT         ||--o{   BRANCH                  : "1:N  has branches"
+
+    %% Identity / RBAC
+    TENANT         ||--o{   TENANT_USER_ROLE        : "1:N  has memberships"
+    USER           ||--o{   TENANT_USER_ROLE        : "1:N  joins tenant"
+    ROLE           ||--o{   TENANT_USER_ROLE        : "1:N  defines role"
+    BRANCH         |o--o{   TENANT_USER_ROLE        : "OPT  scopes to branch"
+
+    %% Academic structure
+    TENANT         ||--o{   ACADEMIC_YEAR           : "1:N  has years"
+    ACADEMIC_YEAR  ||--o{   CLASS                   : "1:N  has classes"
+    ACADEMIC_YEAR  ||--o{   BATCH                   : "1:N  has batches"
+    CLASS          |o--o{   BATCH                   : "OPT  contains batches"
+    TENANT         ||--o{   SUBJECT                 : "1:N  has subjects"
+
+    %% People
+    TENANT         ||--o{   TEACHER                 : "1:N  has teachers"
+    USER           |o--o|   TEACHER                 : "OPT  login account"
+    TENANT         ||--o{   STUDENT                 : "1:N  has students"
+    USER           |o--o|   STUDENT                 : "OPT  login account"
+
+    %% Teaching assignment
+    BATCH          ||--o{   BATCH_SUBJECT_TEACHER   : "1:N  teaches"
+    SUBJECT        ||--o{   BATCH_SUBJECT_TEACHER   : "1:N  assigned to batch"
+    TEACHER        ||--o{   BATCH_SUBJECT_TEACHER   : "1:N  assigned subject"
+
+    %% Timetable
+    BATCH          ||--o{   CLASS_SCHEDULE          : "1:N  timetable"
+    SUBJECT        ||--o{   CLASS_SCHEDULE          : "1:N  slot subject"
+    TEACHER        ||--o{   CLASS_SCHEDULE          : "1:N  slot teacher"
+
+    %% Enrollment
+    STUDENT        ||--o{   STUDENT_ENROLLMENT      : "1:N  enrolled in"
+    CLASS          |o--o{   STUDENT_ENROLLMENT      : "OPT  enrolled class"
+    BATCH          |o--o{   STUDENT_ENROLLMENT      : "OPT  enrolled batch"
+
+    %% Fees
+    TENANT         ||--o{   FEE_PLAN                : "1:N  has fee plans"
+    BATCH          |o--o{   FEE_PLAN                : "OPT  batch plan"
+    STUDENT        ||--o{   PAYMENT                 : "1:N  makes payment"
+    FEE_PLAN       ||--o{   PAYMENT                 : "1:N  paid against"
+
+    %% Exams
+    ACADEMIC_YEAR  ||--o{   EXAM                    : "1:N  has exams"
+    BATCH          ||--o{   EXAM                    : "1:N  exam for batch"
+    EXAM           ||--o{   EXAM_SUBJECT            : "1:N  has subjects"
+    SUBJECT        ||--o{   EXAM_SUBJECT            : "1:N  in exam"
+    EXAM_SUBJECT   ||--o{   MARK                    : "1:N  has marks"
+    STUDENT        ||--o{   MARK                    : "1:N  scored"
+
+    %% System / Audit
+    TENANT         |o--o{   AUDIT_LOG               : "OPT  activity log"
+    USER           |o--o{   AUDIT_LOG               : "OPT  user actions"
+    USER           ||--o{   EMAIL_VERIFICATION      : "1:N  OTP record"
+    TENANT         ||--o{   PENDING_REGISTRATION    : "1:N  pending signup"
+    ROLE           ||--o{   PENDING_REGISTRATION    : "1:N  assigned role"
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     RELATIONSHIP REFERENCE TABLE
+═══════════════════════════════════════════════════════ -->
+<div class="ref-section">
+  <h2>Relationship Reference — All 36 Links</h2>
+  <table class="ref">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>From</th>
+        <th></th>
+        <th>To</th>
+        <th>Type</th>
+        <th>FK Column on Child</th>
+        <th>Plain English</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>TENANT</td><td class="arrow-sym">→</td><td>TENANT_SETTINGS</td><td><span class="badge b-11">1 : 1</span></td><td>tenant_settings.tenant_id</td><td>One org has one settings profile</td></tr>
+      <tr><td>2</td><td>TENANT</td><td class="arrow-sym">→</td><td>TENANT_FEATURE</td><td><span class="badge b-1n">1 : N</span></td><td>tenant_features.tenant_id</td><td>One org has many feature flags</td></tr>
+      <tr><td>3</td><td>TENANT</td><td class="arrow-sym">→</td><td>BRANCH</td><td><span class="badge b-1n">1 : N</span></td><td>branches.tenant_id</td><td>One org has many campuses</td></tr>
+      <tr><td>4</td><td>TENANT</td><td class="arrow-sym">→</td><td>TENANT_USER_ROLE</td><td><span class="badge b-1n">1 : N</span></td><td>tenant_user_roles.tenant_id</td><td>One org has many user memberships</td></tr>
+      <tr><td>5</td><td>USER</td><td class="arrow-sym">→</td><td>TENANT_USER_ROLE</td><td><span class="badge b-1n">1 : N</span></td><td>tenant_user_roles.user_id</td><td>One user can join many orgs</td></tr>
+      <tr><td>6</td><td>ROLE</td><td class="arrow-sym">→</td><td>TENANT_USER_ROLE</td><td><span class="badge b-1n">1 : N</span></td><td>tenant_user_roles.role_id</td><td>A role can be assigned to many users</td></tr>
+      <tr><td>7</td><td>BRANCH</td><td class="arrow-sym">→</td><td>TENANT_USER_ROLE</td><td><span class="badge b-opt">OPT</span></td><td>tenant_user_roles.branch_id</td><td>Optionally scopes a user to one branch</td></tr>
+      <tr><td>8</td><td>TENANT</td><td class="arrow-sym">→</td><td>ACADEMIC_YEAR</td><td><span class="badge b-1n">1 : N</span></td><td>academic_years.tenant_id</td><td>One org spans multiple academic years</td></tr>
+      <tr><td>9</td><td>ACADEMIC_YEAR</td><td class="arrow-sym">→</td><td>CLASS</td><td><span class="badge b-1n">1 : N</span></td><td>classes.academic_year_id</td><td>Classes are defined per academic year</td></tr>
+      <tr><td>10</td><td>ACADEMIC_YEAR</td><td class="arrow-sym">→</td><td>BATCH</td><td><span class="badge b-1n">1 : N</span></td><td>batches.academic_year_id</td><td>Batches are defined per academic year</td></tr>
+      <tr><td>11</td><td>CLASS</td><td class="arrow-sym">→</td><td>BATCH</td><td><span class="badge b-opt">OPT</span></td><td>batches.class_id</td><td>Batch may belong to a class (nullable — coaching centres skip this)</td></tr>
+      <tr><td>12</td><td>TENANT</td><td class="arrow-sym">→</td><td>SUBJECT</td><td><span class="badge b-1n">1 : N</span></td><td>subjects.tenant_id</td><td>Subjects are not year-scoped; they persist across years</td></tr>
+      <tr><td>13</td><td>TENANT</td><td class="arrow-sym">→</td><td>TEACHER</td><td><span class="badge b-1n">1 : N</span></td><td>teachers.tenant_id</td><td>One org has many teachers</td></tr>
+      <tr><td>14</td><td>USER</td><td class="arrow-sym">→</td><td>TEACHER</td><td><span class="badge b-opt">OPT</span></td><td>teachers.user_id</td><td>Teacher may have a login account (created later)</td></tr>
+      <tr><td>15</td><td>TENANT</td><td class="arrow-sym">→</td><td>STUDENT</td><td><span class="badge b-1n">1 : N</span></td><td>students.tenant_id</td><td>One org has many students</td></tr>
+      <tr><td>16</td><td>USER</td><td class="arrow-sym">→</td><td>STUDENT</td><td><span class="badge b-opt">OPT</span></td><td>students.user_id</td><td>Student may have a login account (created later)</td></tr>
+      <tr><td>17</td><td>BATCH</td><td class="arrow-sym">→</td><td>BATCH_SUBJECT_TEACHER</td><td><span class="badge b-1n">1 : N</span></td><td>batch_subject_teachers.batch_id</td><td>A batch has many subject-teacher assignments</td></tr>
+      <tr><td>18</td><td>SUBJECT</td><td class="arrow-sym">→</td><td>BATCH_SUBJECT_TEACHER</td><td><span class="badge b-1n">1 : N</span></td><td>batch_subject_teachers.subject_id</td><td>A subject can be assigned to many batches</td></tr>
+      <tr><td>19</td><td>TEACHER</td><td class="arrow-sym">→</td><td>BATCH_SUBJECT_TEACHER</td><td><span class="badge b-1n">1 : N</span></td><td>batch_subject_teachers.teacher_id</td><td>A teacher can teach many subjects across batches</td></tr>
+      <tr><td>20</td><td>BATCH</td><td class="arrow-sym">→</td><td>CLASS_SCHEDULE</td><td><span class="badge b-1n">1 : N</span></td><td>class_schedules.batch_id</td><td>A batch has many timetable slots</td></tr>
+      <tr><td>21</td><td>SUBJECT</td><td class="arrow-sym">→</td><td>CLASS_SCHEDULE</td><td><span class="badge b-1n">1 : N</span></td><td>class_schedules.subject_id</td><td>A subject appears in many timetable slots</td></tr>
+      <tr><td>22</td><td>TEACHER</td><td class="arrow-sym">→</td><td>CLASS_SCHEDULE</td><td><span class="badge b-1n">1 : N</span></td><td>class_schedules.teacher_id</td><td>A teacher has many scheduled sessions</td></tr>
+      <tr><td>23</td><td>STUDENT</td><td class="arrow-sym">→</td><td>STUDENT_ENROLLMENT</td><td><span class="badge b-1n">1 : N</span></td><td>student_enrollments.student_id</td><td>A student can be re-enrolled each year</td></tr>
+      <tr><td>24</td><td>CLASS</td><td class="arrow-sym">→</td><td>STUDENT_ENROLLMENT</td><td><span class="badge b-opt">OPT</span></td><td>student_enrollments.class_id</td><td>Enrollment may specify a class</td></tr>
+      <tr><td>25</td><td>BATCH</td><td class="arrow-sym">→</td><td>STUDENT_ENROLLMENT</td><td><span class="badge b-opt">OPT</span></td><td>student_enrollments.batch_id</td><td>Enrollment may specify a batch</td></tr>
+      <tr><td>26</td><td>TENANT</td><td class="arrow-sym">→</td><td>FEE_PLAN</td><td><span class="badge b-1n">1 : N</span></td><td>fee_plans.tenant_id</td><td>An org can have many fee plans</td></tr>
+      <tr><td>27</td><td>BATCH</td><td class="arrow-sym">→</td><td>FEE_PLAN</td><td><span class="badge b-opt">OPT</span></td><td>fee_plans.batch_id</td><td>Fee plan can be restricted to one batch</td></tr>
+      <tr><td>28</td><td>STUDENT</td><td class="arrow-sym">→</td><td>PAYMENT</td><td><span class="badge b-1n">1 : N</span></td><td>payments.student_id</td><td>A student makes many payments over time</td></tr>
+      <tr><td>29</td><td>FEE_PLAN</td><td class="arrow-sym">→</td><td>PAYMENT</td><td><span class="badge b-1n">1 : N</span></td><td>payments.fee_plan_id</td><td>Many payments are made against one plan</td></tr>
+      <tr><td>30</td><td>ACADEMIC_YEAR</td><td class="arrow-sym">→</td><td>EXAM</td><td><span class="badge b-1n">1 : N</span></td><td>exams.academic_year_id</td><td>Exams are scoped to an academic year</td></tr>
+      <tr><td>31</td><td>BATCH</td><td class="arrow-sym">→</td><td>EXAM</td><td><span class="badge b-1n">1 : N</span></td><td>exams.batch_id</td><td>Each exam is conducted for a specific batch</td></tr>
+      <tr><td>32</td><td>EXAM</td><td class="arrow-sym">→</td><td>EXAM_SUBJECT</td><td><span class="badge b-1n">1 : N</span></td><td>exam_subjects.exam_id</td><td>One exam covers many subjects</td></tr>
+      <tr><td>33</td><td>SUBJECT</td><td class="arrow-sym">→</td><td>EXAM_SUBJECT</td><td><span class="badge b-1n">1 : N</span></td><td>exam_subjects.subject_id</td><td>A subject appears in many exams</td></tr>
+      <tr><td>34</td><td>EXAM_SUBJECT</td><td class="arrow-sym">→</td><td>MARK</td><td><span class="badge b-1n">1 : N</span></td><td>marks.exam_subject_id</td><td>Each exam subject has one mark per student</td></tr>
+      <tr><td>35</td><td>STUDENT</td><td class="arrow-sym">→</td><td>MARK</td><td><span class="badge b-1n">1 : N</span></td><td>marks.student_id</td><td>A student has marks across many exams</td></tr>
+      <tr><td>36</td><td>USER</td><td class="arrow-sym">→</td><td>EMAIL_VERIFICATION</td><td><span class="badge b-1n">1 : N</span></td><td>email_verifications.user_id</td><td>OTP records for email confirmation</td></tr>
+      <tr><td>37</td><td>TENANT</td><td class="arrow-sym">→</td><td>PENDING_REGISTRATION</td><td><span class="badge b-1n">1 : N</span></td><td>pending_registrations.tenant_id</td><td>Temporary row until signup OTP verified</td></tr>
+      <tr><td>38</td><td>ROLE</td><td class="arrow-sym">→</td><td>PENDING_REGISTRATION</td><td><span class="badge b-1n">1 : N</span></td><td>pending_registrations.role_id</td><td>Role pre-assigned at invite time</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<hr style="margin-top:20px" />
+<p style="text-align:center;font-size:10px;color:#aaa;margin-top:8px;">
+  ClassNova Database &nbsp;|&nbsp; 19 entities &nbsp;·&nbsp; 38 relationships &nbsp;|&nbsp; Generated 2026-05-12
+</p>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      primaryColor:        '#dbeafe',
+      primaryTextColor:    '#1e3a5f',
+      primaryBorderColor:  '#3b82f6',
+      lineColor:           '#6366f1',
+      edgeLabelBackground: '#f0f4ff',
+      fontSize:            '12px'
+    },
+    er: {
+      diagramPadding:  30,
+      layoutDirection: 'TB',
+      minEntityWidth:  100,
+      minEntityHeight: 37,
+      entityPadding:   15,
+      useMaxWidth:     true
+    }
+  });
+</script>
+
+</body>
+</html>

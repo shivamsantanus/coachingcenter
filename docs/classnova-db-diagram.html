@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ClassNova — Database Schema Diagram</title>
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 11px;
+      color: #1a1a2e;
+      background: #fff;
+      padding: 20px;
+    }
+
+    /* ── Page Title ───────────────────────────────────────────── */
+    .page-title {
+      text-align: center;
+      margin-bottom: 6px;
+    }
+    .page-title h1 {
+      font-size: 22px;
+      font-weight: 800;
+      color: #1a1a2e;
+      letter-spacing: 1px;
+    }
+    .page-title p {
+      font-size: 11px;
+      color: #666;
+      margin-top: 3px;
+    }
+
+    /* ── Section Headers ──────────────────────────────────────── */
+    .section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #fff;
+      padding: 4px 12px;
+      border-radius: 4px;
+      margin: 18px 0 10px 0;
+      display: inline-block;
+    }
+
+    /* ── Layer colors ─────────────────────────────────────────── */
+    .layer-1  { background: #1a1a2e; }
+    .layer-2  { background: #16213e; }
+    .layer-3  { background: #0f3460; }
+    .layer-4  { background: #533483; }
+    .layer-5  { background: #1b4332; }
+    .layer-6  { background: #7b2d00; }
+    .layer-7  { background: #4a4e69; }
+
+    /* ── Entity Card ──────────────────────────────────────────── */
+    .entity {
+      border: 1.5px solid #333;
+      border-radius: 6px;
+      overflow: hidden;
+      display: inline-block;
+      vertical-align: top;
+      min-width: 200px;
+      max-width: 240px;
+      margin: 5px;
+      page-break-inside: avoid;
+    }
+
+    .entity-header {
+      padding: 6px 10px;
+      font-weight: 800;
+      font-size: 11.5px;
+      letter-spacing: 0.5px;
+      color: #fff;
+      text-transform: uppercase;
+    }
+
+    /* Header colors per layer */
+    .hdr-tenant      { background: #1a1a2e; }
+    .hdr-settings    { background: #2d4a7a; }
+    .hdr-feature     { background: #2d4a7a; }
+    .hdr-branch      { background: #2d4a7a; }
+    .hdr-user        { background: #2d4a7a; }
+    .hdr-role        { background: #2d4a7a; }
+    .hdr-tur         { background: #2d4a7a; }
+    .hdr-academic    { background: #0f3460; }
+    .hdr-class       { background: #0f3460; }
+    .hdr-batch       { background: #0f3460; }
+    .hdr-subject     { background: #0f3460; }
+    .hdr-bst         { background: #0f3460; }
+    .hdr-schedule    { background: #0f3460; }
+    .hdr-student     { background: #533483; }
+    .hdr-teacher     { background: #533483; }
+    .hdr-enrollment  { background: #533483; }
+    .hdr-feeplan     { background: #1b4332; }
+    .hdr-payment     { background: #1b4332; }
+    .hdr-exam        { background: #7b2d00; }
+    .hdr-examsubject { background: #7b2d00; }
+    .hdr-mark        { background: #7b2d00; }
+    .hdr-audit       { background: #4a4e69; }
+    .hdr-emailver    { background: #4a4e69; }
+    .hdr-pendingreg  { background: #4a4e69; }
+
+    .entity-body {
+      background: #fff;
+    }
+
+    .entity-body table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .entity-body tr:nth-child(even) { background: #f7f9fc; }
+
+    .entity-body td {
+      padding: 3px 8px;
+      border-bottom: 1px solid #e8ecf0;
+      vertical-align: top;
+      line-height: 1.4;
+    }
+
+    .field-name {
+      font-weight: 600;
+      color: #1a1a2e;
+      white-space: nowrap;
+      width: 48%;
+    }
+    .field-name.pk  { color: #c0392b; }
+    .field-name.fk  { color: #2980b9; }
+    .field-name.opt { color: #7f8c8d; }
+
+    .field-value {
+      color: #444;
+      font-style: italic;
+      font-size: 10.5px;
+    }
+
+    .field-tag {
+      font-size: 8.5px;
+      font-weight: 700;
+      border-radius: 3px;
+      padding: 1px 4px;
+      margin-left: 3px;
+      vertical-align: middle;
+    }
+    .tag-pk  { background: #fde8e8; color: #c0392b; border: 1px solid #c0392b; }
+    .tag-fk  { background: #dbeafe; color: #1d4ed8; border: 1px solid #1d4ed8; }
+    .tag-opt { background: #f3f4f6; color: #6b7280; border: 1px solid #9ca3af; }
+
+    /* ── Grid Layouts ─────────────────────────────────────────── */
+    .grid {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+
+    /* ── Relationship Lines ───────────────────────────────────── */
+    .rel-block {
+      background: #f0f4ff;
+      border: 1px solid #c7d2fe;
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin: 14px 0 8px 0;
+      page-break-inside: avoid;
+    }
+    .rel-block h3 {
+      font-size: 11px;
+      font-weight: 700;
+      color: #3730a3;
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .rel-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .rel-table th {
+      background: #e0e7ff;
+      color: #1e1b4b;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 4px 8px;
+      text-align: left;
+      border: 1px solid #c7d2fe;
+    }
+    .rel-table td {
+      padding: 4px 8px;
+      border: 1px solid #e0e7ff;
+      font-size: 10.5px;
+      vertical-align: middle;
+    }
+    .rel-table tr:nth-child(even) td { background: #f5f3ff; }
+
+    .arrow { color: #6366f1; font-weight: 700; font-size: 13px; }
+    .rel-type {
+      font-size: 9px;
+      font-weight: 700;
+      border-radius: 10px;
+      padding: 2px 7px;
+      white-space: nowrap;
+    }
+    .one-one  { background: #fef3c7; color: #92400e; border: 1px solid #f59e0b; }
+    .one-many { background: #dbeafe; color: #1e40af; border: 1px solid #3b82f6; }
+    .many-one { background: #fce7f3; color: #9d174d; border: 1px solid #ec4899; }
+    .opt-rel  { background: #f3f4f6; color: #374151; border: 1px solid #9ca3af; }
+
+    /* ── Divider ──────────────────────────────────────────────── */
+    .divider {
+      border: none;
+      border-top: 2px dashed #cbd5e1;
+      margin: 16px 0;
+    }
+
+    /* ── Legend ───────────────────────────────────────────────── */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+    }
+    .legend-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    /* ── Print ────────────────────────────────────────────────── */
+    @media print {
+      body { padding: 10px; font-size: 10px; }
+      .page-break { page-break-before: always; }
+      .no-break { page-break-inside: avoid; }
+      @page { margin: 1cm; size: A3 landscape; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════
+     PAGE TITLE
+══════════════════════════════════════════════════════════════ -->
+<div class="page-title">
+  <h1>ClassNova — Complete Database Schema</h1>
+  <p>Multi-tenant SaaS platform for coaching centres &nbsp;|&nbsp; All entities, properties &amp; relationships with sample data</p>
+</div>
+
+<hr class="divider" />
+
+<!-- ── LEGEND ──────────────────────────────────────────────────── -->
+<div class="legend">
+  <div class="legend-item"><span class="legend-dot" style="background:#c0392b"></span> <strong>PK</strong> — Primary Key</div>
+  <div class="legend-item"><span class="legend-dot" style="background:#1d4ed8"></span> <strong>FK</strong> — Foreign Key</div>
+  <div class="legend-item"><span class="legend-dot" style="background:#9ca3af"></span> <strong>OPT</strong> — Optional / Nullable</div>
+  <div class="legend-item"><span class="one-one rel-type">1 : 1</span> — One to One</div>
+  <div class="legend-item"><span class="one-many rel-type">1 : N</span> — One to Many</div>
+  <div class="legend-item"><span class="many-one rel-type">N : 1</span> — Many to One</div>
+  <div class="legend-item"><span class="opt-rel rel-type">OPT</span> — Optional relationship</div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     LAYER 1 — TENANT & IDENTITY
+══════════════════════════════════════════════════════════════ -->
+<span class="section-label layer-1">Layer 1 — Tenant &amp; Identity</span>
+
+<div class="grid">
+
+  <!-- TENANT -->
+  <div class="entity">
+    <div class="entity-header hdr-tenant">Tenant</div>
+    <div class="entity-body"><table>
+      <tr><td class="field-name pk">id <span class="field-tag tag-pk">PK</span></td><td class="field-value">T1</td></tr>
+      <tr><td class="field-name">name</td><td class="field-value">Sunrise Academy</td></tr>
+      <tr><td class="field-name">slug</td><td class="field-value">sunrise</td></tr>
+      <tr><td class="field-name">org_type</td><td class="field-value">COACHING_CENTRE</td></tr>
+      <tr><td class="field-name">status</td><td class="field-value">ACTIVE</td></tr>
+      <tr><td class="field-name">primary_contact</td><td class="field-value">Ravi Sharma</td></tr>
+      <tr><td class="field-name">contact_email</td><td class="field-value">ravi@sunrise.com</td></tr>
+      <tr><td class="field-name">contact_phone</td><td class="field-value">9876543210</td></tr>
+      <tr><td class="field-name opt">plan_code <span class="field-tag tag-opt">OPT</span></td><td class="field-value">PRO</td></tr>
+      <tr><td class="field-name">created_at</td><td class="field-value">2024-01-15</td></tr>
+      <tr><td class="field-name">updated_at</td><td class="field-value">2025-04-01</td></tr>
+    </table></div>
+  </div>
+
+  <!-- TENANT SETTINGS -->
+  <div class="entity">
+    <div class="entity-header hdr-settings">Tenant Settings</div>
+    <div class="entity-body"><table>
+      <tr><td class="field-name pk">id <span class="field-tag tag-pk">PK</span></td><td class="field-value">S1</td></tr>
+      <tr><td class="field-name fk">tenant_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">T1</td></tr>
+      <tr><td class="field-name">brand_name</td><td class="field-value">Sunrise Academy</td></tr>
+      <tr><td class="field-name opt">logo_url <span class="field-tag tag-opt">OPT</span></td><td class="field-value">/logos/sunrise.png</td></tr>
+      <tr><td class="field-name opt">primary_color <span class="field-tag tag-opt">OPT</span></td><td class="field-value">#FF6B00</td></tr>
+      <tr><td class="field-name">timezone</td><td class="field-value">Asia/Kolkata</td></tr>
+      <tr><td class="field-name">currency_code</td><td class="field-value">INR</td></tr>
+      <tr><td class="field-name opt">acad_label_class <span class="field-tag tag-opt">OPT</span></td><td class="field-value">Class</td></tr>
+      <tr><td class="field-name opt">acad_label_batch <span class="field-tag tag-opt">OPT</span></td><td class="field-value">Batch</td></tr>
+      <tr><td class="field-name opt">acad_label_section <span class="field-tag tag-opt">OPT</span></td><td class="field-value">Section</td></tr>
+      <tr><td class="field-name opt">default_attendance <span class="field-tag tag-opt">OPT</span></td><td class="field-value">DAILY</td></tr>
+      <tr><td class="field-name opt">default_grading <span class="field-tag tag-opt">OPT</span></td><td class="field-value">PERCENTAGE</td></tr>
+    </table></div>
+  </div>
+
+  <!-- TENANT FEATURE -->
+  <div class="entity">
+    <div class="entity-header hdr-feature">Tenant Feature</div>
+    <div class="entity-body"><table>
+      <tr><td class="field-name pk">id <span class="field-tag tag-pk">PK</span></td><td class="field-value">F1</td></tr>
+      <tr><td class="field-name fk">tenant_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">T1</td></tr>
+      <tr><td class="field-name">feature_key</td><td class="field-value">FEES</td></tr>
+      <tr><td class="field-name">is_enabled</td><td class="field-value">true</td></tr>
+      <tr><td colspan="2" style="padding:2px 8px;background:#f0f4ff;font-size:10px;color:#555">— row 2 —</td></tr>
+      <tr><td class="field-name pk">id</td><td class="field-value">F2</td></tr>
+      <tr><td class="field-name fk">tenant_id</td><td class="field-value">T1</td></tr>
+      <tr><td class="field-name">feature_key</td><td class="field-value">EXAMS</td></tr>
+      <tr><td class="field-name">is_enabled</td><td class="field-value">true</td></tr>
+      <tr><td colspan="2" style="padding:2px 8px;background:#f0f4ff;font-size:10px;color:#555">— row 3 —</td></tr>
+      <tr><td class="field-name pk">id</td><td class="field-value">F3</td></tr>
+      <tr><td class="field-name fk">tenant_id</td><td class="field-value">T1</td></tr>
+      <tr><td class="field-name">feature_key</td><td class="field-value">ATTENDANCE</td></tr>
+      <tr><td class="field-name">is_enabled</td><td class="field-value">false</td></tr>
+    </table></div>
+  </div>
+
+  <!-- BRANCH -->
+  <div class="entity">
+    <div class="entity-header hdr-branch">Branch</div>
+    <div class="entity-body"><table>
+      <tr><td class="field-name pk">id <span class="field-tag tag-pk">PK</span></td><td class="field-value">B1</td></tr>
+      <tr><td class="field-name fk">tenant_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">T1</td></tr>
+      <tr><td class="field-name">name</td><td class="field-value">HQ Main Campus</td></tr>
+      <tr><td class="field-name opt">code <span class="field-tag tag-opt">OPT</span></td><td class="field-value">HQ</td></tr>
+      <tr><td class="field-name opt">address <span class="field-tag tag-opt">OPT</span></td><td class="field-value">12 MG Road</td></tr>
+      <tr><td class="field-name opt">phone <span class="field-tag tag-opt">OPT</span></td><td class="field-value">9000000001</td></tr>
+      <tr><td class="field-name">status</td><td class="field-value">ACTIVE</td></tr>
+      <tr><td class="field-name">created_at</td><td class="field-value">2024-01-15</td></tr>
+      <tr><td class="field-name">updated_at</td><td class="field-value">2024-01-15</td></tr>
+    </table></div>
+  </div>
+
+  <!-- USER -->
+  <div class="entity">
+    <div class="entity-header hdr-user">User</div>
+    <div class="entity-body"><table>
+      <tr><td class="field-name pk">id <span class="field-tag tag-pk">PK</span></td><td class="field-value">U1</td></tr>
+      <tr><td class="field-name">full_name</td><td class="field-value">Ravi Sharma</td></tr>
+      <tr><td class="field-name opt">email <span class="field-tag tag-opt">OPT</span></td><td class="field-value">ravi@sunrise.com</td></tr>
+      <tr><td class="field-name opt">phone <span class="field-tag tag-opt">OPT</span></td><td class="field-value">9876543210</td></tr>
+      <tr><td class="field-name">password_hash</td><td class="field-value">$2b$10$abc…</td></tr>
+      <tr><td class="field-name">is_active</td><td class="field-value">true</td></tr>
+      <tr><td class="field-name">is_email_verified</td><td class="field-value">true</td></tr>
+      <tr><td class="field-name opt">last_login_at <span class="field-tag tag-opt">OPT</span></td><td class="field-value">2025-05-10 08:30</td></tr>
+      <tr><td class="field-name">created_at</td><td class="field-value">2024-01-15</td></tr>
+      <tr><td class="field-name">updated_at</td><td class="field-value">2025-05-10</td></tr>
+    </table></div>
+  </div>
+
+  <!-- ROLE -->
+  <div class="entity">
+    <div class="entity-header hdr-role">Role</div>
+    <div class="entity-body"><table>
+      <tr><td class="field-name pk">id <span class="field-tag tag-pk">PK</span></td><td class="field-value">RO1</td></tr>
+      <tr><td class="field-name">code</td><td class="field-value">PLATFORM_ADMIN</td></tr>
+      <tr><td class="field-name">name</td><td class="field-value">Platform Admin</td></tr>
+      <tr><td colspan="2" style="padding:2px 8px;background:#f0f4ff;font-size:10px;color:#555">— row 2 —</td></tr>
+      <tr><td class="field-name pk">id</td><td class="field-value">RO2</td></tr>
+      <tr><td class="field-name">code</td><td class="field-value">ORG_ADMIN</td></tr>
+      <tr><td class="field-name">name</td><td class="field-value">Org Admin</td></tr>
+      <tr><td colspan="2" style="padding:2px 8px;background:#f0f4ff;font-size:10px;color:#555">— row 3 —</td></tr>
+      <tr><td class="field-name pk">id</td><td class="field-value">RO3</td></tr>
+      <tr><td class="field-name">code</td><td class="field-value">TEACHER</td></tr>
+      <tr><td class="field-name">name</td><td class="field-value">Teacher</td></tr>
+      <tr><td colspan="2" style="padding:2px 8px;background:#f0f4ff;font-size:10px;color:#555">— row 4 —</td></tr>
+      <tr><td class="field-name pk">id</td><td class="field-value">RO4</td></tr>
+      <tr><td class="field-name">code</td><td class="field-value">STUDENT</td></tr>
+      <tr><td class="field-name">name</td><td class="field-value">Student</td></tr>
+    </table></div>
+  </div>
+
+  <!-- TENANT USER ROLE -->
+  <div class="entity">
+    <div class="entity-header hdr-tur">Tenant User Role</div>
+    <div class="entity-body"><table>
+      <tr><td class="field-name pk">id <span class="field-tag tag-pk">PK</span></td><td class="field-value">R1</td></tr>
+      <tr><td class="field-name fk">tenant_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">T1</td></tr>
+      <tr><td class="field-name fk">user_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">U1</td></tr>
+      <tr><td class="field-name fk">role_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">RO2 (ORG_ADMIN)</td></tr>
+      <tr><td class="field-name opt fk">branch_id <span class="field-tag tag-opt">OPT</span></td><td class="field-value">NULL</td></tr>
+      <tr><td class="field-name">status</td><td class="field-value">ACTIVE</td></tr>
+      <tr><td colspan="2" style="padding:2px 8px;background:#f0f4ff;font-size:10px;color:#555">— row 2 —</td></tr>
+      <tr><td class="field-name pk">id</td><td class="field-value">R2</td></tr>
+      <tr><td class="field-name fk">tenant_id</td><td class="field-value">T1</td></tr>
+      <tr><td class="field-name fk">user_id</td><td class="field-value">U2</td></tr>
+      <tr><td class="field-name fk">role_id</td><td class="field-value">RO3 (TEACHER)</td></tr>
+      <tr><td class="field-name opt fk">branch_id</td><td class="field-value">B1 (HQ only)</td></tr>
+      <tr><td class="field-name">status</td><td class="field-value">ACTIVE</td></tr>
+    </table></div>
+  </div>
+
+</div><!-- /grid layer 1 -->
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     LAYER 2 — ACADEMIC STRUCTURE
+══════════════════════════════════════════════════════════════ -->
+<hr class="divider" />
+<span class="section-label layer-2">Layer 2 — Academic Structure</span>
+
+<div class="grid">
+
+  <!-- ACADEMIC YEAR -->
+  <div class="entity">
+    <div class="entity-header hdr-academic">Academic Year</div>
+    <div class="entity-body"><table>
+      <tr><td class="field-name pk">id <span class="field-tag tag-pk">PK</span></td><td class="field-value">AY1</td></tr>
+      <tr><td class="field-name fk">tenant_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">T1</td></tr>
+      <tr><td class="field-name">name</td><td class="field-value">2025-2026</td></tr>
+      <tr><td class="field-name">start_date</td><td class="field-value">2025-04-01</td></tr>
+      <tr><td class="field-name">end_date</td><td class="field-value">2026-03-31</td></tr>
+      <tr><td class="field-name">is_active</td><td class="field-value">true</td></tr>
+      <tr><td class="field-name">created_at</td><td class="field-value">2025-03-15</td></tr>
+      <tr><td class="field-name">updated_at</td><td class="field-value">2025-04-01</td></tr>
+    </table></div>
+  </div>
+
+  <!-- CLASS -->
+  <div class="entity">
+    <div class="entity-header hdr-class">Class</div>
+    <div class="entity-body"><table>
+      <tr><td class="field-name pk">id <span class="field-tag tag-pk">PK</span></td><td class="field-value">CL1</td></tr>
+      <tr><td class="field-name fk">tenant_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">T1</td></tr>
+      <tr><td class="field-name opt fk">branch_id <span class="field-tag tag-opt">OPT</span></td><td class="field-value">B1</td></tr>
+      <tr><td class="field-name fk">academic_year_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">AY1</td></tr>
+      <tr><td class="field-name">name</td><td class="field-value">Class 10</td></tr>
+      <tr><td class="field-name opt">sort_order <span class="field-tag tag-opt">OPT</span></td><td class="field-value">10</td></tr>
+      <tr><td class="field-name">status</td><td class="field-value">ACTIVE</td></tr>
+      <tr><td class="field-name">created_at</td><td class="field-value">2025-04-01</td></tr>
+      <tr><td class="field-name">updated_at</td><td class="field-value">2025-04-01</td></tr>
+    </table></div>
+  </div>
+
+  <!-- BATCH -->
+  <div class="entity">
+    <div class="entity-header hdr-batch">Batch</div>
+    <div class="entity-body"><table>
+      <tr><td class="field-name pk">id <span class="field-tag tag-pk">PK</span></td><td class="field-value">BA1</td></tr>
+      <tr><td class="field-name fk">tenant_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">T1</td></tr>
+      <tr><td class="field-name opt fk">branch_id <span class="field-tag tag-opt">OPT</span></td><td class="field-value">B1</td></tr>
+      <tr><td class="field-name fk">academic_year_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">AY1</td></tr>
+      <tr><td class="field-name opt fk">class_id <span class="field-tag tag-opt">OPT</span></td><td class="field-value">CL1</td></tr>
+      <tr><td class="field-name">name</td><td class="field-value">Section A</td></tr>
+      <tr><td class="field-name opt">start_date <span class="field-tag tag-opt">OPT</span></td><td class="field-value">2025-04-01</td></tr>
+      <tr><td class="field-name opt">end_date <span class="field-tag tag-opt">OPT</span></td><td class="field-value">2026-03-31</td></tr>
+      <tr><td class="field-name">status</td><td class="field-value">ACTIVE</td></tr>
+      <tr><td class="field-name">created_at</td><td class="field-value">2025-04-01</td></tr>
+      <tr><td class="field-name">updated_at</td><td class="field-value">2025-04-01</td></tr>
+    </table></div>
+  </div>
+
+  <!-- SUBJECT -->
+  <div class="entity">
+    <div class="entity-header hdr-subject">Subject</div>
+    <div class="entity-body"><table>
+      <tr><td class="field-name pk">id <span class="field-tag tag-pk">PK</span></td><td class="field-value">SUB1</td></tr>
+      <tr><td class="field-name fk">tenant_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">T1</td></tr>
+      <tr><td class="field-name">name</td><td class="field-value">Mathematics</td></tr>
+      <tr><td class="field-name opt">code <span class="field-tag tag-opt">OPT</span></td><td class="field-value">MATH101</td></tr>
+      <tr><td class="field-name">created_at</td><td class="field-value">2025-04-01</td></tr>
+      <tr><td class="field-name">updated_at</td><td class="field-value">2025-04-01</td></tr>
+      <tr><td colspan="2" style="padding:2px 8px;background:#f0f4ff;font-size:10px;color:#555">— row 2 —</td></tr>
+      <tr><td class="field-name pk">id</td><td class="field-value">SUB2</td></tr>
+      <tr><td class="field-name fk">tenant_id</td><td class="field-value">T1</td></tr>
+      <tr><td class="field-name">name</td><td class="field-value">Physics</td></tr>
+      <tr><td class="field-name opt">code</td><td class="field-value">PHY101</td></tr>
+    </table></div>
+  </div>
+
+  <!-- BATCH SUBJECT TEACHER -->
+  <div class="entity">
+    <div class="entity-header hdr-bst">Batch Subject Teacher</div>
+    <div class="entity-body"><table>
+      <tr><td class="field-name pk">id <span class="field-tag tag-pk">PK</span></td><td class="field-value">BST1</td></tr>
+      <tr><td class="field-name fk">tenant_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">T1</td></tr>
+      <tr><td class="field-name fk">batch_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">BA1 (Sec A)</td></tr>
+      <tr><td class="field-name fk">subject_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">SUB1 (Maths)</td></tr>
+      <tr><td class="field-name fk">teacher_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">TCH1 (Sharma)</td></tr>
+      <tr><td colspan="2" style="padding:2px 8px;background:#f0f4ff;font-size:10px;color:#555">— row 2 —</td></tr>
+      <tr><td class="field-name pk">id</td><td class="field-value">BST2</td></tr>
+      <tr><td class="field-name fk">batch_id</td><td class="field-value">BA1 (Sec A)</td></tr>
+      <tr><td class="field-name fk">subject_id</td><td class="field-value">SUB2 (Physics)</td></tr>
+      <tr><td class="field-name fk">teacher_id</td><td class="field-value">TCH2 (Priya)</td></tr>
+    </table></div>
+  </div>
+
+  <!-- CLASS SCHEDULE -->
+  <div class="entity">
+    <div class="entity-header hdr-schedule">Class Schedule</div>
+    <div class="entity-body"><table>
+      <tr><td class="field-name pk">id <span class="field-tag tag-pk">PK</span></td><td class="field-value">CS1</td></tr>
+      <tr><td class="field-name fk">tenant_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">T1</td></tr>
+      <tr><td class="field-name opt fk">branch_id <span class="field-tag tag-opt">OPT</span></td><td class="field-value">B1</td></tr>
+      <tr><td class="field-name fk">batch_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">BA1 (Sec A)</td></tr>
+      <tr><td class="field-name fk">subject_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">SUB1 (Maths)</td></tr>
+      <tr><td class="field-name fk">teacher_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">TCH1 (Sharma)</td></tr>
+      <tr><td class="field-name">day_of_week</td><td class="field-value">1 (Monday)</td></tr>
+      <tr><td class="field-name">start_time</td><td class="field-value">09:00</td></tr>
+      <tr><td class="field-name">end_time</td><td class="field-value">10:00</td></tr>
+      <tr><td class="field-name opt">room_no <span class="field-tag tag-opt">OPT</span></td><td class="field-value">Room 4</td></tr>
+    </table></div>
+  </div>
+
+</div><!-- /grid layer 2 -->
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     LAYER 3 — STUDENTS & TEACHERS
+══════════════════════════════════════════════════════════════ -->
+<hr class="divider" />
+<span class="section-label layer-4">Layer 3 — Students &amp; Teachers</span>
+
+<div class="grid">
+
+  <!-- TEACHER -->
+  <div class="entity">
+    <div class="entity-header hdr-teacher">Teacher</div>
+    <div class="entity-body"><table>
+      <tr><td class="field-name pk">id <span class="field-tag tag-pk">PK</span></td><td class="field-value">TCH1</td></tr>
+      <tr><td class="field-name fk">tenant_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">T1</td></tr>
+      <tr><td class="field-name opt fk">branch_id <span class="field-tag tag-opt">OPT</span></td><td class="field-value">B1</td></tr>
+      <tr><td class="field-name opt fk">user_id <span class="field-tag tag-opt">OPT</span></td><td class="field-value">U2</td></tr>
+      <tr><td class="field-name">full_name</td><td class="field-value">Mr. Sharma</td></tr>
+      <tr><td class="field-name">employee_code</td><td class="field-value">TCH-001</td></tr>
+      <tr><td class="field-name opt">qualification <span class="field-tag tag-opt">OPT</span></td><td class="field-value">M.Sc Physics</td></tr>
+      <tr><td class="field-name opt">salary_type <span class="field-tag tag-opt">OPT</span></td><td class="field-value">MONTHLY</td></tr>
+      <tr><td class="field-name">status</td><td class="field-value">ACTIVE</td></tr>
+      <tr><td class="field-name opt">photo_url <span class="field-tag tag-opt">OPT</span></td><td class="field-value">/photos/sharma.jpg</td></tr>
+      <tr><td class="field-name">created_at</td><td class="field-value">2025-04-01</td></tr>
+      <tr><td class="field-name">updated_at</td><td class="field-value">2025-04-01</td></tr>
+    </table></div>
+  </div>
+
+  <!-- STUDENT -->
+  <div class="entity">
+    <div class="entity-header hdr-student">Student</div>
+    <div class="entity-body"><table>
+      <tr><td class="field-name pk">id <span class="field-tag tag-pk">PK</span></td><td class="field-value">STU1</td></tr>
+      <tr><td class="field-name fk">tenant_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">T1</td></tr>
+      <tr><td class="field-name opt fk">branch_id <span class="field-tag tag-opt">OPT</span></td><td class="field-value">B1</td></tr>
+      <tr><td class="field-name opt fk">user_id <span class="field-tag tag-opt">OPT</span></td><td class="field-value">U3</td></tr>
+      <tr><td class="field-name">full_name</td><td class="field-value">Arjun Mehta</td></tr>
+      <tr><td class="field-name">admission_no</td><td class="field-value">SUN-2025-001</td></tr>
+      <tr><td class="field-name">guardian_name</td><td class="field-value">Suresh Mehta</td></tr>
+      <tr><td class="field-name">guardian_phone</td><td class="field-value">9123456789</td></tr>
+      <tr><td class="field-name">address</td><td class="field-value">12 Park Street</td></tr>
+      <tr><td class="field-name opt">date_of_birth <span class="field-tag tag-opt">OPT</span></td><td class="field-value">2008-05-14</td></tr>
+      <tr><td class="field-name">status</td><td class="field-value">ACTIVE</td></tr>
+      <tr><td class="field-name opt">photo_url <span class="field-tag tag-opt">OPT</span></td><td class="field-value">/photos/arjun.jpg</td></tr>
+      <tr><td class="field-name">created_at</td><td class="field-value">2025-04-05</td></tr>
+      <tr><td class="field-name">updated_at</td><td class="field-value">2025-04-05</td></tr>
+    </table></div>
+  </div>
+
+  <!-- STUDENT ENROLLMENT -->
+  <div class="entity">
+    <div class="entity-header hdr-enrollment">Student Enrollment</div>
+    <div class="entity-body"><table>
+      <tr><td class="field-name pk">id <span class="field-tag tag-pk">PK</span></td><td class="field-value">SE1</td></tr>
+      <tr><td class="field-name fk">tenant_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">T1</td></tr>
+      <tr><td class="field-name fk">student_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">STU1 (Arjun)</td></tr>
+      <tr><td class="field-name opt fk">class_id <span class="field-tag tag-opt">OPT</span></td><td class="field-value">CL1 (Class 10)</td></tr>
+      <tr><td class="field-name opt fk">batch_id <span class="field-tag tag-opt">OPT</span></td><td class="field-value">BA1 (Section A)</td></tr>
+      <tr><td class="field-name">enrolled_on</td><td class="field-value">2025-04-05</td></tr>
+      <tr><td class="field-name">is_active</td><td class="field-value">true</td></tr>
+    </table></div>
+  </div>
+
+</div><!-- /grid layer 3 -->
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     LAYER 4 — FEES & PAYMENTS
+══════════════════════════════════════════════════════════════ -->
+<hr class="divider" />
+<span class="section-label layer-5">Layer 4 — Fees &amp; Payments</span>
+
+<div class="grid">
+
+  <!-- FEE PLAN -->
+  <div class="entity">
+    <div class="entity-header hdr-feeplan">Fee Plan</div>
+    <div class="entity-body"><table>
+      <tr><td class="field-name pk">id <span class="field-tag tag-pk">PK</span></td><td class="field-value">FP1</td></tr>
+      <tr><td class="field-name fk">tenant_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">T1</td></tr>
+      <tr><td class="field-name opt fk">branch_id <span class="field-tag tag-opt">OPT</span></td><td class="field-value">B1</td></tr>
+      <tr><td class="field-name opt fk">batch_id <span class="field-tag tag-opt">OPT</span></td><td class="field-value">BA1 (Sec A)</td></tr>
+      <tr><td class="field-name">name</td><td class="field-value">Monthly Tuition</td></tr>
+      <tr><td class="field-name">category</td><td class="field-value">TUITION</td></tr>
+      <tr><td class="field-name">amount</td><td class="field-value">3500.00</td></tr>
+      <tr><td class="field-name">frequency</td><td class="field-value">MONTHLY</td></tr>
+      <tr><td class="field-name opt">due_day <span class="field-tag tag-opt">OPT</span></td><td class="field-value">5</td></tr>
+      <tr><td class="field-name">is_active</td><td class="field-value">true</td></tr>
+      <tr><td class="field-name">created_at</td><td class="field-value">2025-04-01</td></tr>
+      <tr><td class="field-name">updated_at</td><td class="field-value">2025-04-01</td></tr>
+    </table></div>
+  </div>
+
+  <!-- PAYMENT -->
+  <div class="entity">
+    <div class="entity-header hdr-payment">Payment</div>
+    <div class="entity-body"><table>
+      <tr><td class="field-name pk">id <span class="field-tag tag-pk">PK</span></td><td class="field-value">PAY1</td></tr>
+      <tr><td class="field-name fk">tenant_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">T1</td></tr>
+      <tr><td class="field-name fk">student_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">STU1 (Arjun)</td></tr>
+      <tr><td class="field-name fk">fee_plan_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">FP1</td></tr>
+      <tr><td class="field-name">amount_paid</td><td class="field-value">3500.00</td></tr>
+      <tr><td class="field-name">payment_date</td><td class="field-value">2025-05-05</td></tr>
+      <tr><td class="field-name">payment_method</td><td class="field-value">UPI</td></tr>
+      <tr><td class="field-name opt">reference_no <span class="field-tag tag-opt">OPT</span></td><td class="field-value">UPI20250505XYZ</td></tr>
+      <tr><td class="field-name opt">notes <span class="field-tag tag-opt">OPT</span></td><td class="field-value">May month fees</td></tr>
+      <tr><td class="field-name">created_at</td><td class="field-value">2025-05-05</td></tr>
+      <tr><td class="field-name">updated_at</td><td class="field-value">2025-05-05</td></tr>
+    </table></div>
+  </div>
+
+</div><!-- /grid layer 4 -->
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     LAYER 5 — EXAMS & MARKS
+══════════════════════════════════════════════════════════════ -->
+<hr class="divider" />
+<span class="section-label layer-6">Layer 5 — Exams &amp; Marks</span>
+
+<div class="grid">
+
+  <!-- EXAM -->
+  <div class="entity">
+    <div class="entity-header hdr-exam">Exam</div>
+    <div class="entity-body"><table>
+      <tr><td class="field-name pk">id <span class="field-tag tag-pk">PK</span></td><td class="field-value">EX1</td></tr>
+      <tr><td class="field-name fk">tenant_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">T1</td></tr>
+      <tr><td class="field-name opt fk">branch_id <span class="field-tag tag-opt">OPT</span></td><td class="field-value">B1</td></tr>
+      <tr><td class="field-name fk">academic_year_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">AY1</td></tr>
+      <tr><td class="field-name fk">batch_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">BA1 (Sec A)</td></tr>
+      <tr><td class="field-name">name</td><td class="field-value">Mid Term Exam</td></tr>
+      <tr><td class="field-name">exam_type</td><td class="field-value">MID_TERM</td></tr>
+      <tr><td class="field-name opt">exam_date <span class="field-tag tag-opt">OPT</span></td><td class="field-value">2025-09-15</td></tr>
+      <tr><td class="field-name">status</td><td class="field-value">PUBLISHED</td></tr>
+      <tr><td class="field-name">created_at</td><td class="field-value">2025-09-01</td></tr>
+      <tr><td class="field-name">updated_at</td><td class="field-value">2025-09-15</td></tr>
+    </table></div>
+  </div>
+
+  <!-- EXAM SUBJECT -->
+  <div class="entity">
+    <div class="entity-header hdr-examsubject">Exam Subject</div>
+    <div class="entity-body"><table>
+      <tr><td class="field-name pk">id <span class="field-tag tag-pk">PK</span></td><td class="field-value">ES1</td></tr>
+      <tr><td class="field-name fk">tenant_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">T1</td></tr>
+      <tr><td class="field-name fk">exam_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">EX1 (Mid Term)</td></tr>
+      <tr><td class="field-name fk">subject_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">SUB1 (Maths)</td></tr>
+      <tr><td class="field-name">max_marks</td><td class="field-value">100</td></tr>
+      <tr><td colspan="2" style="padding:2px 8px;background:#f0f4ff;font-size:10px;color:#555">— row 2 —</td></tr>
+      <tr><td class="field-name pk">id</td><td class="field-value">ES2</td></tr>
+      <tr><td class="field-name fk">exam_id</td><td class="field-value">EX1 (Mid Term)</td></tr>
+      <tr><td class="field-name fk">subject_id</td><td class="field-value">SUB2 (Physics)</td></tr>
+      <tr><td class="field-name">max_marks</td><td class="field-value">100</td></tr>
+    </table></div>
+  </div>
+
+  <!-- MARK -->
+  <div class="entity">
+    <div class="entity-header hdr-mark">Mark</div>
+    <div class="entity-body"><table>
+      <tr><td class="field-name pk">id <span class="field-tag tag-pk">PK</span></td><td class="field-value">MK1</td></tr>
+      <tr><td class="field-name fk">tenant_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">T1</td></tr>
+      <tr><td class="field-name fk">exam_subject_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">ES1 (Maths)</td></tr>
+      <tr><td class="field-name fk">student_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">STU1 (Arjun)</td></tr>
+      <tr><td class="field-name">marks_obtained</td><td class="field-value">87.50</td></tr>
+      <tr><td class="field-name opt">remarks <span class="field-tag tag-opt">OPT</span></td><td class="field-value">Well done</td></tr>
+      <tr><td colspan="2" style="padding:2px 8px;background:#f0f4ff;font-size:10px;color:#555">— row 2 —</td></tr>
+      <tr><td class="field-name pk">id</td><td class="field-value">MK2</td></tr>
+      <tr><td class="field-name fk">exam_subject_id</td><td class="field-value">ES2 (Physics)</td></tr>
+      <tr><td class="field-name fk">student_id</td><td class="field-value">STU1 (Arjun)</td></tr>
+      <tr><td class="field-name">marks_obtained</td><td class="field-value">91.00</td></tr>
+      <tr><td class="field-name opt">remarks</td><td class="field-value">Excellent</td></tr>
+    </table></div>
+  </div>
+
+</div><!-- /grid layer 5 -->
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     LAYER 6 — SYSTEM TABLES
+══════════════════════════════════════════════════════════════ -->
+<hr class="divider" />
+<span class="section-label layer-7">Layer 6 — System Tables</span>
+
+<div class="grid">
+
+  <!-- AUDIT LOG -->
+  <div class="entity">
+    <div class="entity-header hdr-audit">Audit Log</div>
+    <div class="entity-body"><table>
+      <tr><td class="field-name pk">id <span class="field-tag tag-pk">PK</span></td><td class="field-value">AL1</td></tr>
+      <tr><td class="field-name opt fk">tenant_id <span class="field-tag tag-opt">OPT</span></td><td class="field-value">T1</td></tr>
+      <tr><td class="field-name opt fk">user_id <span class="field-tag tag-opt">OPT</span></td><td class="field-value">U1 (Ravi)</td></tr>
+      <tr><td class="field-name">entity_name</td><td class="field-value">Student</td></tr>
+      <tr><td class="field-name opt">entity_id <span class="field-tag tag-opt">OPT</span></td><td class="field-value">STU1</td></tr>
+      <tr><td class="field-name">action</td><td class="field-value">CREATE</td></tr>
+      <tr><td class="field-name opt">metadata_json <span class="field-tag tag-opt">OPT</span></td><td class="field-value">{"admission_no":…}</td></tr>
+      <tr><td class="field-name">created_at</td><td class="field-value">2025-04-05 10:30</td></tr>
+    </table></div>
+  </div>
+
+  <!-- EMAIL VERIFICATION -->
+  <div class="entity">
+    <div class="entity-header hdr-emailver">Email Verification</div>
+    <div class="entity-body"><table>
+      <tr><td class="field-name pk">id <span class="field-tag tag-pk">PK</span></td><td class="field-value">EV1</td></tr>
+      <tr><td class="field-name fk">user_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">U1</td></tr>
+      <tr><td class="field-name">otp_hash</td><td class="field-value">sha256abc…</td></tr>
+      <tr><td class="field-name">otp_salt</td><td class="field-value">base64salt…</td></tr>
+      <tr><td class="field-name">expires_at</td><td class="field-value">2025-05-10 10:45</td></tr>
+      <tr><td class="field-name">attempt_count</td><td class="field-value">1</td></tr>
+      <tr><td class="field-name">send_count</td><td class="field-value">1</td></tr>
+      <tr><td class="field-name">last_sent_at</td><td class="field-value">2025-05-10 10:30</td></tr>
+      <tr><td class="field-name">created_at</td><td class="field-value">2025-05-10 10:30</td></tr>
+    </table></div>
+  </div>
+
+  <!-- PENDING REGISTRATION -->
+  <div class="entity">
+    <div class="entity-header hdr-pendingreg">Pending Registration</div>
+    <div class="entity-body"><table>
+      <tr><td class="field-name pk">id <span class="field-tag tag-pk">PK</span></td><td class="field-value">PR1</td></tr>
+      <tr><td class="field-name">full_name</td><td class="field-value">Neha Gupta</td></tr>
+      <tr><td class="field-name">email</td><td class="field-value">neha@sunrise.com</td></tr>
+      <tr><td class="field-name">password_hash</td><td class="field-value">$2b$10$xyz…</td></tr>
+      <tr><td class="field-name fk">tenant_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">T1</td></tr>
+      <tr><td class="field-name fk">role_id <span class="field-tag tag-fk">FK</span></td><td class="field-value">RO3 (TEACHER)</td></tr>
+      <tr><td class="field-name">otp_hash</td><td class="field-value">sha256def…</td></tr>
+      <tr><td class="field-name">otp_salt</td><td class="field-value">base64salt…</td></tr>
+      <tr><td class="field-name">expires_at</td><td class="field-value">2025-05-10 10:45</td></tr>
+      <tr><td class="field-name">attempt_count</td><td class="field-value">0</td></tr>
+      <tr><td class="field-name">send_count</td><td class="field-value">1</td></tr>
+      <tr><td class="field-name">last_sent_at</td><td class="field-value">2025-05-10 10:30</td></tr>
+      <tr><td class="field-name">created_at</td><td class="field-value">2025-05-10 10:29</td></tr>
+    </table></div>
+  </div>
+
+</div><!-- /grid layer 6 -->
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     RELATIONSHIP TABLE
+══════════════════════════════════════════════════════════════ -->
+<hr class="divider" />
+
+<div class="rel-block no-break">
+  <h3>Complete Relationship Reference</h3>
+  <table class="rel-table">
+    <thead>
+      <tr>
+        <th>Parent Table</th>
+        <th></th>
+        <th>Child Table</th>
+        <th>Type</th>
+        <th>FK Column</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Tenant</td><td class="arrow">→</td><td>TenantSettings</td><td><span class="rel-type one-one">1 : 1</span></td><td>tenant_settings.tenant_id</td><td>One settings profile per org</td></tr>
+      <tr><td>Tenant</td><td class="arrow">→</td><td>TenantFeature</td><td><span class="rel-type one-many">1 : N</span></td><td>tenant_features.tenant_id</td><td>Multiple feature flags per org</td></tr>
+      <tr><td>Tenant</td><td class="arrow">→</td><td>Branch</td><td><span class="rel-type one-many">1 : N</span></td><td>branches.tenant_id</td><td>Multiple campuses per org</td></tr>
+      <tr><td>Tenant</td><td class="arrow">→</td><td>TenantUserRole</td><td><span class="rel-type one-many">1 : N</span></td><td>tenant_user_roles.tenant_id</td><td>All user-role memberships for org</td></tr>
+      <tr><td>User</td><td class="arrow">→</td><td>TenantUserRole</td><td><span class="rel-type one-many">1 : N</span></td><td>tenant_user_roles.user_id</td><td>One user can join multiple orgs</td></tr>
+      <tr><td>Role</td><td class="arrow">→</td><td>TenantUserRole</td><td><span class="rel-type one-many">1 : N</span></td><td>tenant_user_roles.role_id</td><td>Role assigned to membership</td></tr>
+      <tr><td>Branch</td><td class="arrow">→</td><td>TenantUserRole</td><td><span class="rel-type one-many">1 : N</span><span class="rel-type opt" style="margin-left:3px">OPT</span></td><td>tenant_user_roles.branch_id</td><td>Optional branch scope for user</td></tr>
+      <tr><td>Tenant</td><td class="arrow">→</td><td>AcademicYear</td><td><span class="rel-type one-many">1 : N</span></td><td>academic_years.tenant_id</td><td>Multiple years per org</td></tr>
+      <tr><td>AcademicYear</td><td class="arrow">→</td><td>Class</td><td><span class="rel-type one-many">1 : N</span></td><td>classes.academic_year_id</td><td>Classes are year-specific</td></tr>
+      <tr><td>AcademicYear</td><td class="arrow">→</td><td>Batch</td><td><span class="rel-type one-many">1 : N</span></td><td>batches.academic_year_id</td><td>Batches are year-specific</td></tr>
+      <tr><td>Class</td><td class="arrow">→</td><td>Batch</td><td><span class="rel-type one-many">1 : N</span><span class="rel-type opt" style="margin-left:3px">OPT</span></td><td>batches.class_id</td><td>Batch may or may not belong to a class</td></tr>
+      <tr><td>Tenant</td><td class="arrow">→</td><td>Subject</td><td><span class="rel-type one-many">1 : N</span></td><td>subjects.tenant_id</td><td>Subjects not year-scoped</td></tr>
+      <tr><td>Batch</td><td class="arrow">→</td><td>BatchSubjectTeacher</td><td><span class="rel-type one-many">1 : N</span></td><td>batch_subject_teachers.batch_id</td><td>Which subjects taught in batch</td></tr>
+      <tr><td>Subject</td><td class="arrow">→</td><td>BatchSubjectTeacher</td><td><span class="rel-type one-many">1 : N</span></td><td>batch_subject_teachers.subject_id</td><td>Subject assigned to batch</td></tr>
+      <tr><td>Teacher</td><td class="arrow">→</td><td>BatchSubjectTeacher</td><td><span class="rel-type one-many">1 : N</span></td><td>batch_subject_teachers.teacher_id</td><td>Teacher assigned to subject in batch</td></tr>
+      <tr><td>Batch</td><td class="arrow">→</td><td>ClassSchedule</td><td><span class="rel-type one-many">1 : N</span></td><td>class_schedules.batch_id</td><td>Weekly timetable per batch</td></tr>
+      <tr><td>Tenant</td><td class="arrow">→</td><td>Teacher</td><td><span class="rel-type one-many">1 : N</span></td><td>teachers.tenant_id</td><td>Teachers scoped to org</td></tr>
+      <tr><td>User</td><td class="arrow">→</td><td>Teacher</td><td><span class="rel-type one-many">1 : N</span><span class="rel-type opt" style="margin-left:3px">OPT</span></td><td>teachers.user_id</td><td>Teacher may have login account</td></tr>
+      <tr><td>Tenant</td><td class="arrow">→</td><td>Student</td><td><span class="rel-type one-many">1 : N</span></td><td>students.tenant_id</td><td>Students scoped to org</td></tr>
+      <tr><td>User</td><td class="arrow">→</td><td>Student</td><td><span class="rel-type one-many">1 : N</span><span class="rel-type opt" style="margin-left:3px">OPT</span></td><td>students.user_id</td><td>Student may have login account</td></tr>
+      <tr><td>Student</td><td class="arrow">→</td><td>StudentEnrollment</td><td><span class="rel-type one-many">1 : N</span></td><td>student_enrollments.student_id</td><td>Student enrolled in class/batch</td></tr>
+      <tr><td>Tenant</td><td class="arrow">→</td><td>FeePlan</td><td><span class="rel-type one-many">1 : N</span></td><td>fee_plans.tenant_id</td><td>Fee plans per org</td></tr>
+      <tr><td>Batch</td><td class="arrow">→</td><td>FeePlan</td><td><span class="rel-type one-many">1 : N</span><span class="rel-type opt" style="margin-left:3px">OPT</span></td><td>fee_plans.batch_id</td><td>Plan can be batch-specific</td></tr>
+      <tr><td>Student</td><td class="arrow">→</td><td>Payment</td><td><span class="rel-type one-many">1 : N</span></td><td>payments.student_id</td><td>Payment records per student</td></tr>
+      <tr><td>FeePlan</td><td class="arrow">→</td><td>Payment</td><td><span class="rel-type one-many">1 : N</span></td><td>payments.fee_plan_id</td><td>Payment linked to a fee plan</td></tr>
+      <tr><td>AcademicYear</td><td class="arrow">→</td><td>Exam</td><td><span class="rel-type one-many">1 : N</span></td><td>exams.academic_year_id</td><td>Exams are year-scoped</td></tr>
+      <tr><td>Batch</td><td class="arrow">→</td><td>Exam</td><td><span class="rel-type one-many">1 : N</span></td><td>exams.batch_id</td><td>Exam conducted for a batch</td></tr>
+      <tr><td>Exam</td><td class="arrow">→</td><td>ExamSubject</td><td><span class="rel-type one-many">1 : N</span></td><td>exam_subjects.exam_id</td><td>Subjects included in exam</td></tr>
+      <tr><td>Subject</td><td class="arrow">→</td><td>ExamSubject</td><td><span class="rel-type one-many">1 : N</span></td><td>exam_subjects.subject_id</td><td>Subject details in exam</td></tr>
+      <tr><td>ExamSubject</td><td class="arrow">→</td><td>Mark</td><td><span class="rel-type one-many">1 : N</span></td><td>marks.exam_subject_id</td><td>Score per subject per exam</td></tr>
+      <tr><td>Student</td><td class="arrow">→</td><td>Mark</td><td><span class="rel-type one-many">1 : N</span></td><td>marks.student_id</td><td>Student's score record</td></tr>
+      <tr><td>Tenant</td><td class="arrow">→</td><td>AuditLog</td><td><span class="rel-type one-many">1 : N</span><span class="rel-type opt" style="margin-left:3px">OPT</span></td><td>audit_logs.tenant_id</td><td>NULL for platform-level actions</td></tr>
+      <tr><td>User</td><td class="arrow">→</td><td>AuditLog</td><td><span class="rel-type one-many">1 : N</span><span class="rel-type opt" style="margin-left:3px">OPT</span></td><td>audit_logs.user_id</td><td>NULL for system-triggered actions</td></tr>
+      <tr><td>User</td><td class="arrow">→</td><td>EmailVerification</td><td><span class="rel-type one-many">1 : N</span></td><td>email_verifications.user_id</td><td>OTP for email confirm</td></tr>
+      <tr><td>Tenant</td><td class="arrow">→</td><td>PendingRegistration</td><td><span class="rel-type one-many">1 : N</span></td><td>pending_registrations.tenant_id</td><td>Temp row until OTP verified</td></tr>
+      <tr><td>Role</td><td class="arrow">→</td><td>PendingRegistration</td><td><span class="rel-type one-many">1 : N</span></td><td>pending_registrations.role_id</td><td>Role pre-assigned on invite</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<hr class="divider" />
+<p style="text-align:center;font-size:10px;color:#aaa;margin-top:8px;">
+  ClassNova Database Schema &nbsp;|&nbsp; Generated 2026-05-12 &nbsp;|&nbsp; 19 entities &nbsp;|&nbsp; 35 relationships
+</p>
+
+</body>
+</html>
