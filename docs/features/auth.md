@@ -1,7 +1,7 @@
-# Feature: Authentication — Login & Signup
+# Feature: Authentication — Login, Signup & Branch Selection
 
 **Status:** In Progress  
-**Last updated:** 2026-05-09
+**Last updated:** 2026-05-13
 
 ---
 
@@ -31,6 +31,46 @@
 - Register page has an "Already have an account? Sign in" link → `/login`
 - Both pages are publicly accessible (no auth guard)
 
+### 1.3 Branch Selection (Multi-Branch Users)
+
+- After credentials are verified, the server checks how many **ACTIVE** `TenantUserRole` rows exist for that user+tenant combination
+- **Single branch or no branch restriction (`branch_id = NULL`):**
+  - JWT is issued immediately — no extra step
+  - `branch_id = NULL` in JWT means the user can see **all branches** (typically ORG_ADMIN)
+- **Multiple branch assignments:**
+  - Server returns a `requiresBranchSelection: true` response with a list of available branches
+  - Login page renders a **branch dropdown** without re-entering credentials
+  - User selects a branch and resubmits — server issues JWT scoped to that branch
+  - `branch_id` is embedded in the JWT claim so every API call is automatically branch-scoped
+
+```
+Login flow with branch selection:
+
+STEP 1 — Credentials
+  User enters: tenantSlug + email + password
+                      ↓
+  Server verifies tenant + user + password
+                      ↓
+  ┌─────────────────────────────────────┐
+  │ How many branch assignments?        │
+  ├─────────────────────────────────────┤
+  │ 0 or 1 (or branch_id = NULL)        │  →  JWT issued → Dashboard
+  │ 2+                                  │  →  Branch list returned
+  └─────────────────────────────────────┘
+
+STEP 2 — Branch Selection (only if multiple branches)
+  User sees branch dropdown (pre-populated from server)
+  User selects branch → Submit
+                      ↓
+  Server issues JWT with selected branch_id embedded
+                      ↓
+  Dashboard (branch-scoped)
+```
+
+- ORG_ADMIN with `branch_id = NULL` lands on dashboard with an **"All Branches"** global view
+- ORG_ADMIN can use a **branch filter** inside the dashboard to narrow down to one branch — this is a UI preference, not a re-login
+- A teacher assigned to multiple branches **must** pick one branch at login; they would log out and back in to switch branches
+
 ### 1.4 Out of scope (this iteration)
 - Password reset / forgot password
 - Email verification
@@ -38,6 +78,7 @@
 - OAuth / social auth
 - Tenant onboarding (creating a new tenant)
 - Account lockout / brute-force protection
+- In-dashboard branch switching (user must log out and log in to change branch context)
 
 ---
 
@@ -71,7 +112,9 @@
 
 ### POST `/api/auth/login`
 
-**Request**
+This endpoint handles **both steps** of the login flow via the optional `branchId` field.
+
+**Request — Step 1 (credentials only)**
 ```json
 {
   "tenantSlug": "bright-future",
@@ -80,7 +123,7 @@
 }
 ```
 
-**Success — 200**
+**Response — Step 1A: Single/no branch → JWT issued immediately (200)**
 ```json
 {
   "success": true,
@@ -89,7 +132,54 @@
     "role": "ORG_ADMIN",
     "tenantSlug": "bright-future",
     "tenantName": "Bright Future Academy",
-    "fullName": "Shivam Kumar"
+    "fullName": "Shivam Kumar",
+    "branchId": null,
+    "branchName": null,
+    "requiresBranchSelection": false
+  },
+  "error": null
+}
+```
+
+**Response — Step 1B: Multiple branches → branch selection required (200)**
+```json
+{
+  "success": true,
+  "data": {
+    "token": null,
+    "requiresBranchSelection": true,
+    "branches": [
+      { "id": "uuid-b1", "name": "HQ Main Campus" },
+      { "id": "uuid-b2", "name": "City Branch" }
+    ]
+  },
+  "error": null
+}
+```
+
+**Request — Step 2 (credentials + selected branch)**
+```json
+{
+  "tenantSlug": "bright-future",
+  "email": "admin@example.com",
+  "password": "secret123",
+  "branchId": "uuid-b1"
+}
+```
+
+**Response — Step 2: JWT issued scoped to selected branch (200)**
+```json
+{
+  "success": true,
+  "data": {
+    "token": "<jwt>",
+    "role": "TEACHER",
+    "tenantSlug": "bright-future",
+    "tenantName": "Bright Future Academy",
+    "fullName": "Priya Nair",
+    "branchId": "uuid-b1",
+    "branchName": "HQ Main Campus",
+    "requiresBranchSelection": false
   },
   "error": null
 }
@@ -101,6 +191,15 @@
   "success": false,
   "data": null,
   "error": "Invalid email or password."
+}
+```
+
+**Failure — branch not assigned to user — 403**
+```json
+{
+  "success": false,
+  "data": null,
+  "error": "You do not have access to the selected branch."
 }
 ```
 
@@ -166,38 +265,75 @@
 ```typescript
 export interface LoginRequest {
   tenantSlug: string;
-  email: string;
-  password: string;
+  email:      string;
+  password:   string;
+  branchId?:  string;   // only sent in Step 2
+}
+
+export interface BranchOption {
+  id:   string;
+  name: string;
+}
+
+export interface LoginResponse {
+  token:                    string | null;
+  role:                     string | null;
+  tenantSlug:               string | null;
+  tenantName:               string | null;
+  fullName:                 string | null;
+  branchId:                 string | null;
+  branchName:               string | null;
+  requiresBranchSelection:  boolean;
+  branches:                 BranchOption[];  // populated only when requiresBranchSelection = true
 }
 
 export interface RegisterRequest {
-  fullName: string;
+  fullName:   string;
   tenantSlug: string;
-  email: string;
-  password: string;
-  roleCode: string;
-}
-
-export interface AuthData {
-  token: string;
-  role: string;
-  tenantSlug: string;
-  tenantName: string;
-  fullName: string;
+  email:      string;
+  password:   string;
+  roleCode:   string;
 }
 
 export interface AuthContext {
-  token: string;
-  role: string;
+  token:      string;
+  role:       string;
   tenantSlug: string;
   tenantName: string;
-  fullName: string;
+  fullName:   string;
+  branchId:   string | null;   // null = all branches (ORG_ADMIN)
+  branchName: string | null;
 }
 ```
 
-### Backend — existing models (no changes needed)
-- `LoginRequest.cs` — `TenantSlug`, `Email`, `Password`
-- `AuthRequest.cs` — `FullName`, `Email`, `Password`, `TenantSlug`, `RoleCode`
+### Backend — model changes needed
+
+**`LoginRequest.cs`** — add `BranchId`:
+```csharp
+public string  TenantSlug { get; set; }
+public string  Email      { get; set; }
+public string  Password   { get; set; }
+public Guid?   BranchId   { get; set; }   // null on Step 1, populated on Step 2
+```
+
+**New `BranchOption.cs` DTO** (response only):
+```csharp
+public string Id   { get; set; }
+public string Name { get; set; }
+```
+
+**New `LoginResponse.cs` DTO**:
+```csharp
+public string?            Token                   { get; set; }
+public string?            Role                    { get; set; }
+public string?            TenantSlug              { get; set; }
+public string?            TenantName              { get; set; }
+public string?            FullName                { get; set; }
+public string?            BranchId                { get; set; }
+public string?            BranchName              { get; set; }
+public bool               RequiresBranchSelection { get; set; }
+public List<BranchOption> Branches                { get; set; } = [];
+```
 
 ---
 
@@ -205,17 +341,48 @@ export interface AuthContext {
 
 ### LoginComponent (`/login`)
 
+The login page has **two visual states** managed by a signal `branchSelectionMode`.
+
+**State 1 — Credentials form (default)**
+
 | Field | Type | Validation |
 |---|---|---|
 | Organization ID | text | required |
 | Email | email | required, email format |
 | Password | password | required |
 
-- Shows field-level error messages on touched + invalid
+- On submit: calls `POST /api/auth/login` with credentials only
+- If `requiresBranchSelection = false` → store `AuthContext`, navigate to `/dashboard`
+- If `requiresBranchSelection = true` → switch to **State 2** (branch dropdown appears inline, credentials fields remain visible but disabled)
 - Shows API error banner on failed submit
 - Loading spinner on submit button while request in flight
 - "Don't have an account? Sign up" link → `/register`
-- On success: navigate to `/dashboard`
+
+**State 2 — Branch selection (appears inline after Step 1)**
+
+| Field | Type | Validation |
+|---|---|---|
+| Select Branch | dropdown | required; options populated from server response |
+
+- Dropdown lists all branches returned by Step 1 response
+- "Confirm Branch" button triggers Step 2 → `POST /api/auth/login` with `branchId`
+- "Back" link → resets to State 1 (clears branch list, re-enables credential fields)
+- On success: store `AuthContext` (now includes `branchId` + `branchName`), navigate to `/dashboard`
+- Shows API error banner on failed submit
+
+**UI flow sketch:**
+```
+┌──────────────────────────────────────────┐
+│  Organization ID  [ bright-future      ] │  ← disabled in State 2
+│  Email            [ admin@example.com  ] │  ← disabled in State 2
+│  Password         [ ••••••••           ] │  ← disabled in State 2
+│                                          │
+│  ── appears only in State 2 ──           │
+│  Select Branch    [ HQ Main Campus  ▼  ] │
+│                                          │
+│  [ Login / Confirm Branch ]  [ Back ]    │
+└──────────────────────────────────────────┘
+```
 
 ---
 
@@ -247,6 +414,12 @@ export interface AuthContext {
 | Login — wrong password | Error: "Invalid email or password." (do not reveal which field is wrong) |
 | Login — user not linked to tenant | Error: "User does not have access to this tenant." |
 | Login — user account inactive | Error: "Account is inactive." |
+| Login — user has exactly 1 branch assignment | JWT issued directly, no branch picker shown |
+| Login — user has `branch_id = NULL` (ORG_ADMIN) | JWT issued directly with `branchId: null`, sees all branches in dashboard |
+| Login — user has 2+ branch assignments | Step 1 returns `requiresBranchSelection: true` with branch list |
+| Login Step 2 — `branchId` not in user's assignments | Error 403: "You do not have access to the selected branch." |
+| Login Step 2 — `branchId` is valid but branch is INACTIVE | Error: "This branch is currently inactive." |
+| User tampers with branch list and submits unlisted branchId | Server re-validates against DB; returns 403 |
 | Register — email already taken globally | Error: "Email is already registered." |
 | Register — passwords do not match | Client-side validation before API call |
 | Register — password < 8 chars | Client-side validation before API call |
@@ -285,7 +458,20 @@ export interface AuthContext {
 16. Unknown tenant slug → error banner "Tenant not found."
 17. Submit with empty fields → form invalid, button disabled, field errors shown
 
+### Branch Selection — Happy Path
+18. User with 2 branch assignments logs in → Step 1 returns `requiresBranchSelection: true` with 2 branches
+19. User selects "HQ Main Campus" → Step 2 returns JWT with `branchId` = HQ id
+20. `AuthContext` stored in localStorage includes `branchId` and `branchName`
+21. All subsequent API requests are scoped to HQ branch only
+22. User with `branch_id = NULL` (ORG_ADMIN) → Step 1 issues JWT immediately, no branch picker
+23. User with exactly 1 branch assignment → Step 1 issues JWT immediately, no branch picker
+
+### Branch Selection — Error Paths
+24. User submits a `branchId` they are not assigned to → 403 "You do not have access to the selected branch."
+25. User submits a `branchId` for an INACTIVE branch → error shown, branch picker stays visible
+26. User clicks "Back" on branch picker → credential fields re-enabled, branch list cleared, ready for new attempt
+
 ### Auth Guard
-18. Unauthenticated user visits `/dashboard` → redirected to `/login`
-19. Authenticated user visits `/login` → redirected to `/dashboard`
-20. Logout clears `localStorage`, next route navigation redirects to `/login`
+27. Unauthenticated user visits `/dashboard` → redirected to `/login`
+28. Authenticated user visits `/login` → redirected to `/dashboard`
+29. Logout clears `localStorage`, next route navigation redirects to `/login`
