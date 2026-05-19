@@ -1,10 +1,5 @@
-
-// Include theming for Angular Material with `mat.theme()`.
-// This Sass mixin will define CSS variables that are used for styling Angular Material
-// components according to the Material 3 design spec.
-// Learn more about theming and how to use it for your application's
-// custom components at https://material.angular.dev/guide/theming
 @use '@angular/material' as mat;
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800&display=swap');
 
 html {
   @include mat.theme((
@@ -17,22 +12,145 @@ html {
   ));
 }
 
-body {
-  // Default the application to a light color theme. This can be changed to
-  // `dark` to enable the dark color theme, or to `light dark` to defer to the
-  // user's system settings.
-  color-scheme: light;
+:root {
+  /* Brand tokens — overridden at runtime by BrandingService.applyTheme() */
+  --brand-primary: #3B5FDB;
+  --brand-accent:  #F59E0B;
 
-  // Set a default background, font and text colors for the application using
-  // Angular Material's system-level CSS variables. Learn more about these
-  // variables at https://material.angular.dev/guide/system-variables
+  /* App-wide aliases — point at brand tokens so all components stay in sync */
+  --cn-primary:      var(--brand-primary);
+  --cn-primary-dark: color-mix(in srgb, var(--brand-primary) 85%, black);
+  --cn-navy:         #1E1B4B;
+  --cn-accent:       var(--brand-accent);
+  --cn-bg-auth:      #F5F7FF;
+  --cn-text:         #111827;
+  --cn-muted:        #6B7280;
+}
+
+body {
+  color-scheme: light;
   background-color: var(--mat-sys-surface);
   color: var(--mat-sys-on-surface);
   font: var(--mat-sys-body-medium);
-
-  // Reset the user agent margin.
   margin: 0;
+  font-family: 'Inter', 'Roboto', 'Helvetica Neue', sans-serif;
 }
 
 html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+body { margin: 0; }
+
+// ── PrimeNG input overrides — light theme ──────────────────────
+// Overrides PrimeNG Aura's dark surface defaults to white inputs
+// with consistent border, focus ring, and placeholder colour.
+.p-inputtext {
+  background: #ffffff !important;
+  border: 1.5px solid #D1D5DB !important;
+  border-radius: 8px !important;
+  color: #111827 !important;
+  font-family: 'Inter', 'Roboto', sans-serif !important;
+  font-size: 0.9rem !important;
+  padding: 0.65rem 0.875rem !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+
+  &::placeholder {
+    color: #9CA3AF !important;
+    opacity: 1;
+  }
+
+  &:enabled:hover {
+    border-color: #9CA3AF !important;
+    background: #ffffff !important;
+  }
+
+  &:enabled:focus {
+    border-color: #3B5FDB !important;
+    box-shadow: 0 0 0 3px rgba(59, 95, 219, 0.12) !important;
+    outline: none !important;
+    background: #ffffff !important;
+  }
+}
+
+// p-password: wrapper acts as the visual input box.
+// PrimeNG 20 already positions the toggle SVG with position:absolute inside
+// a position:relative wrapper — we must NOT override display/size on the icon.
+// Only override the wrapper appearance, input border, and icon colour.
+.p-password {
+  display: flex !important;
+  background: #ffffff !important;
+  border: 1.5px solid #D1D5DB !important;
+  border-radius: 8px !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+
+  &:focus-within {
+    border-color: #3B5FDB !important;
+    box-shadow: 0 0 0 3px rgba(59, 95, 219, 0.12) !important;
+  }
+
+  &:hover:not(:focus-within) {
+    border-color: #9CA3AF !important;
+  }
+
+  // Borderless input — wrapper provides the visual boundary
+  .p-password-input {
+    flex: 1 !important;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    outline: none !important;
+
+    &:enabled:hover,
+    &:enabled:focus {
+      border: none !important;
+      box-shadow: none !important;
+      background: transparent !important;
+    }
+  }
+
+  // Toggle SVG icon — PrimeNG positions it absolutely; only set colour here
+  .p-password-toggle-mask-icon {
+    color: #6B7280 !important;
+    cursor: pointer !important;
+
+    &:hover {
+      color: #374151 !important;
+    }
+  }
+}
+
+// p-select (dropdown) — white surface, matching border/focus ring
+.p-select {
+  background: #ffffff !important;
+  border: 1.5px solid #D1D5DB !important;
+  border-radius: 8px !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+
+  &:not(.p-disabled):hover {
+    border-color: #9CA3AF !important;
+    background: #ffffff !important;
+  }
+
+  &.p-focus,
+  &:focus-within {
+    border-color: #3B5FDB !important;
+    box-shadow: 0 0 0 3px rgba(59, 95, 219, 0.12) !important;
+  }
+
+  .p-select-label {
+    color: #111827 !important;
+    font-family: 'Inter', 'Roboto', sans-serif !important;
+    font-size: 0.9rem !important;
+    padding: 0.65rem 0.875rem !important;
+    background: transparent !important;
+
+    &.p-placeholder {
+      color: #9CA3AF !important;
+    }
+  }
+
+  .p-select-dropdown {
+    background: transparent !important;
+    color: #6B7280 !important;
+    width: 2.5rem !important;
+  }
+}

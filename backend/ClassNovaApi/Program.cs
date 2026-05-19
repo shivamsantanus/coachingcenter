@@ -62,6 +62,8 @@ else
     builder.Services.AddTransient<IEmailService, ConsoleEmailService>();
 
 builder.Services.AddTransient<OtpService>();
+builder.Services.AddTransient<PasswordResetService>();
+builder.Services.AddTransient<BrandingService>();
 
 if (builder.Environment.IsDevelopment())
     builder.Services.AddHostedService<AngularDevServerService>();

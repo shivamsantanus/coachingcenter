@@ -12,7 +12,16 @@ namespace ClassNovaApi.Services
         public Task SendOtpAsync(string toEmail, string fullName, string otp)
         {
             _logger.LogInformation(
-                "[DEV EMAIL] To: {Email} | Name: {Name} | OTP: {Otp}",
+                "[DEV EMAIL — VERIFY] To: {Email} | Name: {Name} | OTP: {Otp}",
+                toEmail, fullName, otp);
+
+            return Task.CompletedTask;
+        }
+
+        public Task SendPasswordResetOtpAsync(string toEmail, string fullName, string otp)
+        {
+            _logger.LogInformation(
+                "[DEV EMAIL — PASSWORD RESET] To: {Email} | Name: {Name} | OTP: {Otp}",
                 toEmail, fullName, otp);
 
             return Task.CompletedTask;

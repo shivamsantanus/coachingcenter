@@ -38,3 +38,15 @@ export interface ResendOtpRequest {
   tenantSlug: string;
   email: string;
 }
+
+export interface ForgotPasswordRequest {
+  tenantSlug: string;
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  tenantSlug:  string;
+  email:       string;
+  otp:         string;
+  newPassword: string;
+}

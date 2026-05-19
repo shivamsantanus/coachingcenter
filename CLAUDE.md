@@ -4,6 +4,9 @@
 It handles student and teacher management, academic scheduling, fee tracking, exam results,
 attendance, and tenant onboarding — all scoped per tenant with role-based access.
 
+> **Project Plan:** [`docs/project-plan.md`](docs/project-plan.md) is the living progress tracker.
+> **Read it at the start of every session. Update it before and after every feature.**
+
 ---
 
 ## Solution Structure

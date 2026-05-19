@@ -1,7 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { BrandingService } from '../../services/branding.service';
 
 interface NavItem {
   label: string;
@@ -17,11 +18,19 @@ interface NavItem {
   templateUrl: './shell.html',
   styleUrls: ['./shell.scss']
 })
-export class ShellComponent {
-  private authService = inject(AuthService);
-  private router = inject(Router);
+export class ShellComponent implements OnInit {
+  private readonly authService    = inject(AuthService);
+  private readonly brandingService = inject(BrandingService);
+  private readonly router         = inject(Router);
 
   context = this.authService.getContext();
+
+  ngOnInit(): void {
+    const slug = this.context?.tenantSlug;
+    if (slug) {
+      this.brandingService.loadBranding(slug).subscribe();
+    }
+  }
 
   navItems: NavItem[] = [
     { label: 'Dashboard',  icon: 'pi-home',          route: '/dashboard' },

@@ -10,7 +10,9 @@ import {
   AuthData,
   AuthContext,
   VerifyEmailRequest,
-  ResendOtpRequest
+  ResendOtpRequest,
+  ForgotPasswordRequest,
+  ResetPasswordRequest
 } from '../models/auth.models';
 
 interface ApiEnvelope<T> {
@@ -86,6 +88,57 @@ export class AuthService {
   resendOtp(request: ResendOtpRequest): Observable<{ message: string }> {
     return this.http
       .post<ApiEnvelope<{ message: string }>>(`${this.authUrl}/resend-otp`, request)
+      .pipe(
+        map(envelope => {
+          if (!envelope.success || !envelope.data) {
+            throw new Error(envelope.error ?? 'Resend failed.');
+          }
+          return envelope.data;
+        }),
+        catchError(err => {
+          const message = err?.error?.error ?? err?.message ?? 'Could not resend OTP. Please try again.';
+          return throwError(() => new Error(message));
+        })
+      );
+  }
+
+  forgotPassword(request: ForgotPasswordRequest): Observable<{ message: string }> {
+    return this.http
+      .post<ApiEnvelope<{ message: string }>>(`${this.authUrl}/forgot-password`, request)
+      .pipe(
+        map(envelope => {
+          if (!envelope.success || !envelope.data) {
+            throw new Error(envelope.error ?? 'Request failed.');
+          }
+          return envelope.data;
+        }),
+        catchError(err => {
+          const message = err?.error?.error ?? err?.message ?? 'Unable to reach the server. Please try again.';
+          return throwError(() => new Error(message));
+        })
+      );
+  }
+
+  resetPassword(request: ResetPasswordRequest): Observable<{ message: string }> {
+    return this.http
+      .post<ApiEnvelope<{ message: string }>>(`${this.authUrl}/reset-password`, request)
+      .pipe(
+        map(envelope => {
+          if (!envelope.success || !envelope.data) {
+            throw new Error(envelope.error ?? 'Password reset failed.');
+          }
+          return envelope.data;
+        }),
+        catchError(err => {
+          const message = err?.error?.error ?? err?.message ?? 'Password reset failed. Please try again.';
+          return throwError(() => new Error(message));
+        })
+      );
+  }
+
+  resendResetOtp(request: ForgotPasswordRequest): Observable<{ message: string }> {
+    return this.http
+      .post<ApiEnvelope<{ message: string }>>(`${this.authUrl}/resend-reset-otp`, request)
       .pipe(
         map(envelope => {
           if (!envelope.success || !envelope.data) {

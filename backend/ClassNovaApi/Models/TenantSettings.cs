@@ -14,6 +14,8 @@ namespace ClassNovaApi.Models
         public string? AcademicLabelSection { get; set; }
         public string? DefaultAttendanceMode { get; set; }
         public string? DefaultGradingMode { get; set; }
+        public string? AccentColor { get; set; }
+        public string? LandingPageJson { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 

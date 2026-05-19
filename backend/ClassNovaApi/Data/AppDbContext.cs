@@ -30,6 +30,7 @@ namespace ClassNovaApi.Data
         public DbSet<ClassSchedule> ClassSchedules { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<PendingRegistration> PendingRegistrations { get; set; }
+        public DbSet<PasswordResetOtp>    PasswordResetOtps    { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -132,6 +133,11 @@ namespace ClassNovaApi.Data
                 .Property(a => a.MetadataJson)
                 .HasColumnType("jsonb");
 
+            // TenantSettings.LandingPageJson stored as jsonb in PostgreSQL
+            modelBuilder.Entity<TenantSettings>()
+                .Property(ts => ts.LandingPageJson)
+                .HasColumnType("jsonb");
+
             // User.IsEmailVerified — DB default true so existing rows are not locked out after migration
             modelBuilder.Entity<User>()
                 .Property(u => u.IsEmailVerified)
@@ -148,6 +154,21 @@ namespace ClassNovaApi.Data
                 .IsRequired();
 
             modelBuilder.Entity<PendingRegistration>()
+                .Property(pr => pr.OtpSalt)
+                .HasMaxLength(32)
+                .IsRequired();
+
+            // PasswordResetOtp — one active reset per email+tenant at a time
+            modelBuilder.Entity<PasswordResetOtp>()
+                .HasIndex(pr => new { pr.Email, pr.TenantId })
+                .IsUnique();
+
+            modelBuilder.Entity<PasswordResetOtp>()
+                .Property(pr => pr.OtpHash)
+                .HasMaxLength(64)
+                .IsRequired();
+
+            modelBuilder.Entity<PasswordResetOtp>()
                 .Property(pr => pr.OtpSalt)
                 .HasMaxLength(32)
                 .IsRequired();

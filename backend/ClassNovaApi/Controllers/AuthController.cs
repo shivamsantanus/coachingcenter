@@ -18,18 +18,21 @@ namespace ClassNovaApi.Controllers
         private readonly AppDbContext _context;
         private readonly IConfiguration _config;
         private readonly OtpService _otpService;
+        private readonly PasswordResetService _passwordResetService;
         private readonly ILogger<AuthController> _logger;
 
         public AuthController(
             AppDbContext context,
             IConfiguration config,
             OtpService otpService,
+            PasswordResetService passwordResetService,
             ILogger<AuthController> logger)
         {
-            _context    = context;
-            _config     = config;
-            _otpService = otpService;
-            _logger     = logger;
+            _context              = context;
+            _config               = config;
+            _otpService           = otpService;
+            _passwordResetService = passwordResetService;
+            _logger               = logger;
         }
 
         [AllowAnonymous]
@@ -184,6 +187,54 @@ namespace ClassNovaApi.Controllers
             return Ok(new ApiResponse<object>(new
             {
                 message = "If your email is pending verification, a new code has been sent."
+            }));
+        }
+
+        [AllowAnonymous]
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+        {
+            var (success, error) = await _passwordResetService.IssueResetOtpAsync(
+                request.Email, request.TenantSlug);
+
+            if (!success)
+                return BadRequest(new ApiResponse<object>(null, error));
+
+            return Ok(new ApiResponse<object>(new
+            {
+                message = "A reset code has been sent to your email."
+            }));
+        }
+
+        [AllowAnonymous]
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+        {
+            var (success, error) = await _passwordResetService.VerifyAndResetAsync(
+                request.Email, request.TenantSlug, request.Otp, request.NewPassword);
+
+            if (!success)
+                return BadRequest(new ApiResponse<object>(null, error));
+
+            return Ok(new ApiResponse<object>(new
+            {
+                message = "Password reset successfully. You can now sign in."
+            }));
+        }
+
+        [AllowAnonymous]
+        [HttpPost("resend-reset-otp")]
+        public async Task<IActionResult> ResendResetOtp([FromBody] ForgotPasswordRequest request)
+        {
+            var (success, error) = await _passwordResetService.ResendResetOtpAsync(
+                request.Email, request.TenantSlug);
+
+            if (!success)
+                return StatusCode(429, new ApiResponse<object>(null, error));
+
+            return Ok(new ApiResponse<object>(new
+            {
+                message = "If an account with that email exists, a new code has been sent."
             }));
         }
 

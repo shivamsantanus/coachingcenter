@@ -1,80 +1,144 @@
-<div class="login-container">
-  <div class="login-card">
-    <div class="login-header">
-      <h1 class="brand">ClassNova</h1>
-      <p class="subtitle">Sign in to your workspace</p>
+<div class="auth-layout">
+
+  <!-- ── Brand Panel ──────────────────────────── -->
+  <aside class="brand-panel">
+    <div class="brand-inner">
+
+      <div class="brand-logo">
+        <div class="logo-mark">
+          <svg width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="38" height="38" rx="10" fill="rgba(255,255,255,0.16)"/>
+            <path d="M19 8L4 15.5L19 23L34 15.5L19 8Z" fill="white"/>
+            <path d="M8 19.5V27C9.5 29.5 13.5 32 19 32C24.5 32 28.5 29.5 30 27V19.5" stroke="white" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <line x1="34" y1="15.5" x2="34" y2="23.5" stroke="white" stroke-width="2.1" stroke-linecap="round"/>
+            <circle cx="34" cy="24" r="1.75" fill="white"/>
+          </svg>
+        </div>
+        <span class="logo-text">ClassNova</span>
+      </div>
+
+      <div class="brand-tagline">
+        <h2>Empowering Education,<br>One Centre at a Time</h2>
+        <p>A complete platform to manage students, teachers, fees, and exam results — built for modern coaching centres.</p>
+      </div>
+
+      <ul class="feature-list">
+        <li>
+          <span class="feat-icon"><i class="pi pi-users"></i></span>
+          <div class="feat-text">
+            <strong>Student &amp; Teacher Management</strong>
+            <span>Profiles, roles, and performance tracking</span>
+          </div>
+        </li>
+        <li>
+          <span class="feat-icon"><i class="pi pi-chart-bar"></i></span>
+          <div class="feat-text">
+            <strong>Exams &amp; Results</strong>
+            <span>Track scores across batches and subjects</span>
+          </div>
+        </li>
+        <li>
+          <span class="feat-icon"><i class="pi pi-wallet"></i></span>
+          <div class="feat-text">
+            <strong>Fee Management</strong>
+            <span>Plans, payments, and outstanding tracking</span>
+          </div>
+        </li>
+        <li>
+          <span class="feat-icon"><i class="pi pi-calendar"></i></span>
+          <div class="feat-text">
+            <strong>Schedules &amp; Attendance</strong>
+            <span>Timetables, batches, and daily attendance</span>
+          </div>
+        </li>
+      </ul>
+
     </div>
+    <div class="deco deco-1"></div>
+    <div class="deco deco-2"></div>
+    <div class="deco deco-3"></div>
+  </aside>
 
-    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+  <!-- ── Form Panel ──────────────────────────── -->
+  <main class="form-panel">
+    <div class="form-inner">
 
-      <div class="field">
-        <label for="tenantSlug">Organization ID</label>
-        <input
-          id="tenantSlug"
-          type="text"
-          pInputText
-          formControlName="tenantSlug"
-          placeholder="e.g. bright-future"
-          autocomplete="organization"
-        />
-        <small
-          *ngIf="loginForm.get('tenantSlug')?.invalid && loginForm.get('tenantSlug')?.touched"
-          class="error-text">
-          Organization ID is required.
-        </small>
+      <div class="form-header">
+        <h1>Welcome back</h1>
+        <p>Sign in to continue to your workspace</p>
       </div>
 
-      <div class="field">
-        <label for="email">Email</label>
-        <input
-          id="email"
-          type="email"
-          pInputText
-          formControlName="email"
-          placeholder="you@example.com"
-          autocomplete="email"
-        />
-        <small
-          *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
-          class="error-text">
-          Enter a valid email address.
-        </small>
-      </div>
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
 
-      <div class="field">
-        <label for="password">Password</label>
-        <p-password
-          inputId="password"
-          formControlName="password"
-          placeholder="Your password"
-          [feedback]="false"
-          [toggleMask]="true"
+        <div class="field">
+          <label for="tenantSlug">Organization ID</label>
+          <input
+            id="tenantSlug"
+            type="text"
+            pInputText
+            formControlName="tenantSlug"
+            placeholder="e.g. bright-future"
+            autocomplete="organization"
+          />
+          <small *ngIf="loginForm.get('tenantSlug')?.invalid && loginForm.get('tenantSlug')?.touched" class="error-text">
+            Organization ID is required.
+          </small>
+        </div>
+
+        <div class="field">
+          <label for="email">Email address</label>
+          <input
+            id="email"
+            type="email"
+            pInputText
+            formControlName="email"
+            placeholder="you@example.com"
+            autocomplete="email"
+          />
+          <small *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched" class="error-text">
+            Enter a valid email address.
+          </small>
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <p-password
+            inputId="password"
+            formControlName="password"
+            placeholder="Your password"
+            [feedback]="false"
+            [toggleMask]="true"
+            styleClass="w-full"
+          ></p-password>
+          <small *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched" class="error-text">
+            Password is required.
+          </small>
+        </div>
+
+        <div *ngIf="errorMessage" class="error-banner">
+          <i class="pi pi-exclamation-circle"></i>
+          {{ errorMessage }}
+        </div>
+
+        <div class="form-actions-row">
+          <a routerLink="/forgot-password" class="forgot-link">Forgot password?</a>
+        </div>
+
+        <p-button
+          type="submit"
+          label="Sign in"
           styleClass="w-full"
-        ></p-password>
-        <small
-          *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
-          class="error-text">
-          Password is required.
-        </small>
-      </div>
+          [loading]="loading"
+          [disabled]="loginForm.invalid">
+        </p-button>
 
-      <div *ngIf="errorMessage" class="error-banner">
-        {{ errorMessage }}
-      </div>
+      </form>
 
-      <p-button
-        type="submit"
-        label="Sign in"
-        styleClass="w-full"
-        [loading]="loading"
-        [disabled]="loginForm.invalid">
-      </p-button>
+      <p class="auth-switch">
+        Don't have an account? <a routerLink="/register">Sign up free</a>
+      </p>
 
-    </form>
+    </div>
+  </main>
 
-    <p class="auth-link">
-      Don't have an account?
-      <a routerLink="/register">Sign up</a>
-    </p>
-  </div>
 </div>

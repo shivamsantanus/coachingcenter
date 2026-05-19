@@ -3,6 +3,7 @@ using System;
 using ClassNovaApi.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ClassNovaApi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260519144346_AddPasswordResetOtp")]
+    partial class AddPasswordResetOtp
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1208,10 +1211,6 @@ namespace ClassNovaApi.Migrations
                         .HasColumnType("text")
                         .HasColumnName("academic_label_section");
 
-                    b.Property<string>("AccentColor")
-                        .HasColumnType("text")
-                        .HasColumnName("accent_color");
-
                     b.Property<string>("BrandName")
                         .IsRequired()
                         .HasColumnType("text")
@@ -1233,10 +1232,6 @@ namespace ClassNovaApi.Migrations
                     b.Property<string>("DefaultGradingMode")
                         .HasColumnType("text")
                         .HasColumnName("default_grading_mode");
-
-                    b.Property<string>("LandingPageJson")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("landing_page_json");
 
                     b.Property<string>("LogoUrl")
                         .HasColumnType("text")
