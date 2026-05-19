@@ -1,0 +1,60 @@
+<!-- Not found -->
+@if (notFound()) {
+  <div class="ta-not-found">
+    <i class="pi pi-exclamation-circle ta-nf-icon"></i>
+    <h2>Organisation not found</h2>
+    <p>This link is invalid or the organisation is no longer active.</p>
+  </div>
+}
+
+<!-- Loading -->
+@else if (isLoading()) {
+  <div class="ta-loading">
+    <div class="ta-spinner"></div>
+  </div>
+}
+
+<!-- Branded layout -->
+@else {
+  <div class="ta-layout">
+
+    <!-- Left — org brand panel -->
+    <aside class="ta-brand">
+      <div class="ta-brand-inner">
+
+        <!-- Logo or initial avatar -->
+        <button class="ta-logo-btn" type="button" (click)="navigateToLanding()" title="Back to homepage">
+          @if (branding()?.logoUrl) {
+            <img [src]="branding()!.logoUrl" [alt]="branding()!.brandName" class="ta-logo-img" />
+          } @else {
+            <div class="ta-logo-initial">{{ branding()?.brandName?.charAt(0) ?? '?' }}</div>
+          }
+        </button>
+
+        <h1 class="ta-brand-name">{{ branding()?.brandName }}</h1>
+        <p class="ta-brand-tagline">Student &amp; Teacher Management Portal</p>
+
+        <div class="ta-divider"></div>
+
+        <ul class="ta-features">
+          <li><i class="pi pi-check-circle"></i> Track results &amp; attendance</li>
+          <li><i class="pi pi-check-circle"></i> Manage fees &amp; payments</li>
+          <li><i class="pi pi-check-circle"></i> Access schedules &amp; batches</li>
+        </ul>
+
+      </div>
+
+      <p class="ta-powered">Powered by <strong>ClassNova</strong></p>
+
+      <div class="ta-deco ta-deco-1"></div>
+      <div class="ta-deco ta-deco-2"></div>
+      <div class="ta-deco ta-deco-3"></div>
+    </aside>
+
+    <!-- Right — form (child route renders here) -->
+    <main class="ta-content">
+      <router-outlet></router-outlet>
+    </main>
+
+  </div>
+}

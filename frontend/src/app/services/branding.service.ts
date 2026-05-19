@@ -3,7 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of, tap, map, catchError } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { TenantBranding, TeacherPreview } from '../models/branding.models';
+import { TenantBranding, TeacherPreview, UpdateBrandingRequest } from '../models/branding.models';
 
 interface ApiEnvelope<T> {
   success: boolean;
@@ -59,6 +59,26 @@ export class BrandingService {
       root.style.setProperty('--brand-accent', brandingData.accentColor);
       root.style.setProperty('--cn-accent', brandingData.accentColor);
     }
+  }
+
+  saveBranding(request: UpdateBrandingRequest): Observable<{ message: string }> {
+    return this.http
+      .put<{ success: boolean; data: { message: string } | null; error: string | null }>(
+        `${environment.apiBaseUrl}/tenant/branding`,
+        request
+      )
+      .pipe(
+        map(envelope => {
+          if (!envelope.success || !envelope.data) {
+            throw new Error(envelope.error ?? 'Failed to save branding.');
+          }
+          return envelope.data;
+        }),
+        catchError(err => {
+          const message = err?.error?.error ?? err?.message ?? 'Failed to save branding.';
+          throw new Error(message);
+        })
+      );
   }
 
   clearTheme(): void {

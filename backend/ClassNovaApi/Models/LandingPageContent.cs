@@ -9,9 +9,33 @@ namespace ClassNovaApi.Models
         public AboutSection? About { get; set; }
         public OfferingsSection? Offerings { get; set; }
         public TeachersSectionConfig? TeachersSection { get; set; }
+        public AchievementsSection? Achievements { get; set; }
         public GallerySection? Gallery { get; set; }
         public ContactSection? Contact { get; set; }
         public SocialLinks? Social { get; set; }
+    }
+
+    public class AchievementsSection
+    {
+        public bool IsVisible { get; set; } = true;
+        public List<AchievementItem> Items { get; set; } = [];
+    }
+
+    public class AchievementItem
+    {
+        [Required, MaxLength(80)]
+        public string StudentName { get; set; } = string.Empty;
+
+        [Required, MaxLength(100)]
+        public string Exam { get; set; } = string.Empty;
+
+        [Required, MaxLength(60)]
+        public string Score { get; set; } = string.Empty;
+
+        public string? PhotoUrl { get; set; }
+
+        [Range(2000, 2100)]
+        public int? Year { get; set; }
     }
 
     public class HeroSection

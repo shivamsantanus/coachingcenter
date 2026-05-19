@@ -22,7 +22,11 @@
     }
     <h1>{{ branding()!.brandName }}</h1>
     <p>Our page is coming soon.</p>
-    <button pButton label="Sign In" (click)="navigateToLogin()"></button>
+    @if (isSignedInHere()) {
+      <button pButton label="Go to Dashboard" (click)="navigateToDashboard()"></button>
+    } @else {
+      <button pButton label="Sign In" (click)="navigateToLogin()"></button>
+    }
   </div>
 }
 
@@ -39,7 +43,11 @@
           }
           <span class="lp-brand-name">{{ branding()!.brandName }}</span>
         </div>
-        <button pButton label="Sign In" class="p-button-sm" (click)="navigateToLogin()"></button>
+        @if (isSignedInHere()) {
+          <button pButton label="Go to Dashboard" class="p-button-sm" (click)="navigateToDashboard()"></button>
+        } @else {
+          <button pButton label="Sign In" class="p-button-sm" (click)="navigateToLogin()"></button>
+        }
       </div>
     </nav>
 
@@ -53,11 +61,15 @@
           <div class="lp-hero-content">
             <h1 class="hero-headline">{{ branding()!.landingPage!.hero!.headline }}</h1>
             <p class="hero-tagline">{{ branding()!.landingPage!.hero!.tagline }}</p>
-            <button pButton
-              [label]="branding()!.landingPage!.hero!.ctaText || 'Enroll Now'"
-              class="hero-cta"
-              (click)="navigateToLogin()">
-            </button>
+            @if (isSignedInHere()) {
+              <button pButton label="Go to Dashboard" class="hero-cta" (click)="navigateToDashboard()"></button>
+            } @else {
+              <button pButton
+                [label]="branding()!.landingPage!.hero!.ctaText || 'Enroll Now'"
+                class="hero-cta"
+                (click)="navigateToRegister()">
+              </button>
+            }
           </div>
         </div>
       </section>
@@ -95,7 +107,7 @@
           <div class="offerings-grid">
             @for (item of branding()!.landingPage!.offerings!.items; track item.title) {
               <div class="offering-card">
-                <div class="offering-icon">&#127979;</div>
+                <div class="offering-icon"><i class="pi pi-graduation-cap"></i></div>
                 <h3 class="offering-title">{{ item.title }}</h3>
                 @if (item.note) {
                   <p class="offering-note">{{ item.note }}</p>
@@ -135,18 +147,56 @@
       </section>
     }
 
-    <!-- GALLERY -->
+    <!-- ACHIEVEMENTS -->
+    @if (branding()!.landingPage!.achievements?.isVisible && branding()!.landingPage!.achievements!.items.length > 0) {
+      <section class="lp-section lp-achievements lp-section-alt">
+        <div class="lp-container">
+          <h2 class="section-title">Our Achievers</h2>
+          <div class="achievements-grid">
+            @for (item of branding()!.landingPage!.achievements!.items; track item.studentName) {
+              <div class="achievement-card">
+                <div class="achievement-score">{{ item.score }}</div>
+                <div class="achievement-student">
+                  @if (item.photoUrl) {
+                    <img [src]="item.photoUrl" [alt]="item.studentName" class="achievement-photo" />
+                  } @else {
+                    <div class="achievement-avatar">{{ item.studentName.charAt(0) }}</div>
+                  }
+                  <div class="achievement-info">
+                    <span class="achievement-name">{{ item.studentName }}</span>
+                    <span class="achievement-exam">{{ item.exam }}</span>
+                    @if (item.year) {
+                      <span class="achievement-year">{{ item.year }}</span>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- GALLERY CAROUSEL -->
     @if (branding()!.landingPage!.gallery?.isVisible && branding()!.landingPage!.gallery!.imageUrls.length > 0) {
       <section class="lp-section lp-gallery lp-section-alt">
         <div class="lp-container">
           <h2 class="section-title">Gallery</h2>
-          <div class="gallery-grid">
-            @for (url of branding()!.landingPage!.gallery!.imageUrls; track url) {
-              <div class="gallery-item">
-                <img [src]="url" alt="Gallery photo" (error)="onImageError($event)" />
+          <p-carousel
+            [value]="branding()!.landingPage!.gallery!.imageUrls"
+            [numVisible]="3"
+            [numScroll]="1"
+            [circular]="true"
+            [autoplayInterval]="3500"
+            [responsiveOptions]="carouselResponsiveOptions"
+            styleClass="gallery-carousel">
+            <ng-template #item let-imageUrl>
+              <div class="carousel-slide">
+                <img [src]="imageUrl" alt="Gallery photo"
+                  (error)="onImageError($event)" />
               </div>
-            }
-          </div>
+            </ng-template>
+          </p-carousel>
         </div>
       </section>
     }
@@ -160,13 +210,13 @@
             <div class="contact-details">
               @if (branding()!.landingPage!.contact!.phone) {
                 <div class="contact-row">
-                  <span class="contact-icon">&#128222;</span>
+                  <i class="pi pi-phone contact-icon"></i>
                   <span>{{ branding()!.landingPage!.contact!.phone }}</span>
                 </div>
               }
               @if (branding()!.landingPage!.contact!.email) {
                 <div class="contact-row">
-                  <span class="contact-icon">&#9993;</span>
+                  <i class="pi pi-envelope contact-icon"></i>
                   <a [href]="'mailto:' + branding()!.landingPage!.contact!.email">
                     {{ branding()!.landingPage!.contact!.email }}
                   </a>
@@ -174,7 +224,7 @@
               }
               @if (branding()!.landingPage!.contact!.address) {
                 <div class="contact-row">
-                  <span class="contact-icon">&#128205;</span>
+                  <i class="pi pi-map-marker contact-icon"></i>
                   <span>{{ branding()!.landingPage!.contact!.address }}</span>
                 </div>
               }
@@ -196,6 +246,28 @@
       </section>
     }
 
+    <!-- FLOATING CONTACT BUTTONS -->
+    @if (branding()!.landingPage!.social?.whatsapp || branding()!.landingPage!.social?.instagram) {
+      <div class="floating-contact">
+        @if (branding()!.landingPage!.social?.whatsapp) {
+          <a [href]="'https://wa.me/' + branding()!.landingPage!.social!.whatsapp"
+            target="_blank" rel="noopener"
+            class="floating-btn floating-whatsapp"
+            title="Chat on WhatsApp">
+            <i class="pi pi-whatsapp"></i>
+          </a>
+        }
+        @if (branding()!.landingPage!.social?.instagram) {
+          <a [href]="branding()!.landingPage!.social!.instagram"
+            target="_blank" rel="noopener"
+            class="floating-btn floating-instagram"
+            title="Follow on Instagram">
+            <i class="pi pi-instagram"></i>
+          </a>
+        }
+      </div>
+    }
+
     <!-- FOOTER -->
     <footer class="lp-footer">
       <div class="lp-container">
@@ -208,23 +280,27 @@
         @if (branding()!.landingPage!.social) {
           <div class="social-links">
             @if (branding()!.landingPage!.social!.whatsapp) {
-              <a [href]="'https://wa.me/' + branding()!.landingPage!.social!.whatsapp" target="_blank" rel="noopener" class="social-link" title="WhatsApp">
-                <span>&#128172;</span>
+              <a [href]="'https://wa.me/' + branding()!.landingPage!.social!.whatsapp"
+                target="_blank" rel="noopener" class="social-link" title="WhatsApp">
+                <i class="pi pi-whatsapp"></i>
               </a>
             }
             @if (branding()!.landingPage!.social!.instagram) {
-              <a [href]="branding()!.landingPage!.social!.instagram" target="_blank" rel="noopener" class="social-link" title="Instagram">
-                <span>&#128247;</span>
+              <a [href]="branding()!.landingPage!.social!.instagram"
+                target="_blank" rel="noopener" class="social-link" title="Instagram">
+                <i class="pi pi-instagram"></i>
               </a>
             }
             @if (branding()!.landingPage!.social!.youtube) {
-              <a [href]="branding()!.landingPage!.social!.youtube" target="_blank" rel="noopener" class="social-link" title="YouTube">
-                <span>&#9654;</span>
+              <a [href]="branding()!.landingPage!.social!.youtube"
+                target="_blank" rel="noopener" class="social-link" title="YouTube">
+                <i class="pi pi-youtube"></i>
               </a>
             }
             @if (branding()!.landingPage!.social!.facebook) {
-              <a [href]="branding()!.landingPage!.social!.facebook" target="_blank" rel="noopener" class="social-link" title="Facebook">
-                <span>&#128101;</span>
+              <a [href]="branding()!.landingPage!.social!.facebook"
+                target="_blank" rel="noopener" class="social-link" title="Facebook">
+                <i class="pi pi-facebook"></i>
               </a>
             }
           </div>

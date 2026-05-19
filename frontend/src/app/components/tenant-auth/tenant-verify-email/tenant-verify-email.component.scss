@@ -1,0 +1,10 @@
+@use '../forms' as f;
+@include f.base;
+
+.otp-input {
+  font-size: 1.5rem;
+  letter-spacing: 0.4em;
+  text-align: center;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+}

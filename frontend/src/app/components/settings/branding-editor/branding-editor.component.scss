@@ -1,0 +1,231 @@
+.editor-page {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  font-family: 'Inter', sans-serif;
+}
+
+// ── Header ────────────────────────────────────────────────────────────────────
+
+.editor-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.editor-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--cn-text);
+  margin: 0 0 0.25rem;
+}
+
+.editor-subtitle {
+  font-size: 0.875rem;
+  color: var(--cn-muted);
+  margin: 0;
+}
+
+.editor-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+// ── Feedback ──────────────────────────────────────────────────────────────────
+
+.feedback {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+
+  &.success {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #6ee7b7;
+  }
+
+  &.error {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+  }
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+
+:host ::ng-deep p-tabs {
+  .p-tabpanels {
+    padding: 1.5rem 0 0;
+    background: transparent;
+  }
+}
+
+.list-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+// ── Tab content layout ────────────────────────────────────────────────────────
+
+.tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+// ── Field ─────────────────────────────────────────────────────────────────────
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+
+  label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+
+  &.field-sm {
+    max-width: 260px;
+  }
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.char-hint {
+  font-weight: 400;
+  color: var(--cn-muted);
+  font-size: 0.8rem;
+}
+
+.field-hint {
+  font-size: 0.78rem;
+  color: var(--cn-muted);
+  margin-top: 0.1rem;
+}
+
+// ── Colour picker ──────────────────────────────────────────────────────────────
+
+.color-field {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+
+  input[type="color"] {
+    width: 40px;
+    height: 40px;
+    border: 1.5px solid #D1D5DB;
+    border-radius: 8px;
+    padding: 2px;
+    cursor: pointer;
+    flex-shrink: 0;
+    background: none;
+  }
+
+  .p-inputtext {
+    flex: 1;
+    font-family: 'Courier New', monospace;
+    text-transform: uppercase;
+  }
+}
+
+// ── Toggle row ────────────────────────────────────────────────────────────────
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  label {
+    font-size: 0.9rem;
+    color: #374151;
+    cursor: pointer;
+  }
+}
+
+// ── Dynamic list ──────────────────────────────────────────────────────────────
+
+.list-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+
+  .list-item-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.625rem;
+    flex: 1;
+
+    @media (max-width: 600px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .flex-1 { flex: 1; }
+}
+
+// ── Achievement list item ─────────────────────────────────────────────────────
+
+.achievement-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 1rem;
+
+  .achievement-fields {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .achievement-remove {
+    margin-top: 0.25rem;
+    flex-shrink: 0;
+  }
+}
+
+// ── Info note ─────────────────────────────────────────────────────────────────
+
+.info-note {
+  background: #f0f4ff;
+  border: 1px solid #c7d2fe;
+  border-radius: 8px;
+  padding: 0.875rem 1rem;
+  font-size: 0.875rem;
+  color: #3730a3;
+  line-height: 1.6;
+  margin: 0;
+}

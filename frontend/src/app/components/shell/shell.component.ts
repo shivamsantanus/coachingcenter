@@ -50,8 +50,13 @@ export class ShellComponent implements OnInit {
     );
   }
 
-  logout() {
+  get tenantHomeUrl(): string {
+    return `/t/${this.context?.tenantSlug ?? ''}`;
+  }
+
+  logout(): void {
+    const slug = this.context?.tenantSlug ?? '';
     this.authService.logout();
-    this.router.navigate(['/login']);
+    this.router.navigate([`/t/${slug}`]);
   }
 }

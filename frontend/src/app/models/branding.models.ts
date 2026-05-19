@@ -14,6 +14,7 @@ export interface LandingPageContent {
   about: AboutSection | null;
   offerings: OfferingsSection | null;
   teachersSection: TeachersSectionConfig | null;
+  achievements: AchievementsSection | null;
   gallery: GallerySection | null;
   contact: ContactSection | null;
   social: SocialLinks | null;
@@ -47,6 +48,19 @@ export interface TeachersSectionConfig {
   isVisible: boolean;
 }
 
+export interface AchievementsSection {
+  isVisible: boolean;
+  items: AchievementItem[];
+}
+
+export interface AchievementItem {
+  studentName: string;
+  exam: string;
+  score: string;
+  photoUrl: string | null;
+  year: number | null;
+}
+
 export interface GallerySection {
   isVisible: boolean;
   imageUrls: string[];
@@ -71,4 +85,12 @@ export interface TeacherPreview {
   fullName: string;
   qualification: string | null;
   photoUrl: string | null;
+}
+
+export interface UpdateBrandingRequest {
+  brandName?: string | null;
+  logoUrl?: string | null;
+  primaryColor?: string | null;
+  accentColor?: string | null;
+  landingPage?: LandingPageContent | null;
 }

@@ -1,0 +1,65 @@
+<div class="form-inner">
+
+  <div class="form-header">
+    <h2>Create account</h2>
+    <p>Register as a student to get started</p>
+  </div>
+
+  <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+
+    <div class="field">
+      <label for="tr-name">Full name</label>
+      <input id="tr-name" type="text" pInputText formControlName="fullName"
+        placeholder="Your full name" autocomplete="name" />
+      @if (registerForm.get('fullName')?.invalid && registerForm.get('fullName')?.touched) {
+        <small class="error-text">Full name is required.</small>
+      }
+    </div>
+
+    <div class="field">
+      <label for="tr-email">Email address</label>
+      <input id="tr-email" type="email" pInputText formControlName="email"
+        placeholder="you@example.com" autocomplete="email" />
+      @if (registerForm.get('email')?.invalid && registerForm.get('email')?.touched) {
+        <small class="error-text">Enter a valid email address.</small>
+      }
+    </div>
+
+    <div class="field">
+      <label for="tr-password">Password</label>
+      <p-password inputId="tr-password" formControlName="password"
+        placeholder="Min. 8 characters" [toggleMask]="true" styleClass="w-full">
+      </p-password>
+      @if (registerForm.get('password')?.invalid && registerForm.get('password')?.touched) {
+        <small class="error-text">Password must be at least 8 characters.</small>
+      }
+    </div>
+
+    <div class="field">
+      <label for="tr-confirm">Confirm password</label>
+      <p-password inputId="tr-confirm" formControlName="confirmPassword"
+        placeholder="Re-enter password" [feedback]="false" [toggleMask]="true"
+        styleClass="w-full">
+      </p-password>
+      @if (registerForm.hasError('passwordMismatch') && registerForm.get('confirmPassword')?.touched) {
+        <small class="error-text">Passwords do not match.</small>
+      }
+    </div>
+
+    @if (errorMsg()) {
+      <div class="error-banner">
+        <i class="pi pi-exclamation-circle"></i>{{ errorMsg() }}
+      </div>
+    }
+
+    <p-button type="submit" label="Create account"
+      [loading]="isLoading()" [disabled]="registerForm.invalid">
+    </p-button>
+
+  </form>
+
+  <p class="auth-switch">
+    Already have an account? <a [routerLink]="loginLink">Sign in</a>
+  </p>
+
+</div>

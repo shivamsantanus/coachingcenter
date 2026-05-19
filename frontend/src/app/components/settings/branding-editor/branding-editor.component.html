@@ -1,0 +1,301 @@
+<div class="editor-page">
+
+  <!-- Header -->
+  <div class="editor-header">
+    <div>
+      <h1 class="editor-title">Branding &amp; Landing Page</h1>
+      <p class="editor-subtitle">Configure how your page looks to prospective students</p>
+    </div>
+    <div class="editor-actions">
+      <button pButton label="Preview" icon="pi pi-external-link" class="p-button-outlined p-button-sm"
+        type="button" (click)="openPreview()">
+      </button>
+      <button pButton label="Save Changes" icon="pi pi-check" class="p-button-sm"
+        type="button" [loading]="isSaving()" (click)="onSubmit()">
+      </button>
+    </div>
+  </div>
+
+  <!-- Feedback -->
+  @if (saveSuccess()) {
+    <div class="feedback success">Changes saved successfully.</div>
+  }
+  @if (saveError()) {
+    <div class="feedback error">{{ saveError() }}</div>
+  }
+
+  <!-- Form -->
+  <form [formGroup]="brandingForm">
+    <p-tabs value="branding">
+      <p-tablist>
+        <p-tab value="branding">Branding</p-tab>
+        <p-tab value="hero">Hero</p-tab>
+        <p-tab value="about">About</p-tab>
+        <p-tab value="offerings">Offerings</p-tab>
+        <p-tab value="teachers">Teachers</p-tab>
+        <p-tab value="achievements">Achievements</p-tab>
+        <p-tab value="gallery">Gallery</p-tab>
+        <p-tab value="contact">Contact</p-tab>
+        <p-tab value="social">Social</p-tab>
+      </p-tablist>
+
+      <p-tabpanels>
+
+        <!-- ── Branding ───────────────────────────────────────── -->
+        <p-tabpanel value="branding">
+          <div class="tab-content">
+            <div class="field-row">
+              <div class="field">
+                <label>Brand Name</label>
+                <input pInputText formControlName="brandName" placeholder="e.g. Bright Minds Academy" />
+              </div>
+              <div class="field">
+                <label>Logo URL</label>
+                <input pInputText formControlName="logoUrl" placeholder="https://..." />
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label>Primary Colour</label>
+                <div class="color-field">
+                  <input type="color" [value]="brandingForm.get('primaryColor')?.value || '#3B5FDB'"
+                    (input)="brandingForm.get('primaryColor')?.setValue($any($event.target).value)" />
+                  <input pInputText formControlName="primaryColor" placeholder="#3B5FDB" maxlength="7" />
+                </div>
+              </div>
+              <div class="field">
+                <label>Accent Colour</label>
+                <div class="color-field">
+                  <input type="color" [value]="brandingForm.get('accentColor')?.value || '#F59E0B'"
+                    (input)="brandingForm.get('accentColor')?.setValue($any($event.target).value)" />
+                  <input pInputText formControlName="accentColor" placeholder="#F59E0B" maxlength="7" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </p-tabpanel>
+
+        <!-- ── Hero ──────────────────────────────────────────── -->
+        <p-tabpanel value="hero">
+          <div class="tab-content" formGroupName="hero">
+            <div class="field">
+              <label>Headline <span class="char-hint">(max 80 chars)</span></label>
+              <input pInputText formControlName="headline" placeholder="Learn. Grow. Excel." />
+            </div>
+            <div class="field">
+              <label>Tagline <span class="char-hint">(max 120 chars)</span></label>
+              <input pInputText formControlName="tagline" placeholder="Quality coaching since 2015" />
+            </div>
+            <div class="field">
+              <label>Banner Image URL</label>
+              <input pInputText formControlName="bannerImageUrl" placeholder="https://..." />
+              <span class="field-hint">Used as hero background. Leave blank for a solid colour.</span>
+            </div>
+            <div class="field field-sm">
+              <label>CTA Button Text <span class="char-hint">(max 40 chars)</span></label>
+              <input pInputText formControlName="ctaText" placeholder="Enroll Now" />
+            </div>
+          </div>
+        </p-tabpanel>
+
+        <!-- ── About ─────────────────────────────────────────── -->
+        <p-tabpanel value="about">
+          <div class="tab-content" formGroupName="about">
+            <div class="toggle-row">
+              <p-toggleswitch formControlName="isVisible"></p-toggleswitch>
+              <label>Show About section on landing page</label>
+            </div>
+            <div class="field">
+              <label>Description <span class="char-hint">(max 500 chars)</span></label>
+              <textarea pTextarea formControlName="description" rows="4"
+                placeholder="A brief introduction to your coaching centre..."></textarea>
+            </div>
+            <div class="field-row">
+              <div class="field field-sm">
+                <label>Founded Year</label>
+                <input pInputText formControlName="foundedYear" type="number" placeholder="2015" />
+              </div>
+              <div class="field field-sm">
+                <label>Total Students</label>
+                <input pInputText formControlName="studentCount" type="number" placeholder="500" />
+              </div>
+            </div>
+          </div>
+        </p-tabpanel>
+
+        <!-- ── Offerings ─────────────────────────────────────── -->
+        <p-tabpanel value="offerings">
+          <div class="tab-content" formGroupName="offerings">
+            <div class="toggle-row">
+              <p-toggleswitch formControlName="isVisible"></p-toggleswitch>
+              <label>Show Offerings section on landing page</label>
+            </div>
+            <div formArrayName="items" class="list-section">
+              @for (item of offeringsItems.controls; track $index) {
+                <div class="list-item" [formGroupName]="$index">
+                  <div class="list-item-fields">
+                    <input pInputText formControlName="title" placeholder="e.g. JEE Mains" />
+                    <input pInputText formControlName="note" placeholder="Short note (optional)" />
+                  </div>
+                  <button pButton icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm"
+                    type="button" (click)="removeOffering($index)">
+                  </button>
+                </div>
+              }
+            </div>
+            <div class="list-actions">
+              <button pButton label="Add Course" icon="pi pi-plus" class="p-button-outlined p-button-sm"
+                type="button" [disabled]="offeringsItems.length >= 6" (click)="addOffering()">
+              </button>
+              <span class="field-hint">{{ offeringsItems.length }}/6 courses added</span>
+            </div>
+          </div>
+        </p-tabpanel>
+
+        <!-- ── Teachers ──────────────────────────────────────── -->
+        <p-tabpanel value="teachers">
+          <div class="tab-content" formGroupName="teachersSection">
+            <div class="toggle-row">
+              <p-toggleswitch formControlName="isVisible"></p-toggleswitch>
+              <label>Show Teachers section on landing page</label>
+            </div>
+            <p class="info-note">
+              When enabled, up to 8 of your active teachers are shown automatically.
+              Manage teachers via the Teachers section in the main menu.
+            </p>
+          </div>
+        </p-tabpanel>
+
+        <!-- ── Achievements ─────────────────────────────────── -->
+        <p-tabpanel value="achievements">
+          <div class="tab-content" formGroupName="achievements">
+            <div class="toggle-row">
+              <p-toggleswitch formControlName="isVisible"></p-toggleswitch>
+              <label>Show Achievements section on landing page</label>
+            </div>
+            <div formArrayName="items" class="list-section">
+              @for (achievementCtrl of achievementItems.controls; track $index) {
+                <div class="achievement-list-item" [formGroupName]="$index">
+                  <div class="achievement-fields">
+                    <div class="field-row">
+                      <div class="field">
+                        <label>Student Name</label>
+                        <input pInputText formControlName="studentName" placeholder="e.g. Priya Sharma" />
+                      </div>
+                      <div class="field">
+                        <label>Exam / Course</label>
+                        <input pInputText formControlName="exam" placeholder="e.g. JEE Advanced" />
+                      </div>
+                    </div>
+                    <div class="field-row">
+                      <div class="field field-sm">
+                        <label>Score / Rank</label>
+                        <input pInputText formControlName="score" placeholder="e.g. AIR 42 or 98%" />
+                      </div>
+                      <div class="field field-sm">
+                        <label>Year</label>
+                        <input pInputText formControlName="year" type="number" placeholder="2024" />
+                      </div>
+                      <div class="field">
+                        <label>Photo URL (optional)</label>
+                        <input pInputText formControlName="photoUrl" placeholder="https://..." />
+                      </div>
+                    </div>
+                  </div>
+                  <button pButton icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm achievement-remove"
+                    type="button" (click)="removeAchievement($index)">
+                  </button>
+                </div>
+              }
+            </div>
+            <div class="list-actions">
+              <button pButton label="Add Achiever" icon="pi pi-plus" class="p-button-outlined p-button-sm"
+                type="button" [disabled]="achievementItems.length >= 12" (click)="addAchievement()">
+              </button>
+              <span class="field-hint">{{ achievementItems.length }}/12 achievers added</span>
+            </div>
+          </div>
+        </p-tabpanel>
+
+        <!-- ── Gallery ───────────────────────────────────────── -->
+        <p-tabpanel value="gallery">
+          <div class="tab-content" formGroupName="gallery">
+            <div class="toggle-row">
+              <p-toggleswitch formControlName="isVisible"></p-toggleswitch>
+              <label>Show Gallery section on landing page</label>
+            </div>
+            <div formArrayName="imageUrls" class="list-section">
+              @for (urlCtrl of galleryUrls.controls; track $index) {
+                <div class="list-item">
+                  <input pInputText [formControlName]="$index" placeholder="https://..." class="flex-1" />
+                  <button pButton icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm"
+                    type="button" (click)="removeGalleryUrl($index)">
+                  </button>
+                </div>
+              }
+            </div>
+            <div class="list-actions">
+              <button pButton label="Add Photo URL" icon="pi pi-plus" class="p-button-outlined p-button-sm"
+                type="button" [disabled]="galleryUrls.length >= 8" (click)="addGalleryUrl()">
+              </button>
+              <span class="field-hint">{{ galleryUrls.length }}/8 photos added</span>
+            </div>
+          </div>
+        </p-tabpanel>
+
+        <!-- ── Contact ───────────────────────────────────────── -->
+        <p-tabpanel value="contact">
+          <div class="tab-content" formGroupName="contact">
+            <div class="toggle-row">
+              <p-toggleswitch formControlName="isVisible"></p-toggleswitch>
+              <label>Show Contact section on landing page</label>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label>Phone</label>
+                <input pInputText formControlName="phone" placeholder="+91 98765 43210" />
+              </div>
+              <div class="field">
+                <label>Email</label>
+                <input pInputText formControlName="email" placeholder="info@example.com" />
+              </div>
+            </div>
+            <div class="field">
+              <label>Address</label>
+              <input pInputText formControlName="address" placeholder="123 Main Street, City, State" />
+            </div>
+            <div class="field">
+              <label>Google Maps Embed URL</label>
+              <input pInputText formControlName="mapsEmbedUrl" placeholder="https://maps.google.com/embed?..." />
+              <span class="field-hint">In Google Maps → Share → Embed a map → copy the src URL from the iframe code.</span>
+            </div>
+          </div>
+        </p-tabpanel>
+
+        <!-- ── Social ────────────────────────────────────────── -->
+        <p-tabpanel value="social">
+          <div class="tab-content" formGroupName="social">
+            <div class="field">
+              <label>WhatsApp Number</label>
+              <input pInputText formControlName="whatsapp" placeholder="919876543210 (no + or spaces)" />
+            </div>
+            <div class="field">
+              <label>Instagram URL</label>
+              <input pInputText formControlName="instagram" placeholder="https://instagram.com/yourpage" />
+            </div>
+            <div class="field">
+              <label>YouTube URL</label>
+              <input pInputText formControlName="youtube" placeholder="https://youtube.com/@yourchannel" />
+            </div>
+            <div class="field">
+              <label>Facebook URL</label>
+              <input pInputText formControlName="facebook" placeholder="https://facebook.com/yourpage" />
+            </div>
+          </div>
+        </p-tabpanel>
+
+      </p-tabpanels>
+    </p-tabs>
+  </form>
+
+</div>

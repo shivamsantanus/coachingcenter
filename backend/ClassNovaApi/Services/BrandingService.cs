@@ -92,6 +92,9 @@ namespace ClassNovaApi.Services
             if (request.LandingPage?.Gallery?.ImageUrls?.Count > 8)
                 return "Gallery cannot exceed 8 images.";
 
+            if (request.LandingPage?.Achievements?.Items?.Count > 12)
+                return "Achievements list cannot exceed 12 items.";
+
             return null;
         }
     }

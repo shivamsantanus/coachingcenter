@@ -4,7 +4,7 @@
 > Never start a feature without a row in the plan. Never finish one without marking it done
 > and linking the feature doc. This is the single source of truth for project state.
 
-**Last updated:** 2026-05-19
+**Last updated:** 2026-05-20 (Tenant auth pages implemented)
 
 ---
 
@@ -153,18 +153,21 @@
 | 10.3 | Backend: PUT /api/tenant/branding + teachers-preview | ✅ Done | [tenant-landing-page.md](features/tenant-landing-page.md) | BrandingService + 2 new controller actions |
 | 10.4 | Angular BrandingService + CSS variable theming | ✅ Done | [tenant-landing-page.md](features/tenant-landing-page.md) | applyTheme() wired into shell on init |
 | 10.5 | LandingPageComponent (/t/:slug) | ✅ Done | [tenant-landing-page.md](features/tenant-landing-page.md) | Public, no auth, all 7 sections |
-| 10.6 | LandingPageEditorComponent (ORG_ADMIN settings) | 📋 Planned | [tenant-landing-page.md](features/tenant-landing-page.md) | Tab-based form; depends on 9.3 |
+| 10.6 | BrandingEditorComponent (/settings/branding) | ✅ Done | [branding-editor.md](features/branding-editor.md) | 8-tab form; ORG_ADMIN only; save + preview |
+| 10.7 | Achievements section — landing page + editor | ✅ Done | [tenant-landing-page.md](features/tenant-landing-page.md) | AchievementItem DTO; achievement-card UI; editor tab (max 12) |
+| 10.8 | Tenant-branded auth pages (/t/:slug/login etc.) | ✅ Done | [tenant-auth-pages.md](features/tenant-auth-pages.md) | TenantAuthComponent shell + 5 child forms; branded left panel; slug-scoped routing |
 
 ---
 
 ## What to Work on Next
 
-**Immediate next steps (Phase 2 continuation):**
+**Immediate next steps:**
 
 1. **Student management UI** (Feature 2.3) — create `docs/features/student-management.md` first
-   *(Forgot password flow is complete — backend + frontend + migration all done)*
 2. **Teacher management UI** (Feature 2.4) — create `docs/features/teacher-management.md` first
 3. Then move into Phase 3 (Academic Structure) — start with backend controllers before UI
+
+*(Tenant-branded auth pages complete: `/t/:slug/login|register|verify-email|forgot-password|reset-password` all implemented with branded left-panel shell and slug-scoped routing)*
 
 ---
 
