@@ -240,6 +240,7 @@ export const environment = {
 - Use `isPlatformBrowser()` before accessing `localStorage` (SSR compatibility)
 - All date/time formatting: use Angular `DatePipe` or native `Intl` — no Moment.js dependency yet
 - API base URL from `environment.ts` only — never inline strings
+- **Never use `::ng-deep`** in component SCSS files — see Rule 21 below
 
 ---
 
@@ -370,6 +371,21 @@ Every endpoint must return this structure:
 - Components read from services — they never write to shared state directly; call a service method
 - Backend: service methods return new values or update DB through EF Core — no global mutable variables
 
+### 21. No `::ng-deep` in Component SCSS
+
+`::ng-deep` is deprecated and breaks Angular's style encapsulation. It also leads to uncontrolled global leakage and will be fully removed from Angular.
+
+**The rule:** All PrimeNG (and Angular Material) internal style overrides must live in `styles.scss` as global rules — never inside a component's SCSS file.
+
+**The pattern:**
+1. Add a `styleClass="some-hook"` attribute to the PrimeNG component in the template. PrimeNG applies this class to the root rendered element (e.g., `<div class="p-select some-hook">`).
+2. In `styles.scss`, target it without any host scoping: `.p-select.some-hook { ... }`.
+
+**What is allowed in component SCSS (no deep needed):**
+- Styling the Angular host element selector: `:host { ... }`
+- Styling child HTML elements: `.my-class { ... }`
+- Styling PrimeNG *host element tags* (not their internals): `p-button { display: block; }` — this targets the Angular component element, not its shadow DOM
+
 ### 20. Feature Completion Checklist
 
 A feature is NOT complete until ALL of the following are true:
@@ -398,11 +414,12 @@ A feature is NOT complete until ALL of the following are true:
 10. ❌ **Never swallow exceptions** — no empty catch blocks
 11. ❌ **Never hardcode the API base URL** — always use `environment.ts`
 12. ❌ **Never write a tenant-unscoped DB query** — always filter by `tenantId`
-13. ✅ Always create a feature document in `docs/features/` before starting implementation
-14. ✅ Always check how similar features are implemented before writing new code
-15. ✅ Always be tenant-aware — every query, service method, and response must respect tenant boundaries
-16. ✅ Always return the standard API response envelope `{ success, data, error }`
-17. ✅ Ask before refactoring existing working code
+13. ❌ **Never use `::ng-deep`** in component SCSS — all PrimeNG overrides belong in `styles.scss`; use `styleClass` to add a CSS hook to the component's rendered root element
+14. ✅ Always create a feature document in `docs/features/` before starting implementation
+15. ✅ Always check how similar features are implemented before writing new code
+16. ✅ Always be tenant-aware — every query, service method, and response must respect tenant boundaries
+17. ✅ Always return the standard API response envelope `{ success, data, error }`
+18. ✅ Ask before refactoring existing working code
 
 ---
 

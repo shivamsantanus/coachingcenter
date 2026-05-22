@@ -60,13 +60,6 @@
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
 
-:host ::ng-deep p-tabs {
-  .p-tabpanels {
-    padding: 1.5rem 0 0;
-    background: transparent;
-  }
-}
-
 .list-actions {
   display: flex;
   align-items: center;

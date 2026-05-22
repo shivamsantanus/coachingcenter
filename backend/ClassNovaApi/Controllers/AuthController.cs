@@ -238,6 +238,48 @@ namespace ClassNovaApi.Controllers
             }));
         }
 
+        [AllowAnonymous]
+        [HttpPost("platform-login")]
+        public async Task<IActionResult> PlatformLogin([FromBody] PlatformLoginRequest request)
+        {
+            const string invalidCredentials = "Invalid email or password.";
+
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Email == request.Email && u.IsEmailVerified);
+
+            if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+                return Unauthorized(new ApiResponse<object>(null, invalidCredentials));
+
+            if (!user.IsActive)
+                return Unauthorized(new ApiResponse<object>(null, "Account is inactive."));
+
+            var platformRole = await _context.TenantUserRoles
+                .Include(tur => tur.Role)
+                .FirstOrDefaultAsync(tur =>
+                    tur.UserId     == user.Id          &&
+                    tur.Role.Code  == "PLATFORM_ADMIN" &&
+                    tur.Status     == "ACTIVE");
+
+            if (platformRole == null)
+                return Unauthorized(new ApiResponse<object>(null, "Access denied."));
+
+            user.LastLoginAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            var token = GeneratePlatformToken(user);
+
+            _logger.LogInformation("Platform admin logged in. Email: {Email}", user.Email);
+
+            return Ok(new ApiResponse<object>(new
+            {
+                token,
+                role       = "PLATFORM_ADMIN",
+                tenantSlug = "classnova",
+                tenantName = "ClassNova Platform",
+                fullName   = user.FullName
+            }));
+        }
+
         [Authorize]
         [HttpGet("me")]
         public IActionResult GetMe()
@@ -251,6 +293,33 @@ namespace ClassNovaApi.Controllers
                 tenantSlug = User.FindFirstValue("tenant_slug"),
                 role       = User.FindFirstValue("role")
             }));
+        }
+
+        private string GeneratePlatformToken(User user)
+        {
+            var jwtKey = _config["Jwt:Key"]
+                ?? throw new InvalidOperationException("JWT key is not configured.");
+
+            var key = Encoding.ASCII.GetBytes(jwtKey);
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(
+                [
+                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                    new Claim(ClaimTypes.Name,           user.FullName),
+                    new Claim(ClaimTypes.Email,          user.Email ?? string.Empty),
+                    new Claim("tenant_id",               Guid.Empty.ToString()),
+                    new Claim("tenant_slug",             "classnova"),
+                    new Claim("role",                    "PLATFORM_ADMIN")
+                ]),
+                Expires = DateTime.UtcNow.AddHours(8),
+                SigningCredentials = new SigningCredentials(
+                    new SymmetricSecurityKey(key),
+                    SecurityAlgorithms.HmacSha256Signature)
+            };
+
+            var handler = new JwtSecurityTokenHandler();
+            return handler.WriteToken(handler.CreateToken(tokenDescriptor));
         }
 
         private string GenerateToken(User user, Tenant tenant, string roleCode)

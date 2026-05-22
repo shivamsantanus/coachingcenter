@@ -104,19 +104,6 @@
     width: 100%;
     display: block;
     margin-top: 0.25rem;
-
-    ::ng-deep .p-button {
-      width: 100%;
-      justify-content: center;
-      background: var(--cn-primary) !important;
-      border-color: var(--cn-primary) !important;
-      font-weight: 600;
-      padding: 0.72rem 1.5rem;
-      font-size: 0.9rem;
-      border-radius: 8px;
-      transition: opacity 0.15s;
-      &:hover:not(:disabled) { opacity: 0.88; }
-    }
   }
 
   .auth-switch {

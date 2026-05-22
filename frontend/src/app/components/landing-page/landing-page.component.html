@@ -35,7 +35,7 @@
   <div class="landing-page">
 
     <!-- NAV -->
-    <nav class="lp-nav">
+    <nav class="lp-nav" [class.lp-nav-scrolled]="navScrolled()">
       <div class="lp-nav-inner">
         <div class="lp-nav-brand">
           @if (branding()!.logoUrl) {
@@ -57,8 +57,16 @@
         [style.backgroundImage]="branding()!.landingPage!.hero!.bannerImageUrl
           ? 'url(' + branding()!.landingPage!.hero!.bannerImageUrl + ')'
           : 'none'">
+        <div class="hero-particles" aria-hidden="true">
+          <span class="particle"></span>
+          <span class="particle"></span>
+          <span class="particle"></span>
+          <span class="particle"></span>
+          <span class="particle"></span>
+          <span class="particle"></span>
+        </div>
         <div class="lp-hero-overlay">
-          <div class="lp-hero-content">
+          <div class="lp-hero-content reveal">
             <h1 class="hero-headline">{{ branding()!.landingPage!.hero!.headline }}</h1>
             <p class="hero-tagline">{{ branding()!.landingPage!.hero!.tagline }}</p>
             @if (isSignedInHere()) {
@@ -77,7 +85,7 @@
 
     <!-- ABOUT -->
     @if (branding()!.landingPage!.about?.isVisible && branding()!.landingPage!.about?.description) {
-      <section class="lp-section lp-about">
+      <section class="lp-section lp-about reveal">
         <div class="lp-container">
           <h2 class="section-title">About Us</h2>
           <p class="about-description">{{ branding()!.landingPage!.about!.description }}</p>
@@ -101,12 +109,12 @@
 
     <!-- OFFERINGS -->
     @if (branding()!.landingPage!.offerings?.isVisible && branding()!.landingPage!.offerings!.items.length > 0) {
-      <section class="lp-section lp-offerings lp-section-alt">
+      <section class="lp-section lp-offerings lp-section-alt reveal">
         <div class="lp-container">
           <h2 class="section-title">What We Offer</h2>
           <div class="offerings-grid">
-            @for (item of branding()!.landingPage!.offerings!.items; track item.title) {
-              <div class="offering-card">
+            @for (item of branding()!.landingPage!.offerings!.items; track item.title; let i = $index) {
+              <div class="offering-card" [style.--i]="i">
                 <div class="offering-icon"><i class="pi pi-graduation-cap"></i></div>
                 <h3 class="offering-title">{{ item.title }}</h3>
                 @if (item.note) {
@@ -121,15 +129,15 @@
 
     <!-- TEACHERS -->
     @if (branding()!.landingPage!.teachersSection?.isVisible) {
-      <section class="lp-section lp-teachers">
+      <section class="lp-section lp-teachers reveal">
         <div class="lp-container">
           <h2 class="section-title">Our Teachers</h2>
           @if (teachers().length === 0) {
             <p class="empty-state">No teachers listed yet.</p>
           } @else {
             <div class="teachers-grid">
-              @for (teacher of teachers(); track teacher.fullName) {
-                <div class="teacher-card">
+              @for (teacher of teachers(); track teacher.fullName; let i = $index) {
+                <div class="teacher-card" [style.--i]="i">
                   @if (teacher.photoUrl) {
                     <img [src]="teacher.photoUrl" [alt]="teacher.fullName" class="teacher-photo" />
                   } @else {
@@ -149,12 +157,12 @@
 
     <!-- ACHIEVEMENTS -->
     @if (branding()!.landingPage!.achievements?.isVisible && branding()!.landingPage!.achievements!.items.length > 0) {
-      <section class="lp-section lp-achievements lp-section-alt">
+      <section class="lp-section lp-achievements lp-section-alt reveal">
         <div class="lp-container">
           <h2 class="section-title">Our Achievers</h2>
           <div class="achievements-grid">
-            @for (item of branding()!.landingPage!.achievements!.items; track item.studentName) {
-              <div class="achievement-card">
+            @for (item of branding()!.landingPage!.achievements!.items; track item.studentName; let i = $index) {
+              <div class="achievement-card" [style.--i]="i">
                 <div class="achievement-score">{{ item.score }}</div>
                 <div class="achievement-student">
                   @if (item.photoUrl) {
@@ -179,7 +187,7 @@
 
     <!-- GALLERY CAROUSEL -->
     @if (branding()!.landingPage!.gallery?.isVisible && branding()!.landingPage!.gallery!.imageUrls.length > 0) {
-      <section class="lp-section lp-gallery lp-section-alt">
+      <section class="lp-section lp-gallery lp-section-alt reveal">
         <div class="lp-container">
           <h2 class="section-title">Gallery</h2>
           <p-carousel
@@ -203,7 +211,7 @@
 
     <!-- CONTACT -->
     @if (branding()!.landingPage!.contact?.isVisible) {
-      <section class="lp-section lp-contact">
+      <section class="lp-section lp-contact reveal">
         <div class="lp-container">
           <h2 class="section-title">Contact Us</h2>
           <div class="contact-layout">
@@ -309,5 +317,12 @@
       </div>
     </footer>
 
+  </div>
+}
+
+<!-- Default: pre-load state before ngOnInit resolves -->
+@else {
+  <div class="loading-state">
+    <div class="spinner"></div>
   </div>
 }

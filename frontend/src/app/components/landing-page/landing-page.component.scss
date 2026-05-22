@@ -55,6 +55,12 @@
   background: #fff;
   border-bottom: 1px solid #e5e7eb;
   box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+  transition: box-shadow 0.25s ease, border-color 0.25s ease;
+
+  &.lp-nav-scrolled {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    border-color: transparent;
+  }
 }
 
 .lp-nav-inner {
@@ -86,21 +92,60 @@
 // ── Hero ──────────────────────────────────────────────────────────────────────
 
 .lp-hero {
+  position: relative;
   min-height: 520px;
   background: var(--cn-primary);
   background-size: cover;
   background-position: center;
+  background-attachment: fixed;
   display: flex;
   align-items: center;
+  overflow: hidden;
+
+  @media (pointer: coarse) {
+    background-attachment: scroll;
+  }
 }
 
 .lp-hero-overlay {
+  position: relative;
+  z-index: 2;
   width: 100%;
   min-height: 520px;
   display: flex;
   align-items: center;
   background: linear-gradient(135deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.2) 100%);
   padding: 3rem 0;
+}
+
+// ── Hero particles ────────────────────────────────────────────────────────────
+
+.hero-particles {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  animation: particle-float linear infinite;
+
+  &:nth-child(1) { width: 80px;  height: 80px;  left: 10%;  top: 20%; animation-duration: 14s; animation-delay: 0s;    }
+  &:nth-child(2) { width: 50px;  height: 50px;  left: 25%;  top: 65%; animation-duration: 18s; animation-delay: -4s;   }
+  &:nth-child(3) { width: 120px; height: 120px; left: 60%;  top: 15%; animation-duration: 22s; animation-delay: -8s;   }
+  &:nth-child(4) { width: 40px;  height: 40px;  left: 75%;  top: 70%; animation-duration: 16s; animation-delay: -2s;   }
+  &:nth-child(5) { width: 65px;  height: 65px;  left: 85%;  top: 30%; animation-duration: 20s; animation-delay: -10s;  }
+  &:nth-child(6) { width: 30px;  height: 30px;  left: 45%;  top: 80%; animation-duration: 12s; animation-delay: -6s;   }
+}
+
+@keyframes particle-float {
+  0%   { transform: translateY(0)   rotate(0deg);   opacity: 0.6; }
+  50%  { transform: translateY(-40px) rotate(180deg); opacity: 0.3; }
+  100% { transform: translateY(0)   rotate(360deg); opacity: 0.6; }
 }
 
 .lp-hero-content {
@@ -142,6 +187,43 @@
 
 .lp-section-alt {
   background: #f9fafb;
+}
+
+// ── Scroll-reveal ─────────────────────────────────────────────────────────────
+
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+  // Safety net: force-reveal after 2s if JS observer never fires
+  animation: reveal-safety 0.01s 2s forwards;
+
+  // Once JS has successfully revealed this element at least once,
+  // cancel the safety animation so it doesn't re-fire on scroll-back.
+  &.has-revealed {
+    animation: none;
+  }
+
+  &.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes reveal-safety {
+  to { opacity: 1; transform: none; }
+}
+
+.lp-offerings.is-visible .offering-card,
+.lp-teachers.is-visible .teacher-card,
+.lp-achievements.is-visible .achievement-card {
+  animation: card-pop-in 0.5s ease both;
+  animation-delay: calc(var(--i, 0) * 80ms);
+}
+
+@keyframes card-pop-in {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 // ── About ─────────────────────────────────────────────────────────────────────
@@ -391,33 +473,6 @@
   &.hidden { display: none; }
 }
 
-:host ::ng-deep .gallery-carousel {
-  .p-carousel-item {
-    padding: 0 0.375rem;
-  }
-
-  .p-carousel-prev,
-  .p-carousel-next {
-    color: var(--cn-primary) !important;
-    background: #fff !important;
-    border: 1.5px solid #e5e7eb !important;
-    border-radius: 50% !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
-    width: 2.5rem !important;
-    height: 2.5rem !important;
-  }
-
-  .p-carousel-indicators .p-carousel-indicator button {
-    background: #d1d5db !important;
-    border-radius: 50% !important;
-    width: 8px !important;
-    height: 8px !important;
-  }
-
-  .p-carousel-indicators .p-carousel-indicator.p-highlight button {
-    background: var(--cn-primary) !important;
-  }
-}
 
 // ── Contact ───────────────────────────────────────────────────────────────────
 

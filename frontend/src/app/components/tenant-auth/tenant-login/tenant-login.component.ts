@@ -7,6 +7,7 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { AuthService } from '../../../services/auth.service';
+import { TenantContextService } from '../../../services/tenant-context.service';
 
 @Component({
   selector: 'app-tenant-login',
@@ -16,11 +17,12 @@ import { AuthService } from '../../../services/auth.service';
   styleUrls: ['./tenant-login.component.scss']
 })
 export class TenantLoginComponent implements OnInit, OnDestroy {
-  private readonly fb          = inject(FormBuilder);
-  private readonly authService = inject(AuthService);
-  private readonly router      = inject(Router);
-  private readonly route       = inject(ActivatedRoute);
-  private readonly destroy$    = new Subject<void>();
+  private readonly fb            = inject(FormBuilder);
+  private readonly authService   = inject(AuthService);
+  private readonly router        = inject(Router);
+  private readonly route         = inject(ActivatedRoute);
+  private readonly tenantContext = inject(TenantContextService);
+  private readonly destroy$      = new Subject<void>();
 
   private readonly slug = this.resolveSlug();
 
@@ -50,8 +52,8 @@ export class TenantLoginComponent implements OnInit, OnDestroy {
       });
   }
 
-  get registerLink(): string { return `/t/${this.slug}/register`; }
-  get forgotLink():   string { return `/t/${this.slug}/forgot-password`; }
+  get registerLink(): string { return this.tenantContext.authPath('register'); }
+  get forgotLink():   string { return this.tenantContext.authPath('forgot-password'); }
 
   private resolveSlug(): string {
     let snapshot = this.route.snapshot;
@@ -61,7 +63,7 @@ export class TenantLoginComponent implements OnInit, OnDestroy {
       if (!snapshot.parent) break;
       snapshot = snapshot.parent;
     }
-    return '';
+    return this.tenantContext.slug();
   }
 
   ngOnDestroy(): void { this.destroy$.next(); this.destroy$.complete(); }

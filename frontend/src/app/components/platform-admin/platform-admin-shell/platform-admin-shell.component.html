@@ -1,0 +1,43 @@
+<div class="admin-shell">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <span class="brand-name">ClassNova</span>
+      <span class="brand-subtitle">Platform Admin</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a
+        *ngFor="let item of navItems"
+        [routerLink]="item.route"
+        routerLinkActive="active"
+        class="nav-item">
+        <i class="pi {{ item.icon }}"></i>
+        <span>{{ item.label }}</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="admin-info">
+        <div class="avatar">{{ context?.fullName?.charAt(0) | uppercase }}</div>
+        <div class="admin-details">
+          <span class="admin-name">{{ context?.fullName }}</span>
+          <span class="admin-role">Platform Admin</span>
+        </div>
+      </div>
+      <button class="logout-btn" (click)="logout()">
+        <i class="pi pi-sign-out"></i>
+        <span>Log out</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main area -->
+  <div class="main">
+    <main class="content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+
+</div>

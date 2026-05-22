@@ -6,6 +6,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { AuthService } from '../../../services/auth.service';
+import { TenantContextService } from '../../../services/tenant-context.service';
 
 @Component({
   selector: 'app-tenant-verify-email',
@@ -15,18 +16,19 @@ import { AuthService } from '../../../services/auth.service';
   styleUrls: ['./tenant-verify-email.component.scss']
 })
 export class TenantVerifyEmailComponent implements OnInit, OnDestroy {
-  private readonly fb          = inject(FormBuilder);
-  private readonly authService = inject(AuthService);
-  private readonly router      = inject(Router);
-  private readonly route       = inject(ActivatedRoute);
-  private readonly destroy$    = new Subject<void>();
+  private readonly fb            = inject(FormBuilder);
+  private readonly authService   = inject(AuthService);
+  private readonly router        = inject(Router);
+  private readonly route         = inject(ActivatedRoute);
+  private readonly tenantContext = inject(TenantContextService);
+  private readonly destroy$      = new Subject<void>();
 
   private readonly slug = this.resolveSlug();
 
-  readonly email     = signal('');
-  readonly isLoading = signal(false);
+  readonly email      = signal('');
+  readonly isLoading  = signal(false);
   readonly isResending = signal(false);
-  readonly errorMsg  = signal<string | null>(null);
+  readonly errorMsg   = signal<string | null>(null);
   readonly successMsg = signal<string | null>(null);
 
   readonly otpForm = this.fb.group({
@@ -35,7 +37,7 @@ export class TenantVerifyEmailComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.email.set(this.route.snapshot.queryParamMap.get('email') ?? '');
-    if (!this.email()) this.router.navigate([`/t/${this.slug}/register`]);
+    if (!this.email()) this.router.navigate([this.tenantContext.authPath('register')]);
   }
 
   onSubmit(): void {
@@ -51,7 +53,7 @@ export class TenantVerifyEmailComponent implements OnInit, OnDestroy {
       .subscribe({
         next: () => {
           this.isLoading.set(false);
-          this.router.navigate([`/t/${this.slug}/login`]);
+          this.router.navigate([this.tenantContext.authPath('login')]);
         },
         error: (err: Error) => { this.isLoading.set(false); this.errorMsg.set(err.message); }
       });
@@ -74,7 +76,7 @@ export class TenantVerifyEmailComponent implements OnInit, OnDestroy {
       });
   }
 
-  get loginLink(): string { return `/t/${this.slug}/login`; }
+  get loginLink(): string { return this.tenantContext.authPath('login'); }
 
   private resolveSlug(): string {
     let snapshot = this.route.snapshot;
@@ -84,7 +86,7 @@ export class TenantVerifyEmailComponent implements OnInit, OnDestroy {
       if (!snapshot.parent) break;
       snapshot = snapshot.parent;
     }
-    return '';
+    return this.tenantContext.slug();
   }
 
   ngOnDestroy(): void { this.destroy$.next(); this.destroy$.complete(); }

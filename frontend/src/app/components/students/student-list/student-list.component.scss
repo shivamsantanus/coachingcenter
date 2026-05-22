@@ -1,0 +1,241 @@
+.students-page {
+  max-width: 1200px;
+}
+
+// ── Header ────────────────────────────────────────────────────────────────────
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+
+  .page-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 0.2rem;
+  }
+
+  .page-subtitle {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin: 0;
+  }
+}
+
+// ── Filters ───────────────────────────────────────────────────────────────────
+.filters-bar {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+
+  .search-wrapper {
+    flex: 1;
+    min-width: 240px;
+    position: relative;
+
+    .search-icon {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #94a3b8;
+      font-size: 0.875rem;
+      pointer-events: none;
+    }
+
+    .search-input {
+      width: 100%;
+      padding-left: 2.25rem !important;
+    }
+  }
+
+}
+
+// ── Table card ────────────────────────────────────────────────────────────────
+.table-card {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+// ── Loading / empty states ────────────────────────────────────────────────────
+.loading-state,
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 4rem 1rem;
+  color: #94a3b8;
+
+  i {
+    font-size: 2rem;
+  }
+
+  p {
+    font-weight: 600;
+    color: #64748b;
+    margin: 0;
+  }
+
+  span {
+    font-size: 0.875rem;
+  }
+}
+
+// ── Table ─────────────────────────────────────────────────────────────────────
+.student-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  thead tr {
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  th {
+    padding: 0.75rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #64748b;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 0.875rem 1rem;
+    font-size: 0.875rem;
+    color: #334155;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  tbody tr:hover {
+    background: #f8fafc;
+  }
+
+  .actions-col {
+    width: 100px;
+    text-align: right;
+  }
+
+  .mono {
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    color: #475569;
+  }
+}
+
+// ── Student cell ──────────────────────────────────────────────────────────────
+.student-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.student-name {
+  font-weight: 500;
+  color: #1e293b;
+}
+
+// ── Guardian ──────────────────────────────────────────────────────────────────
+td .guardian-name,
+td .guardian-phone {
+  display: block;
+}
+
+.guardian-name {
+  font-weight: 500;
+}
+
+.guardian-phone {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+// ── Status badge ──────────────────────────────────────────────────────────────
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  &.active {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+
+  &.inactive {
+    background: #f1f5f9;
+    color: #64748b;
+  }
+}
+
+// ── Action buttons ────────────────────────────────────────────────────────────
+.action-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
+}
+
+.action-btn {
+  &--deactivate {
+    color: #ef4444 !important;
+  }
+
+  &--activate {
+    color: #16a34a !important;
+  }
+}
+
+// ── Pagination ────────────────────────────────────────────────────────────────
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-top: 1px solid #f1f5f9;
+
+  .page-info {
+    font-size: 0.875rem;
+    color: #64748b;
+    min-width: 120px;
+    text-align: center;
+  }
+}

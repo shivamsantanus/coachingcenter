@@ -4,7 +4,7 @@
 > Never start a feature without a row in the plan. Never finish one without marking it done
 > and linking the feature doc. This is the single source of truth for project state.
 
-**Last updated:** 2026-05-20 (Tenant auth pages implemented)
+**Last updated:** 2026-05-22 (Platform Admin — super admin login, tenant list, create tenant)
 
 ---
 
@@ -27,7 +27,8 @@
 | 1.1 | Database schema design | ✅ Done | [db-design-v1.md](db-design-v1.md) | 22 tables, all tenant-scoped |
 | 1.2 | MVP scope definition | ✅ Done | [mvp-scope.md](mvp-scope.md) | Roles, workflows, out-of-scope |
 | 1.3 | EF Core initial migration | ✅ Done | — | `20260427184021_InitialCreate` |
-| 1.4 | Tenant creation API | ✅ Done | — | `POST /api/tenant`; public endpoint |
+| 1.4 | Tenant creation API | ✅ Done | [platform-admin.md](features/platform-admin.md) | `POST /api/tenant`; secured — PLATFORM_ADMIN only |
+| 1.13 | Platform Admin dashboard | ✅ Done | [platform-admin.md](features/platform-admin.md) | `/admin/login`, tenant list, create tenant; `platformAdminGuard`; `POST /api/auth/platform-login`; `GET /api/tenant` |
 | 1.5 | Tenant branding endpoint | ✅ Done | — | `GET /api/tenant/{slug}`; used by login page |
 | 1.6 | User registration + login (JWT) | ✅ Done | [auth.md](features/auth.md) | 8-hour JWT, BCrypt hashing, claims: tenant_id/role/full_name |
 | 1.7 | Email OTP verification | ✅ Done | [email-otp-verification.md](features/email-otp-verification.md) | SHA-256 hashed OTP, 15-min expiry, rate-limited resend (3/hr, 60s cooldown) |
@@ -52,7 +53,7 @@
 |---|---|---|---|---|
 | 2.1 | Student CRUD API | ✅ Done | — | Paginated list, search, status toggle, photo upload (2 MB / JPG/PNG/WebP) |
 | 2.2 | Teacher CRUD API | ✅ Done | — | Paginated list, search, status toggle, photo upload |
-| 2.3 | Student management UI | 📋 Planned | — | List, add, edit, status toggle, photo; ORG_ADMIN only |
+| 2.3 | Student management UI | ✅ Done | [student-management.md](features/student-management.md) | List, add, edit, status toggle, photo upload; ORG_ADMIN + TEACHER |
 | 2.4 | Teacher management UI | 📋 Planned | — | List, add, edit, status toggle, photo; ORG_ADMIN only |
 
 > **Note:** Backend endpoints for Students and Teachers are fully implemented. Angular UI is the next step.
@@ -156,6 +157,7 @@
 | 10.6 | BrandingEditorComponent (/settings/branding) | ✅ Done | [branding-editor.md](features/branding-editor.md) | 8-tab form; ORG_ADMIN only; save + preview |
 | 10.7 | Achievements section — landing page + editor | ✅ Done | [tenant-landing-page.md](features/tenant-landing-page.md) | AchievementItem DTO; achievement-card UI; editor tab (max 12) |
 | 10.8 | Tenant-branded auth pages (/t/:slug/login etc.) | ✅ Done | [tenant-auth-pages.md](features/tenant-auth-pages.md) | TenantAuthComponent shell + 5 child forms; branded left panel; slug-scoped routing |
+| 10.9 | Custom domain routing | ✅ Done | — | custom_domain column + migration; GET /api/tenant/by-domain; TenantContextService; DomainResolverService (APP_INITIALIZER); canMatch guard; all nav uses authPath() |
 
 ---
 
@@ -163,9 +165,8 @@
 
 **Immediate next steps:**
 
-1. **Student management UI** (Feature 2.3) — create `docs/features/student-management.md` first
-2. **Teacher management UI** (Feature 2.4) — create `docs/features/teacher-management.md` first
-3. Then move into Phase 3 (Academic Structure) — start with backend controllers before UI
+1. **Teacher management UI** (Feature 2.4) — create `docs/features/teacher-management.md` first
+2. Then move into Phase 3 (Academic Structure) — start with backend controllers before UI
 
 *(Tenant-branded auth pages complete: `/t/:slug/login|register|verify-email|forgot-password|reset-password` all implemented with branded left-panel shell and slug-scoped routing)*
 

@@ -222,13 +222,14 @@ namespace ClassNovaApi.Controllers
                 return BadRequest(new { error = "Image must be smaller than 2 MB." });
 
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-            var folder = Path.Combine(_env.WebRootPath, "uploads", "students", tenantId.ToString());
+            var webRoot = _env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot");
+            var folder = Path.Combine(webRoot, "uploads", "students", tenantId.ToString());
             Directory.CreateDirectory(folder);
 
             // Delete old photo if present
             if (!string.IsNullOrEmpty(student.PhotoUrl))
             {
-                var oldPath = Path.Combine(_env.WebRootPath, student.PhotoUrl.TrimStart('/'));
+                var oldPath = Path.Combine(webRoot, student.PhotoUrl.TrimStart('/'));
                 if (System.IO.File.Exists(oldPath))
                     System.IO.File.Delete(oldPath);
             }

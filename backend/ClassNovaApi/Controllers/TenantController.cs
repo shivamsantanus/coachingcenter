@@ -26,15 +26,47 @@ namespace ClassNovaApi.Controllers
             _logger          = logger;
         }
 
-        // Open endpoint — in production this would be restricted to Platform Admin
-        [AllowAnonymous]
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> GetAllTenants()
+        {
+            var role = User.GetRole();
+            if (role != "PLATFORM_ADMIN")
+                return StatusCode(403, new ApiResponse<object>(null, "Access denied."));
+
+            var tenants = await _context.Tenants
+                .Where(t => t.Status != "DELETED")
+                .OrderByDescending(t => t.CreatedAt)
+                .Select(t => new TenantSummaryDto
+                {
+                    Id                  = t.Id,
+                    Name                = t.Name,
+                    Slug                = t.Slug,
+                    OrganizationType    = t.OrganizationType,
+                    Status              = t.Status,
+                    PrimaryContactName  = t.PrimaryContactName,
+                    PrimaryContactEmail = t.PrimaryContactEmail,
+                    PlanCode            = t.PlanCode,
+                    CreatedAt           = t.CreatedAt
+                })
+                .ToListAsync();
+
+            _logger.LogInformation("Platform admin fetched tenant list. Count: {Count}", tenants.Count);
+            return Ok(new ApiResponse<List<TenantSummaryDto>>(tenants));
+        }
+
+        [Authorize]
         [HttpPost]
         public IActionResult CreateTenant([FromBody] CreateTenantRequest request)
         {
+            var role = User.GetRole();
+            if (role != "PLATFORM_ADMIN")
+                return StatusCode(403, new ApiResponse<object>(null, "Only Platform Admin can create tenants."));
+
             var slug = request.Slug.ToLower().Trim();
 
             if (_context.Tenants.Any(t => t.Slug == slug))
-                return BadRequest(new { error = "Slug is already taken." });
+                return BadRequest(new ApiResponse<object>(null, "Slug is already taken."));
 
             var now      = DateTime.UtcNow;
             var tenantId = Guid.NewGuid();
@@ -78,7 +110,64 @@ namespace ClassNovaApi.Controllers
             _context.TenantFeatures.AddRange(features);
             _context.SaveChanges();
 
-            return Ok(new { id = tenant.Id, slug = tenant.Slug, name = tenant.Name, status = tenant.Status });
+            _logger.LogInformation("Tenant created by platform admin. Slug: {Slug}", tenant.Slug);
+            return Ok(new ApiResponse<TenantSummaryDto>(new TenantSummaryDto
+            {
+                Id                  = tenant.Id,
+                Name                = tenant.Name,
+                Slug                = tenant.Slug,
+                OrganizationType    = tenant.OrganizationType,
+                Status              = tenant.Status,
+                PrimaryContactName  = tenant.PrimaryContactName,
+                PrimaryContactEmail = tenant.PrimaryContactEmail,
+                PlanCode            = tenant.PlanCode,
+                CreatedAt           = tenant.CreatedAt
+            }));
+        }
+
+        [Authorize]
+        [HttpPatch("{id:guid}/status")]
+        public async Task<IActionResult> UpdateTenantStatus(Guid id, [FromBody] UpdateTenantStatusRequest request)
+        {
+            var role = User.GetRole();
+            if (role != "PLATFORM_ADMIN")
+                return StatusCode(403, new ApiResponse<object>(null, "Access denied."));
+
+            var allowed = new[] { "ACTIVE", "SUSPENDED" };
+            var newStatus = request.Status.ToUpper().Trim();
+            if (!allowed.Contains(newStatus))
+                return BadRequest(new ApiResponse<object>(null, "Status must be ACTIVE or SUSPENDED."));
+
+            var tenant = await _context.Tenants.FindAsync(id);
+            if (tenant == null || tenant.Status == "DELETED")
+                return NotFound(new ApiResponse<object>(null, "Tenant not found."));
+
+            tenant.Status    = newStatus;
+            tenant.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Tenant {Slug} status set to {Status} by platform admin", tenant.Slug, newStatus);
+            return Ok(new ApiResponse<object>(new { message = $"Tenant status updated to {newStatus}." }));
+        }
+
+        [Authorize]
+        [HttpDelete("{id:guid}")]
+        public async Task<IActionResult> DeleteTenant(Guid id)
+        {
+            var role = User.GetRole();
+            if (role != "PLATFORM_ADMIN")
+                return StatusCode(403, new ApiResponse<object>(null, "Access denied."));
+
+            var tenant = await _context.Tenants.FindAsync(id);
+            if (tenant == null || tenant.Status == "DELETED")
+                return NotFound(new ApiResponse<object>(null, "Tenant not found."));
+
+            tenant.Status    = "DELETED";
+            tenant.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Tenant {Slug} soft-deleted by platform admin", tenant.Slug);
+            return Ok(new ApiResponse<object>(new { message = "Tenant deleted." }));
         }
 
         // Public endpoint — frontend calls this to load branding before showing any page
@@ -139,6 +228,50 @@ namespace ClassNovaApi.Controllers
 
             _logger.LogInformation("Branding updated by ORG_ADMIN in tenant {TenantId}", tenantId);
             return Ok(new ApiResponse<object>(new { message = "Branding updated successfully." }));
+        }
+
+        // Public endpoint — resolves tenant slug from a custom domain hostname
+        [AllowAnonymous]
+        [HttpGet("by-domain")]
+        public IActionResult GetTenantByDomain([FromQuery] string hostname)
+        {
+            if (string.IsNullOrWhiteSpace(hostname))
+                return BadRequest(new ApiResponse<object>(null, "Hostname is required."));
+
+            var tenant = _context.Tenants
+                .Where(t => t.CustomDomain == hostname.ToLower())
+                .Select(t => new
+                {
+                    t.Name,
+                    t.Slug,
+                    t.Status,
+                    BrandName       = t.Settings != null ? t.Settings.BrandName    : t.Name,
+                    LogoUrl         = t.Settings != null ? t.Settings.LogoUrl      : null,
+                    PrimaryColor    = t.Settings != null ? t.Settings.PrimaryColor : null,
+                    AccentColor     = t.Settings != null ? t.Settings.AccentColor  : null,
+                    LandingPageJson = t.Settings != null ? t.Settings.LandingPageJson : null
+                })
+                .FirstOrDefault();
+
+            if (tenant == null)
+                return NotFound(new ApiResponse<object>(null, "No tenant mapped to this domain."));
+
+            if (tenant.Status != "ACTIVE")
+                return BadRequest(new ApiResponse<object>(null, "Tenant is not active."));
+
+            var landingPage = _brandingService.DeserializeLandingPage(tenant.LandingPageJson);
+
+            return Ok(new
+            {
+                tenant.Name,
+                tenant.Slug,
+                tenant.Status,
+                tenant.BrandName,
+                tenant.LogoUrl,
+                tenant.PrimaryColor,
+                tenant.AccentColor,
+                LandingPage = landingPage
+            });
         }
 
         // Public endpoint — landing page uses this to show the teachers section

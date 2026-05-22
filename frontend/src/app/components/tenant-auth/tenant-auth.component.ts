@@ -4,6 +4,7 @@ import { RouterOutlet } from '@angular/router';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { BrandingService } from '../../services/branding.service';
+import { TenantContextService } from '../../services/tenant-context.service';
 import { TenantBranding } from '../../models/branding.models';
 
 @Component({
@@ -17,6 +18,7 @@ export class TenantAuthComponent implements OnInit, OnDestroy {
   private readonly route           = inject(ActivatedRoute);
   private readonly router          = inject(Router);
   private readonly brandingService = inject(BrandingService);
+  private readonly tenantContext   = inject(TenantContextService);
   private readonly destroy$        = new Subject<void>();
 
   readonly branding  = this.brandingService.branding;
@@ -30,14 +32,13 @@ export class TenantAuthComponent implements OnInit, OnDestroy {
     this.brandingService.loadBranding(slug)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next:  data  => { if (!data) this.notFound.set(true); },
-        error: ()    => this.notFound.set(true)
+        next:  data => { if (!data) this.notFound.set(true); },
+        error: ()   => this.notFound.set(true)
       });
   }
 
   navigateToLanding(): void {
-    const slug = this.resolveSlug();
-    if (slug) this.router.navigate(['/t', slug]);
+    this.router.navigate([this.tenantContext.landingUrl]);
   }
 
   private resolveSlug(): string {
@@ -48,7 +49,7 @@ export class TenantAuthComponent implements OnInit, OnDestroy {
       if (!route.parent) break;
       route = route.parent;
     }
-    return '';
+    return this.tenantContext.slug();
   }
 
   ngOnDestroy(): void {

@@ -1,0 +1,173 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 1200px;
+}
+
+// ── Header ────────────────────────────────────────────────
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.page-header-left {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.page-count {
+  font-size: 0.82rem;
+  color: #64748b;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+}
+
+// ── Error banner ──────────────────────────────────────────
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  color: #dc2626;
+  font-size: 0.875rem;
+}
+
+// ── Table card ────────────────────────────────────────────
+.table-card {
+  background: #ffffff;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+
+.table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  background: #ffffff;
+}
+
+.search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.75rem;
+  color: #94a3b8;
+  font-size: 0.875rem;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.search-input {
+  padding-left: 2.25rem !important;
+  width: 260px;
+  font-size: 0.875rem;
+  border-radius: 6px;
+}
+
+// ── Cell styles ───────────────────────────────────────────
+.tenant-name {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.slug-chip {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.78rem;
+  color: #475569;
+  font-family: 'Courier New', monospace;
+}
+
+.contact-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+
+  .contact-name  { font-size: 0.85rem; color: #1e293b; font-weight: 500; }
+  .contact-email { font-size: 0.75rem; color: #64748b; }
+}
+
+.action-btns {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.empty-cell {
+  text-align: center;
+  padding: 3rem 1rem !important;
+  color: #94a3b8;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+
+  i    { font-size: 2rem; }
+  span { font-size: 0.9rem; }
+}
+
+// ── Delete dialog ─────────────────────────────────────────
+.dialog-body {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.dialog-icon {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+
+  &.danger {
+    background: #fef2f2;
+    color: #dc2626;
+  }
+}
+
+.dialog-msg {
+  font-size: 0.9rem;
+  color: #374151;
+  margin: 0;
+  line-height: 1.55;
+
+  strong { color: #0f172a; }
+}
+
+.dialog-sub {
+  font-size: 0.8rem;
+  color: #6b7280;
+  display: block;
+  margin-top: 0.4rem;
+}

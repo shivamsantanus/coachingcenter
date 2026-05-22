@@ -7,6 +7,7 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { AuthService } from '../../../services/auth.service';
+import { TenantContextService } from '../../../services/tenant-context.service';
 
 @Component({
   selector: 'app-tenant-register',
@@ -16,11 +17,12 @@ import { AuthService } from '../../../services/auth.service';
   styleUrls: ['./tenant-register.component.scss']
 })
 export class TenantRegisterComponent implements OnInit, OnDestroy {
-  private readonly fb          = inject(FormBuilder);
-  private readonly authService = inject(AuthService);
-  private readonly router      = inject(Router);
-  private readonly route       = inject(ActivatedRoute);
-  private readonly destroy$    = new Subject<void>();
+  private readonly fb            = inject(FormBuilder);
+  private readonly authService   = inject(AuthService);
+  private readonly router        = inject(Router);
+  private readonly route         = inject(ActivatedRoute);
+  private readonly tenantContext = inject(TenantContextService);
+  private readonly destroy$      = new Subject<void>();
 
   private readonly slug = this.resolveSlug();
 
@@ -54,13 +56,16 @@ export class TenantRegisterComponent implements OnInit, OnDestroy {
       .subscribe({
         next: () => {
           this.isLoading.set(false);
-          this.router.navigate([`/t/${this.slug}/verify-email`], { queryParams: { email: email! } });
+          this.router.navigate(
+            [this.tenantContext.authPath('verify-email')],
+            { queryParams: { email: email! } }
+          );
         },
         error: (err: Error) => { this.isLoading.set(false); this.errorMsg.set(err.message); }
       });
   }
 
-  get loginLink(): string { return `/t/${this.slug}/login`; }
+  get loginLink(): string { return this.tenantContext.authPath('login'); }
 
   private passwordMatch(group: AbstractControl) {
     const pw  = group.get('password')?.value;
@@ -76,7 +81,7 @@ export class TenantRegisterComponent implements OnInit, OnDestroy {
       if (!snapshot.parent) break;
       snapshot = snapshot.parent;
     }
-    return '';
+    return this.tenantContext.slug();
   }
 
   ngOnDestroy(): void { this.destroy$.next(); this.destroy$.complete(); }

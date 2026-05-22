@@ -145,25 +145,6 @@
 p-button {
   width: 100%;
   display: block;
-
-  ::ng-deep .p-button {
-    width: 100%;
-    justify-content: center;
-    background: #3B5FDB !important;
-    border-color: #3B5FDB !important;
-    font-weight: 600;
-    padding: 0.72rem 1.5rem;
-    font-size: 0.9rem;
-    border-radius: 8px;
-    font-family: 'Inter', sans-serif;
-    transition: background 0.2s, box-shadow 0.2s;
-
-    &:hover:not(:disabled) {
-      background: #2D4BC4 !important;
-      border-color: #2D4BC4 !important;
-      box-shadow: 0 4px 14px rgba(59, 95, 219, 0.3) !important;
-    }
-  }
 }
 
 .resend-row {

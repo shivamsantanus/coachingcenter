@@ -1,0 +1,168 @@
+<p-toast position="top-right" />
+
+<div class="students-page">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Students</h1>
+      <p class="page-subtitle">
+        {{ totalRecords() }} student{{ totalRecords() !== 1 ? 's' : '' }} total
+      </p>
+    </div>
+    @if (isOrgAdmin) {
+      <button pButton type="button" label="Add Student" icon="pi pi-plus"
+        class="p-button-primary" (click)="openAddForm()">
+      </button>
+    }
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar">
+    <div class="search-wrapper">
+      <i class="pi pi-search search-icon"></i>
+      <input
+        type="text"
+        pInputText
+        placeholder="Search by name, admission no, guardian…"
+        class="search-input"
+        [ngModel]="searchTerm()"
+        (ngModelChange)="onSearchChange($event)" />
+    </div>
+
+    <p-select
+      [options]="statusOptions"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="All statuses"
+      [ngModel]="statusFilter()"
+      (ngModelChange)="statusFilter.set($event); onStatusFilterChange()"
+      styleClass="status-select">
+    </p-select>
+  </div>
+
+  <!-- Table -->
+  <div class="table-card">
+
+    @if (isLoading()) {
+      <div class="loading-state">
+        <i class="pi pi-spin pi-spinner"></i>
+        <span>Loading students…</span>
+      </div>
+    } @else if (students().length === 0) {
+      <div class="empty-state">
+        <i class="pi pi-users"></i>
+        <p>No students found</p>
+        @if (searchTerm() || statusFilter()) {
+          <span>Try adjusting your search or filter.</span>
+        } @else if (isOrgAdmin) {
+          <span>Add your first student to get started.</span>
+        }
+      </div>
+    } @else {
+      <table class="student-table">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Admission No</th>
+            <th>Guardian</th>
+            <th>Date of Birth</th>
+            <th>Status</th>
+            @if (isOrgAdmin) {
+              <th class="actions-col">Actions</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (student of students(); track student.id) {
+            <tr>
+              <!-- Avatar + Name -->
+              <td>
+                <div class="student-cell">
+                  <div class="avatar" [class.has-photo]="student.photoUrl">
+                    @if (photoUrl(student.photoUrl)) {
+                      <img [src]="photoUrl(student.photoUrl)" [alt]="student.fullName" />
+                    } @else {
+                      <span>{{ initials(student.fullName) }}</span>
+                    }
+                  </div>
+                  <span class="student-name">{{ student.fullName }}</span>
+                </div>
+              </td>
+
+              <td class="mono">{{ student.admissionNo }}</td>
+
+              <!-- Guardian -->
+              <td>
+                <span class="guardian-name">{{ student.guardianName }}</span>
+                <span class="guardian-phone">{{ student.guardianPhone }}</span>
+              </td>
+
+              <!-- DOB -->
+              <td>
+                {{ student.dateOfBirth ? (student.dateOfBirth | date: 'dd MMM yyyy') : '—' }}
+              </td>
+
+              <!-- Status -->
+              <td>
+                <span class="status-badge" [class.active]="student.status === 'ACTIVE'"
+                  [class.inactive]="student.status === 'INACTIVE'">
+                  {{ student.status === 'ACTIVE' ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+
+              <!-- Actions -->
+              @if (isOrgAdmin) {
+                <td class="actions-col">
+                  <div class="action-buttons">
+                    <button pButton type="button" icon="pi pi-pencil"
+                      class="p-button-text p-button-sm action-btn"
+                      title="Edit student"
+                      (click)="openEditForm(student.id)">
+                    </button>
+                    <button pButton type="button"
+                      [icon]="togglingId() === student.id ? 'pi pi-spin pi-spinner' : (student.status === 'ACTIVE' ? 'pi pi-ban' : 'pi pi-check-circle')"
+                      class="p-button-text p-button-sm action-btn"
+                      [class.action-btn--deactivate]="student.status === 'ACTIVE'"
+                      [class.action-btn--activate]="student.status === 'INACTIVE'"
+                      [title]="student.status === 'ACTIVE' ? 'Deactivate' : 'Activate'"
+                      [disabled]="togglingId() === student.id"
+                      (click)="toggleStatus(student)">
+                    </button>
+                  </div>
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <!-- Pagination -->
+      @if (totalPages > 1) {
+        <div class="pagination">
+          <button pButton type="button" icon="pi pi-angle-left" class="p-button-text p-button-sm"
+            [disabled]="currentPage() === 1"
+            (click)="goToPage(currentPage() - 1)">
+          </button>
+          <span class="page-info">
+            Page {{ currentPage() }} of {{ totalPages }}
+          </span>
+          <button pButton type="button" icon="pi pi-angle-right" class="p-button-text p-button-sm"
+            [disabled]="currentPage() === totalPages"
+            (click)="goToPage(currentPage() + 1)">
+          </button>
+        </div>
+      }
+    }
+  </div>
+</div>
+
+<!-- Add / Edit dialog -->
+@if (showForm()) {
+  <app-student-form
+    [studentId]="editStudentId()"
+    [visible]="showForm()"
+    (saved)="onFormSaved()"
+    (closed)="onFormClosed()">
+  </app-student-form>
+}

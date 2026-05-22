@@ -11,6 +11,7 @@ namespace ClassNovaApi.Models
         public string PrimaryContactEmail { get; set; } = string.Empty;
         public string PrimaryContactPhone { get; set; } = string.Empty;
         public string? PlanCode { get; set; }
+        public string? CustomDomain { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 

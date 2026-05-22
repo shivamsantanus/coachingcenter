@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { BrandingService } from '../../services/branding.service';
+import { TenantContextService } from '../../services/tenant-context.service';
 
 interface NavItem {
   label: string;
@@ -19,15 +20,17 @@ interface NavItem {
   styleUrls: ['./shell.scss']
 })
 export class ShellComponent implements OnInit {
-  private readonly authService    = inject(AuthService);
+  private readonly authService     = inject(AuthService);
   private readonly brandingService = inject(BrandingService);
-  private readonly router         = inject(Router);
+  private readonly router          = inject(Router);
+  readonly tenantContext            = inject(TenantContextService);
 
   context = this.authService.getContext();
 
   ngOnInit(): void {
     const slug = this.context?.tenantSlug;
     if (slug) {
+      this.tenantContext.setContext(slug, this.tenantContext.isCustomDomain());
       this.brandingService.loadBranding(slug).subscribe();
     }
   }
@@ -50,13 +53,9 @@ export class ShellComponent implements OnInit {
     );
   }
 
-  get tenantHomeUrl(): string {
-    return `/t/${this.context?.tenantSlug ?? ''}`;
-  }
-
   logout(): void {
-    const slug = this.context?.tenantSlug ?? '';
+    const landingUrl = this.tenantContext.landingUrl;
     this.authService.logout();
-    this.router.navigate([`/t/${slug}`]);
+    this.router.navigate([landingUrl]);
   }
 }

@@ -50,3 +50,8 @@ export interface ResetPasswordRequest {
   otp:         string;
   newPassword: string;
 }
+
+export interface PlatformLoginRequest {
+  email:    string;
+  password: string;
+}

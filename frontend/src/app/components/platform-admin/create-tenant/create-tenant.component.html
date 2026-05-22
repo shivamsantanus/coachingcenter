@@ -1,0 +1,199 @@
+<div class="page">
+
+  <div class="page-header">
+    <a routerLink="/admin/tenants" class="back-link">
+      <i class="pi pi-arrow-left"></i> Tenants
+    </a>
+    <h1 class="page-title">Create Tenant</h1>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+    <div class="form-layout">
+
+      <!-- Organisation Details -->
+      <div class="form-section">
+        <h2 class="section-title">Organisation Details</h2>
+        <div class="fields-grid">
+
+          <div class="field">
+            <label for="name">Organisation Name *</label>
+            <input
+              pInputText
+              id="name"
+              type="text"
+              formControlName="name"
+              placeholder="e.g. Bright Future Academy"
+              (input)="onNameInput($event)"
+              [class.p-invalid]="fieldInvalid('name')" />
+            <small class="error-text" *ngIf="fieldInvalid('name')">Name is required.</small>
+          </div>
+
+          <div class="field">
+            <label for="slug">
+              Slug *
+              <span class="label-hint">(used in URL — auto-generated from name)</span>
+            </label>
+            <input
+              pInputText
+              id="slug"
+              type="text"
+              formControlName="slug"
+              placeholder="e.g. bright-future"
+              (input)="onSlugInput()"
+              [class.p-invalid]="fieldInvalid('slug')" />
+            <small class="error-text" *ngIf="fieldInvalid('slug') && form.get('slug')?.errors?.['required']">
+              Slug is required.
+            </small>
+            <small class="error-text" *ngIf="fieldInvalid('slug') && form.get('slug')?.errors?.['pattern']">
+              Only lowercase letters, numbers, and hyphens allowed.
+            </small>
+          </div>
+
+          <div class="field">
+            <label for="organizationType">Organisation Type *</label>
+            <p-select
+              inputId="organizationType"
+              formControlName="organizationType"
+              [options]="orgTypes"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Select type"
+              styleClass="w-full"
+              [class.p-invalid]="fieldInvalid('organizationType')" />
+            <small class="error-text" *ngIf="fieldInvalid('organizationType')">Select an organisation type.</small>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Contact Details -->
+      <div class="form-section">
+        <h2 class="section-title">Primary Contact</h2>
+        <div class="fields-grid">
+
+          <div class="field">
+            <label for="primaryContactName">Contact Name *</label>
+            <input
+              pInputText
+              id="primaryContactName"
+              type="text"
+              formControlName="primaryContactName"
+              placeholder="Full name"
+              [class.p-invalid]="fieldInvalid('primaryContactName')" />
+            <small class="error-text" *ngIf="fieldInvalid('primaryContactName')">Contact name is required.</small>
+          </div>
+
+          <div class="field">
+            <label for="primaryContactEmail">Contact Email *</label>
+            <input
+              pInputText
+              id="primaryContactEmail"
+              type="email"
+              formControlName="primaryContactEmail"
+              placeholder="owner@example.com"
+              [class.p-invalid]="fieldInvalid('primaryContactEmail')" />
+            <small class="error-text" *ngIf="fieldInvalid('primaryContactEmail')">Enter a valid email address.</small>
+          </div>
+
+          <div class="field">
+            <label for="primaryContactPhone">Contact Phone *</label>
+            <input
+              pInputText
+              id="primaryContactPhone"
+              type="tel"
+              formControlName="primaryContactPhone"
+              placeholder="+91 9999999999"
+              [class.p-invalid]="fieldInvalid('primaryContactPhone')" />
+            <small class="error-text" *ngIf="fieldInvalid('primaryContactPhone')">Phone number is required.</small>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Branding -->
+      <div class="form-section">
+        <h2 class="section-title">Branding</h2>
+        <div class="fields-grid">
+
+          <div class="field">
+            <label for="brandName">Brand Name *</label>
+            <input
+              pInputText
+              id="brandName"
+              type="text"
+              formControlName="brandName"
+              placeholder="e.g. Bright Future"
+              [class.p-invalid]="fieldInvalid('brandName')" />
+            <small class="error-text" *ngIf="fieldInvalid('brandName')">Brand name is required.</small>
+          </div>
+
+          <div class="field">
+            <label for="logoUrl">Logo URL <span class="label-optional">(optional)</span></label>
+            <input
+              pInputText
+              id="logoUrl"
+              type="url"
+              formControlName="logoUrl"
+              placeholder="https://..." />
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Settings -->
+      <div class="form-section">
+        <h2 class="section-title">Settings</h2>
+        <div class="fields-grid">
+
+          <div class="field">
+            <label for="timezone">Timezone *</label>
+            <p-select
+              inputId="timezone"
+              formControlName="timezone"
+              [options]="timezones"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Select timezone"
+              styleClass="w-full" />
+          </div>
+
+          <div class="field">
+            <label for="currencyCode">Currency *</label>
+            <p-select
+              inputId="currencyCode"
+              formControlName="currencyCode"
+              [options]="currencies"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Select currency"
+              styleClass="w-full" />
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Error banner -->
+    <div class="error-banner" *ngIf="errorMsg()">
+      <i class="pi pi-exclamation-circle"></i>
+      <span>{{ errorMsg() }}</span>
+    </div>
+
+    <!-- Actions -->
+    <div class="form-actions">
+      <p-button
+        label="Cancel"
+        severity="secondary"
+        [outlined]="true"
+        routerLink="/admin/tenants" />
+      <p-button
+        type="submit"
+        label="Create Tenant"
+        icon="pi pi-plus"
+        [loading]="isLoading()" />
+    </div>
+
+  </form>
+
+</div>

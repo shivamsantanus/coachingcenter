@@ -1,0 +1,132 @@
+<p-toast position="top-right" />
+
+<p-dialog
+  [header]="dialogTitle"
+  [visible]="visible"
+  [modal]="true"
+  [closable]="true"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="student-dialog"
+  (onHide)="onClose()">
+
+  @if (isLoading()) {
+    <div class="dialog-loading">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>Loading student…</span>
+    </div>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="student-form">
+
+      @if (errorMessage()) {
+        <div class="form-error-banner">
+          <i class="pi pi-exclamation-circle"></i>
+          {{ errorMessage() }}
+        </div>
+      }
+
+      <!-- Photo section — always visible; in create mode preview is local until save -->
+      <div class="photo-section">
+        <div class="photo-avatar">
+          @if (avatarPhotoUrl) {
+            <img [src]="avatarPhotoUrl" alt="Student photo" />
+          } @else {
+            <span>{{ avatarInitials || '?' }}</span>
+          }
+        </div>
+        <div class="photo-actions">
+          <label class="upload-btn" [class.uploading]="isUploading()">
+            <i class="pi" [class.pi-upload]="!isUploading()" [class.pi-spin]="isUploading()"
+              [class.pi-spinner]="isUploading()"></i>
+            {{ isUploading() ? 'Uploading…' : (isEditMode ? 'Change Photo' : 'Add Photo') }}
+            <input type="file" accept="image/jpeg,image/png,image/webp"
+              style="display: none" (change)="onPhotoSelected($event)" />
+          </label>
+          @if (!isEditMode && pendingPhotoFile()) {
+            <span class="photo-hint photo-hint--selected">
+              <i class="pi pi-check-circle"></i> {{ pendingPhotoFile()!.name }}
+            </span>
+          } @else {
+            <span class="photo-hint">JPG, PNG or WebP — max 2 MB</span>
+          }
+        </div>
+      </div>
+
+      <!-- Form fields grid -->
+      <div class="form-grid">
+
+        <!-- Full Name -->
+        <div class="field">
+          <label for="fullName">Full Name <span class="required">*</span></label>
+          <input id="fullName" type="text" pInputText formControlName="fullName"
+            placeholder="e.g. Riya Sharma" />
+          @if (fieldError('fullName')) {
+            <span class="field-error">{{ fieldError('fullName') }}</span>
+          }
+        </div>
+
+        <!-- Admission No -->
+        <div class="field">
+          <label for="admissionNo">Admission No <span class="required">*</span></label>
+          <input id="admissionNo" type="text" pInputText formControlName="admissionNo"
+            placeholder="e.g. ADM-2024-001" />
+          @if (fieldError('admissionNo')) {
+            <span class="field-error">{{ fieldError('admissionNo') }}</span>
+          }
+        </div>
+
+        <!-- Guardian Name -->
+        <div class="field">
+          <label for="guardianName">Guardian Name <span class="required">*</span></label>
+          <input id="guardianName" type="text" pInputText formControlName="guardianName"
+            placeholder="e.g. Rajesh Sharma" />
+          @if (fieldError('guardianName')) {
+            <span class="field-error">{{ fieldError('guardianName') }}</span>
+          }
+        </div>
+
+        <!-- Guardian Phone -->
+        <div class="field">
+          <label for="guardianPhone">Guardian Phone <span class="required">*</span></label>
+          <input id="guardianPhone" type="tel" pInputText formControlName="guardianPhone"
+            placeholder="e.g. 9876543210" />
+          @if (fieldError('guardianPhone')) {
+            <span class="field-error">{{ fieldError('guardianPhone') }}</span>
+          }
+        </div>
+
+        <!-- Date of Birth -->
+        <div class="field">
+          <label for="dateOfBirth">Date of Birth</label>
+          <input id="dateOfBirth" type="date" pInputText formControlName="dateOfBirth" />
+        </div>
+
+        <!-- Address (full width) -->
+        <div class="field field--full">
+          <label for="address">Address</label>
+          <textarea id="address" pTextarea formControlName="address" rows="2"
+            placeholder="Street, city, state…"></textarea>
+          @if (fieldError('address')) {
+            <span class="field-error">{{ fieldError('address') }}</span>
+          }
+        </div>
+
+      </div>
+
+      <!-- Footer buttons -->
+      <div class="form-footer">
+        <button pButton type="button" label="Cancel" class="p-button-text"
+          (click)="onClose()" [disabled]="isSaving() || isUploading()">
+        </button>
+        <button pButton type="submit"
+          [label]="submitLabel"
+          [icon]="(isSaving() || isUploading()) ? 'pi pi-spin pi-spinner' : ''"
+          class="p-button-primary"
+          [disabled]="isSaving() || isUploading()">
+        </button>
+      </div>
+
+    </form>
+  }
+
+</p-dialog>

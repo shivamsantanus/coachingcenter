@@ -119,6 +119,50 @@ body { margin: 0; }
   }
 }
 
+// p-dialog — force light theme across the entire app
+.p-dialog {
+  background: #ffffff !important;
+  color: #111827 !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12) !important;
+
+  .p-dialog-header {
+    background: #ffffff !important;
+    color: #111827 !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    padding: 1.25rem 1.5rem !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    border-radius: 12px 12px 0 0 !important;
+  }
+
+  .p-dialog-content {
+    background: #ffffff !important;
+    color: #374151 !important;
+    padding: 1.25rem 1.5rem !important;
+  }
+
+  .p-dialog-footer {
+    background: #ffffff !important;
+    border-top: 1px solid #f1f5f9 !important;
+    padding: 1rem 1.5rem 1.25rem !important;
+    border-radius: 0 0 12px 12px !important;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+
+  .p-dialog-header-close {
+    color: #6b7280 !important;
+
+    &:hover {
+      background: #f3f4f6 !important;
+      color: #374151 !important;
+    }
+  }
+}
+
 // p-select (dropdown) — white surface, matching border/focus ring
 .p-select {
   background: #ffffff !important;
@@ -154,4 +198,143 @@ body { margin: 0; }
     color: #6B7280 !important;
     width: 2.5rem !important;
   }
+}
+
+// p-select / p-password width utility (used via styleClass="w-full")
+.p-select.w-full  { width: 100% !important; }
+.p-password.w-full { width: 100% !important; }
+
+// ── Auth form submit buttons ───────────────────────────────────────────────────
+// Standard auth pages (login, register, verify-email, forgot/reset password)
+.p-button.auth-btn {
+  width: 100%;
+  justify-content: center;
+  background: #3B5FDB !important;
+  border-color: #3B5FDB !important;
+  font-weight: 600;
+  padding: 0.72rem 1.5rem;
+  font-size: 0.9rem;
+  border-radius: 8px;
+  font-family: 'Inter', sans-serif;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+
+  &:hover:not(:disabled) {
+    background: #2D4BC4 !important;
+    border-color: #2D4BC4 !important;
+    box-shadow: 0 4px 14px rgba(59, 95, 219, 0.3) !important;
+  }
+}
+
+// Tenant auth pages — uses brand CSS variable so theming applies
+.p-button.tenant-auth-btn {
+  width: 100%;
+  justify-content: center;
+  background: var(--cn-primary) !important;
+  border-color: var(--cn-primary) !important;
+  font-weight: 600;
+  padding: 0.72rem 1.5rem;
+  font-size: 0.9rem;
+  border-radius: 8px;
+  transition: opacity 0.15s;
+
+  &:hover:not(:disabled) { opacity: 0.88; }
+}
+
+// Platform admin login button
+.p-button.login-btn {
+  width: 100%;
+  justify-content: center;
+  padding: 0.65rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+// ── PrimeNG DataTable — light theme ───────────────────────────────────────────
+.p-datatable {
+  background: #ffffff;
+
+  .p-datatable-thead > tr > th {
+    background: #f8fafc !important;
+    color: #374151 !important;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.75rem 1rem;
+    border-color: #e2e8f0;
+  }
+
+  .p-datatable-tbody > tr {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    border-color: #f1f5f9;
+    transition: background 0.12s;
+
+    > td {
+      background: #ffffff !important;
+      color: #1e293b !important;
+      padding: 0.75rem 1rem;
+      font-size: 0.875rem;
+      border-color: #f1f5f9;
+      vertical-align: middle;
+    }
+
+    &:hover > td { background: #f8fafc !important; }
+
+    &.row-suspended > td {
+      background: #fffbeb !important;
+      opacity: 0.85;
+    }
+  }
+
+  .p-datatable-loading-overlay { background: rgba(255, 255, 255, 0.7); }
+}
+
+// ── Landing page gallery carousel ─────────────────────────────────────────────
+.p-carousel.gallery-carousel {
+  .p-carousel-item { padding: 0 0.375rem; }
+
+  .p-carousel-prev,
+  .p-carousel-next {
+    color: var(--cn-primary) !important;
+    background: #fff !important;
+    border: 1.5px solid #e5e7eb !important;
+    border-radius: 50% !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+  }
+
+  .p-carousel-indicators .p-carousel-indicator button {
+    background: #d1d5db !important;
+    border-radius: 50% !important;
+    width: 8px !important;
+    height: 8px !important;
+  }
+
+  .p-carousel-indicators .p-carousel-indicator.p-highlight button {
+    background: var(--cn-primary) !important;
+  }
+}
+
+// ── Branding editor tabs ───────────────────────────────────────────────────────
+.p-tabs.branding-tabs .p-tabpanels {
+  padding: 1.5rem 0 0;
+  background: transparent;
+}
+
+// ── Student list — status filter select ───────────────────────────────────────
+.p-select.status-select { min-width: 160px; }
+
+// ── Student form dialog ────────────────────────────────────────────────────────
+.p-dialog.student-dialog {
+  width: 600px !important;
+  max-width: 95vw !important;
+}
+
+// ── Tenant list — delete confirmation dialog ──────────────────────────────────
+.p-dialog.delete-dialog {
+  .p-dialog-header { padding: 1.25rem 1.5rem 0.75rem !important; }
+  .p-dialog-content { padding: 0.75rem 1.5rem 1rem !important; }
+  .p-dialog-footer  { padding: 0.75rem 1.5rem 1.25rem !important; }
 }

@@ -1,0 +1,61 @@
+<div class="login-page">
+  <div class="login-card">
+
+    <div class="login-header">
+      <div class="logo-mark">CN</div>
+      <h1 class="title">ClassNova</h1>
+      <p class="subtitle">Platform Admin Portal</p>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form" novalidate>
+
+      <div class="field">
+        <label for="email">Email</label>
+        <input
+          pInputText
+          id="email"
+          type="email"
+          formControlName="email"
+          placeholder="admin@classnova.in"
+          autocomplete="email"
+          [class.ng-invalid]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched" />
+        <small
+          class="error-text"
+          *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
+          Enter a valid email address.
+        </small>
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <p-password
+          inputId="password"
+          formControlName="password"
+          placeholder="Enter password"
+          [feedback]="false"
+          [toggleMask]="true"
+          styleClass="w-full"
+          [inputStyle]="{ width: '100%' }" />
+        <small
+          class="error-text"
+          *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
+          Password is required.
+        </small>
+      </div>
+
+      <div class="error-banner" *ngIf="errorMsg()">
+        <i class="pi pi-exclamation-circle"></i>
+        <span>{{ errorMsg() }}</span>
+      </div>
+
+      <p-button
+        type="submit"
+        label="Sign in"
+        [loading]="isLoading()"
+        [disabled]="loginForm.invalid"
+        styleClass="w-full login-btn" />
+
+    </form>
+
+  </div>
+</div>

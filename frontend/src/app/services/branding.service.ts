@@ -20,6 +20,9 @@ export class BrandingService {
   readonly isLoading = signal(false);
 
   loadBranding(slug: string): Observable<TenantBranding | null> {
+    const cached = this.branding();
+    if (cached?.slug === slug) return of(cached);
+
     this.isLoading.set(true);
 
     return this.http.get<TenantBranding>(`${environment.apiBaseUrl}/tenant/${slug}`).pipe(
@@ -33,6 +36,11 @@ export class BrandingService {
         return of(null);
       })
     );
+  }
+
+  sideloadBranding(brandingData: TenantBranding): void {
+    this.branding.set(brandingData);
+    this.applyTheme(brandingData);
   }
 
   loadTeachersPreview(slug: string): Observable<TeacherPreview[]> {

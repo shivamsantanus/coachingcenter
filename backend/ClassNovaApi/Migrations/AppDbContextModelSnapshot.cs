@@ -1106,6 +1106,10 @@ namespace ClassNovaApi.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<string>("CustomDomain")
+                        .HasColumnType("text")
+                        .HasColumnName("custom_domain");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text")

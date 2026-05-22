@@ -12,7 +12,8 @@ import {
   VerifyEmailRequest,
   ResendOtpRequest,
   ForgotPasswordRequest,
-  ResetPasswordRequest
+  ResetPasswordRequest,
+  PlatformLoginRequest
 } from '../models/auth.models';
 
 interface ApiEnvelope<T> {
@@ -31,6 +32,24 @@ export class AuthService {
 
   private get storage(): Storage | null {
     return isPlatformBrowser(this.platformId) ? localStorage : null;
+  }
+
+  platformLogin(credentials: PlatformLoginRequest): Observable<AuthData> {
+    return this.http
+      .post<ApiEnvelope<AuthData>>(`${this.authUrl}/platform-login`, credentials)
+      .pipe(
+        map(envelope => {
+          if (!envelope.success || !envelope.data) {
+            throw new Error(envelope.error ?? 'Login failed.');
+          }
+          return envelope.data;
+        }),
+        tap(authData => this.saveContext(authData)),
+        catchError(err => {
+          const message = err?.error?.error ?? err?.message ?? 'Login failed. Please try again.';
+          return throwError(() => new Error(message));
+        })
+      );
   }
 
   login(credentials: LoginRequest): Observable<AuthData> {
