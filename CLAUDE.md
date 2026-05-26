@@ -386,6 +386,29 @@ Every endpoint must return this structure:
 - Styling child HTML elements: `.my-class { ... }`
 - Styling PrimeNG *host element tags* (not their internals): `p-button { display: block; }` — this targets the Angular component element, not its shadow DOM
 
+### 22. No `!important` — Use PrimeNG Design Tokens
+
+`!important` is forbidden everywhere in this codebase. Once used, every override on top of it also needs `!important`, creating an unwinnable specificity war.
+
+**The correct approach for PrimeNG overrides:**
+
+Override the component's CSS design token in `:root` inside `styles.scss`. PrimeNG reads its own tokens internally, so no selector fight occurs.
+
+```scss
+/* ❌ Never */
+.p-inputtext { background: #ffffff !important; }
+
+/* ✅ Always */
+:root { --p-inputtext-background: #ffffff; }
+```
+
+Token naming pattern: `--p-<component>-<property>`
+Examples: `--p-inputtext-background`, `--p-datatable-header-cell-background`, `--p-select-border-color`
+
+For properties with no token (font-family, transitions), use plain CSS selectors — they work fine because `darkModeSelector: '.dark-mode'` in `app.config.ts` means PrimeNG never auto-applies dark styles.
+
+**Dark mode rule:** `darkModeSelector` is set to `'.dark-mode'`. Dark theme only activates when you explicitly add `.dark-mode` to `<html>`. Never change this to `system` or `media`.
+
 ### 20. Feature Completion Checklist
 
 A feature is NOT complete until ALL of the following are true:
@@ -415,11 +438,12 @@ A feature is NOT complete until ALL of the following are true:
 11. ❌ **Never hardcode the API base URL** — always use `environment.ts`
 12. ❌ **Never write a tenant-unscoped DB query** — always filter by `tenantId`
 13. ❌ **Never use `::ng-deep`** in component SCSS — all PrimeNG overrides belong in `styles.scss`; use `styleClass` to add a CSS hook to the component's rendered root element
-14. ✅ Always create a feature document in `docs/features/` before starting implementation
-15. ✅ Always check how similar features are implemented before writing new code
-16. ✅ Always be tenant-aware — every query, service method, and response must respect tenant boundaries
-17. ✅ Always return the standard API response envelope `{ success, data, error }`
-18. ✅ Ask before refactoring existing working code
+14. ❌ **Never use `!important`** — use PrimeNG design tokens in `:root` instead; see Rule 22
+15. ✅ Always create a feature document in `docs/features/` before starting implementation
+16. ✅ Always check how similar features are implemented before writing new code
+17. ✅ Always be tenant-aware — every query, service method, and response must respect tenant boundaries
+18. ✅ Always return the standard API response envelope `{ success, data, error }`
+19. ✅ Ask before refactoring existing working code
 
 ---
 

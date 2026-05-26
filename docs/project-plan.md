@@ -4,7 +4,7 @@
 > Never start a feature without a row in the plan. Never finish one without marking it done
 > and linking the feature doc. This is the single source of truth for project state.
 
-**Last updated:** 2026-05-22 (Platform Admin — super admin login, tenant list, create tenant)
+**Last updated:** 2026-05-22 (Student management UI done; codebase-wide `::ng-deep` elimination; Rule 21 added to CLAUDE.md)
 
 ---
 
@@ -167,6 +167,11 @@
 
 1. **Teacher management UI** (Feature 2.4) — create `docs/features/teacher-management.md` first
 2. Then move into Phase 3 (Academic Structure) — start with backend controllers before UI
+
+**Just completed (2026-05-22):**
+- Student management UI (2.3) — list, add, edit, status toggle, photo upload
+- Eliminated all `::ng-deep` from component SCSS files; all PrimeNG overrides now live in `styles.scss` with `styleClass` hooks
+- Added Rule 21 to CLAUDE.md forbidding `::ng-deep` going forward
 
 *(Tenant-branded auth pages complete: `/t/:slug/login|register|verify-email|forgot-password|reset-password` all implemented with branded left-panel shell and slug-scoped routing)*
 

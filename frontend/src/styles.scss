@@ -13,12 +13,15 @@ html {
   ));
 }
 
+// ── Brand + PrimeNG design token overrides ────────────────
+// Setting tokens here means PrimeNG reads our values internally —
+// no selector battles, no !important needed.
 :root {
-  /* Brand tokens — overridden at runtime by BrandingService.applyTheme() */
+  // Brand tokens — overridden at runtime by BrandingService.applyTheme()
   --brand-primary: #3B5FDB;
   --brand-accent:  #F59E0B;
 
-  /* App-wide aliases — point at brand tokens so all components stay in sync */
+  // App-wide aliases
   --cn-primary:      var(--brand-primary);
   --cn-primary-dark: color-mix(in srgb, var(--brand-primary) 85%, black);
   --cn-navy:         #1E1B4B;
@@ -26,8 +29,58 @@ html {
   --cn-bg-auth:      #F5F7FF;
   --cn-text:         #111827;
   --cn-muted:        #6B7280;
+
+  // ── InputText ───────────────────────────────────────────
+  --p-inputtext-background:           #ffffff;
+  --p-inputtext-border-color:         #D1D5DB;
+  --p-inputtext-hover-border-color:   #9CA3AF;
+  --p-inputtext-focus-border-color:   #3B5FDB;
+  --p-inputtext-color:                #111827;
+  --p-inputtext-placeholder-color:    #9CA3AF;
+  --p-inputtext-border-radius:        8px;
+  --p-inputtext-padding-x:            0.875rem;
+  --p-inputtext-padding-y:            0.65rem;
+  --p-inputtext-shadow:               0 0 0 3px rgba(59, 95, 219, 0.12);
+
+  // ── Select (dropdown) ───────────────────────────────────
+  --p-select-background:              #ffffff;
+  --p-select-border-color:            #D1D5DB;
+  --p-select-hover-border-color:      #9CA3AF;
+  --p-select-focus-border-color:      #3B5FDB;
+  --p-select-color:                   #111827;
+  --p-select-placeholder-color:       #9CA3AF;
+  --p-select-border-radius:           8px;
+  --p-select-shadow:                  0 0 0 3px rgba(59, 95, 219, 0.12);
+  --p-select-padding-x:               0.875rem;
+  --p-select-padding-y:               0.65rem;
+
+  // ── DataTable ───────────────────────────────────────────
+  --p-datatable-header-cell-background:       #f8fafc;
+  --p-datatable-header-cell-hover-background: #f1f5f9;
+  --p-datatable-header-cell-color:            #374151;
+  --p-datatable-header-cell-border-color:     #e2e8f0;
+  --p-datatable-body-row-background:          #ffffff;
+  --p-datatable-body-row-hover-background:    #f8fafc;
+  --p-datatable-body-row-color:               #1e293b;
+  --p-datatable-body-cell-border-color:       #f1f5f9;
+  --p-datatable-footer-background:            #f8fafc;
+
+  // ── Dialog ──────────────────────────────────────────────
+  --p-dialog-background:              #ffffff;
+  --p-dialog-color:                   #111827;
+  --p-dialog-border-color:            #e2e8f0;
+  --p-dialog-border-radius:           12px;
+  --p-dialog-shadow:                  0 12px 40px rgba(0, 0, 0, 0.12);
+  --p-dialog-header-background:       #ffffff;
+  --p-dialog-header-color:            #111827;
+  --p-dialog-header-border-color:     #f1f5f9;
+  --p-dialog-content-background:      #ffffff;
+  --p-dialog-content-color:           #374151;
+  --p-dialog-footer-background:       #ffffff;
+  --p-dialog-footer-border-color:     #f1f5f9;
 }
 
+// ── Base ──────────────────────────────────────────────────
 body {
   color-scheme: light;
   background-color: var(--mat-sys-surface);
@@ -38,179 +91,95 @@ body {
 }
 
 html, body { height: 100%; }
-body { margin: 0; }
 
-// ── PrimeNG input overrides — light theme ──────────────────────
-// Overrides PrimeNG Aura's dark surface defaults to white inputs
-// with consistent border, focus ring, and placeholder colour.
+// ── PrimeNG structural overrides ─────────────────────────
+// These handle properties not covered by design tokens
+// (font-family, transitions, etc.). No !important needed
+// since dark mode is now opt-in via .dark-mode class only.
+
 .p-inputtext {
-  background: #ffffff !important;
-  border: 1.5px solid #D1D5DB !important;
-  border-radius: 8px !important;
-  color: #111827 !important;
-  font-family: 'Inter', 'Roboto', sans-serif !important;
-  font-size: 0.9rem !important;
-  padding: 0.65rem 0.875rem !important;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+  font-family: 'Inter', 'Roboto', sans-serif;
+  font-size: 0.9rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  width: 100%;
 
-  &::placeholder {
-    color: #9CA3AF !important;
-    opacity: 1;
-  }
-
-  &:enabled:hover {
-    border-color: #9CA3AF !important;
-    background: #ffffff !important;
-  }
-
-  &:enabled:focus {
-    border-color: #3B5FDB !important;
-    box-shadow: 0 0 0 3px rgba(59, 95, 219, 0.12) !important;
-    outline: none !important;
-    background: #ffffff !important;
-  }
+  &::placeholder { opacity: 1; }
 }
 
-// p-password: wrapper acts as the visual input box.
-// PrimeNG 20 already positions the toggle SVG with position:absolute inside
-// a position:relative wrapper — we must NOT override display/size on the icon.
-// Only override the wrapper appearance, input border, and icon colour.
+// p-password: wrapper is the visual input box
 .p-password {
-  display: flex !important;
-  background: #ffffff !important;
-  border: 1.5px solid #D1D5DB !important;
-  border-radius: 8px !important;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+  display: flex;
+  border: 1.5px solid var(--p-inputtext-border-color);
+  border-radius: var(--p-inputtext-border-radius);
+  background: var(--p-inputtext-background);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 
   &:focus-within {
-    border-color: #3B5FDB !important;
-    box-shadow: 0 0 0 3px rgba(59, 95, 219, 0.12) !important;
+    border-color: var(--p-inputtext-focus-border-color);
+    box-shadow: var(--p-inputtext-shadow);
   }
 
   &:hover:not(:focus-within) {
-    border-color: #9CA3AF !important;
+    border-color: var(--p-inputtext-hover-border-color);
   }
 
-  // Borderless input — wrapper provides the visual boundary
   .p-password-input {
-    flex: 1 !important;
-    border: none !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
-    outline: none !important;
+    flex: 1;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    border-radius: 0;
+    outline: none;
 
     &:enabled:hover,
     &:enabled:focus {
-      border: none !important;
-      box-shadow: none !important;
-      background: transparent !important;
+      border: none;
+      box-shadow: none;
+      background: transparent;
     }
   }
 
-  // Toggle SVG icon — PrimeNG positions it absolutely; only set colour here
   .p-password-toggle-mask-icon {
-    color: #6B7280 !important;
-    cursor: pointer !important;
+    color: #6B7280;
+    cursor: pointer;
 
-    &:hover {
-      color: #374151 !important;
-    }
+    &:hover { color: #374151; }
+  }
+
+  &.w-full { width: 100%; }
+}
+
+// p-select width utility
+.p-select.w-full { width: 100%; }
+
+// DataTable — font and header text transform (no token for these)
+.p-datatable {
+  .p-datatable-thead > tr > th {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.75rem 1rem;
+  }
+
+  .p-datatable-tbody > tr > td {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    vertical-align: middle;
+  }
+
+  .p-datatable-tbody > tr.row-suspended > td {
+    background: #fffbeb;
+    opacity: 0.85;
   }
 }
 
-// p-dialog — force light theme across the entire app
-.p-dialog {
-  background: #ffffff !important;
-  color: #111827 !important;
-  border: 1px solid #e2e8f0 !important;
-  border-radius: 12px !important;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12) !important;
-
-  .p-dialog-header {
-    background: #ffffff !important;
-    color: #111827 !important;
-    border-bottom: 1px solid #f1f5f9 !important;
-    padding: 1.25rem 1.5rem !important;
-    font-size: 1rem !important;
-    font-weight: 600 !important;
-    border-radius: 12px 12px 0 0 !important;
-  }
-
-  .p-dialog-content {
-    background: #ffffff !important;
-    color: #374151 !important;
-    padding: 1.25rem 1.5rem !important;
-  }
-
-  .p-dialog-footer {
-    background: #ffffff !important;
-    border-top: 1px solid #f1f5f9 !important;
-    padding: 1rem 1.5rem 1.25rem !important;
-    border-radius: 0 0 12px 12px !important;
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.5rem;
-  }
-
-  .p-dialog-header-close {
-    color: #6b7280 !important;
-
-    &:hover {
-      background: #f3f4f6 !important;
-      color: #374151 !important;
-    }
-  }
-}
-
-// p-select (dropdown) — white surface, matching border/focus ring
-.p-select {
-  background: #ffffff !important;
-  border: 1.5px solid #D1D5DB !important;
-  border-radius: 8px !important;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
-
-  &:not(.p-disabled):hover {
-    border-color: #9CA3AF !important;
-    background: #ffffff !important;
-  }
-
-  &.p-focus,
-  &:focus-within {
-    border-color: #3B5FDB !important;
-    box-shadow: 0 0 0 3px rgba(59, 95, 219, 0.12) !important;
-  }
-
-  .p-select-label {
-    color: #111827 !important;
-    font-family: 'Inter', 'Roboto', sans-serif !important;
-    font-size: 0.9rem !important;
-    padding: 0.65rem 0.875rem !important;
-    background: transparent !important;
-
-    &.p-placeholder {
-      color: #9CA3AF !important;
-    }
-  }
-
-  .p-select-dropdown {
-    background: transparent !important;
-    color: #6B7280 !important;
-    width: 2.5rem !important;
-  }
-}
-
-// p-select / p-password width utility (used via styleClass="w-full")
-.p-select.w-full  { width: 100% !important; }
-.p-password.w-full { width: 100% !important; }
-
-// ── Auth form submit buttons ───────────────────────────────────────────────────
-// Standard auth pages (login, register, verify-email, forgot/reset password)
+// ── Auth submit buttons ───────────────────────────────────
 .p-button.auth-btn {
   width: 100%;
   justify-content: center;
-  background: #3B5FDB !important;
-  border-color: #3B5FDB !important;
+  background: #3B5FDB;
+  border-color: #3B5FDB;
   font-weight: 600;
   padding: 0.72rem 1.5rem;
   font-size: 0.9rem;
@@ -219,18 +188,18 @@ body { margin: 0; }
   transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
 
   &:hover:not(:disabled) {
-    background: #2D4BC4 !important;
-    border-color: #2D4BC4 !important;
-    box-shadow: 0 4px 14px rgba(59, 95, 219, 0.3) !important;
+    background: #2D4BC4;
+    border-color: #2D4BC4;
+    box-shadow: 0 4px 14px rgba(59, 95, 219, 0.3);
   }
 }
 
-// Tenant auth pages — uses brand CSS variable so theming applies
+// Tenant auth pages — uses brand CSS variable
 .p-button.tenant-auth-btn {
   width: 100%;
   justify-content: center;
-  background: var(--cn-primary) !important;
-  border-color: var(--cn-primary) !important;
+  background: var(--cn-primary);
+  border-color: var(--cn-primary);
   font-weight: 600;
   padding: 0.72rem 1.5rem;
   font-size: 0.9rem;
@@ -249,92 +218,51 @@ body { margin: 0; }
   font-weight: 600;
 }
 
-// ── PrimeNG DataTable — light theme ───────────────────────────────────────────
-.p-datatable {
-  background: #ffffff;
-
-  .p-datatable-thead > tr > th {
-    background: #f8fafc !important;
-    color: #374151 !important;
-    font-size: 0.8rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    padding: 0.75rem 1rem;
-    border-color: #e2e8f0;
-  }
-
-  .p-datatable-tbody > tr {
-    background: #ffffff !important;
-    color: #1e293b !important;
-    border-color: #f1f5f9;
-    transition: background 0.12s;
-
-    > td {
-      background: #ffffff !important;
-      color: #1e293b !important;
-      padding: 0.75rem 1rem;
-      font-size: 0.875rem;
-      border-color: #f1f5f9;
-      vertical-align: middle;
-    }
-
-    &:hover > td { background: #f8fafc !important; }
-
-    &.row-suspended > td {
-      background: #fffbeb !important;
-      opacity: 0.85;
-    }
-  }
-
-  .p-datatable-loading-overlay { background: rgba(255, 255, 255, 0.7); }
-}
-
-// ── Landing page gallery carousel ─────────────────────────────────────────────
+// ── Landing page gallery carousel ────────────────────────
 .p-carousel.gallery-carousel {
   .p-carousel-item { padding: 0 0.375rem; }
 
   .p-carousel-prev,
   .p-carousel-next {
-    color: var(--cn-primary) !important;
-    background: #fff !important;
-    border: 1.5px solid #e5e7eb !important;
-    border-radius: 50% !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
-    width: 2.5rem !important;
-    height: 2.5rem !important;
+    color: var(--cn-primary);
+    background: #fff;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    width: 2.5rem;
+    height: 2.5rem;
   }
 
   .p-carousel-indicators .p-carousel-indicator button {
-    background: #d1d5db !important;
-    border-radius: 50% !important;
-    width: 8px !important;
-    height: 8px !important;
+    background: #d1d5db;
+    border-radius: 50%;
+    width: 8px;
+    height: 8px;
   }
 
   .p-carousel-indicators .p-carousel-indicator.p-highlight button {
-    background: var(--cn-primary) !important;
+    background: var(--cn-primary);
   }
 }
 
-// ── Branding editor tabs ───────────────────────────────────────────────────────
+// ── Branding editor tabs ──────────────────────────────────
 .p-tabs.branding-tabs .p-tabpanels {
   padding: 1.5rem 0 0;
   background: transparent;
 }
 
-// ── Student list — status filter select ───────────────────────────────────────
+// ── Student list — status filter select ──────────────────
 .p-select.status-select { min-width: 160px; }
 
-// ── Student form dialog ────────────────────────────────────────────────────────
+// ── Student form dialog ───────────────────────────────────
 .p-dialog.student-dialog {
-  width: 600px !important;
-  max-width: 95vw !important;
+  width: 600px;
+  max-width: 95vw;
 }
 
-// ── Tenant list — delete confirmation dialog ──────────────────────────────────
+// ── Tenant list — delete confirmation dialog ─────────────
 .p-dialog.delete-dialog {
-  .p-dialog-header { padding: 1.25rem 1.5rem 0.75rem !important; }
-  .p-dialog-content { padding: 0.75rem 1.5rem 1rem !important; }
-  .p-dialog-footer  { padding: 0.75rem 1.5rem 1.25rem !important; }
+  .p-dialog-header  { padding: 1.25rem 1.5rem 0.75rem; }
+  .p-dialog-content { padding: 0.75rem 1.5rem 1rem; }
+  .p-dialog-footer  { padding: 0.75rem 1.5rem 1.25rem; }
 }
