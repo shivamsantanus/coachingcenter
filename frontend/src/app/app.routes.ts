@@ -10,6 +10,7 @@ import { BrandingEditorComponent } from './components/settings/branding-editor/b
 import { ShellComponent } from './components/shell/shell.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { StudentListComponent } from './components/students/student-list/student-list.component';
+import { TeacherListComponent } from './components/teachers/teacher-list/teacher-list.component';
 import { TenantAuthComponent } from './components/tenant-auth/tenant-auth.component';
 import { TenantLoginComponent } from './components/tenant-auth/tenant-login/tenant-login.component';
 import { TenantRegisterComponent } from './components/tenant-auth/tenant-register/tenant-register.component';
@@ -28,11 +29,11 @@ import { CreateTenantComponent } from './components/platform-admin/create-tenant
 const onCustomDomain: CanMatchFn = () => inject(TenantContextService).isCustomDomain();
 
 // ── Shell children — all protected pages inside the app ──────────────────────
-// path: '**' at the end catches unimplemented routes (teachers, fees, etc.)
-// and redirects them to dashboard instead of silently failing.
+// path: '**' catches unimplemented routes (fees, exams, etc.) and redirects to dashboard.
 const shellChildren: Route[] = [
   { path: 'dashboard',         component: DashboardComponent      },
   { path: 'students',          component: StudentListComponent     },
+  { path: 'teachers',          component: TeacherListComponent     },
   { path: 'settings',          redirectTo: 'settings/branding', pathMatch: 'full' },
   { path: 'settings/branding', component: BrandingEditorComponent  },
   { path: '',                  redirectTo: 'dashboard', pathMatch: 'full' },

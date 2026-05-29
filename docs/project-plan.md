@@ -4,7 +4,7 @@
 > Never start a feature without a row in the plan. Never finish one without marking it done
 > and linking the feature doc. This is the single source of truth for project state.
 
-**Last updated:** 2026-05-22 (Student management UI done; codebase-wide `::ng-deep` elimination; Rule 21 added to CLAUDE.md)
+**Last updated:** 2026-05-30 (Phase 2 complete — Teacher management UI done; starting Phase 3 Academic Structure)
 
 ---
 
@@ -54,7 +54,7 @@
 | 2.1 | Student CRUD API | ✅ Done | — | Paginated list, search, status toggle, photo upload (2 MB / JPG/PNG/WebP) |
 | 2.2 | Teacher CRUD API | ✅ Done | — | Paginated list, search, status toggle, photo upload |
 | 2.3 | Student management UI | ✅ Done | [student-management.md](features/student-management.md) | List, add, edit, status toggle, photo upload; ORG_ADMIN + TEACHER |
-| 2.4 | Teacher management UI | 📋 Planned | — | List, add, edit, status toggle, photo; ORG_ADMIN only |
+| 2.4 | Teacher management UI | ✅ Done | [teacher-management.md](features/teacher-management.md) | List, add, edit, status toggle, photo upload; ORG_ADMIN only |
 
 > **Note:** Backend endpoints for Students and Teachers are fully implemented. Angular UI is the next step.
 
@@ -165,13 +165,14 @@
 
 **Immediate next steps:**
 
-1. **Teacher management UI** (Feature 2.4) — create `docs/features/teacher-management.md` first
-2. Then move into Phase 3 (Academic Structure) — start with backend controllers before UI
+1. **Phase 3 — Academic Structure** — backend controllers first, then UI
+   - Start with: Academic Year → Class → Batch → Subject (in that order — each depends on the previous)
+   - Feature doc required before any code: `docs/features/academic-structure.md`
 
-**Just completed (2026-05-22):**
-- Student management UI (2.3) — list, add, edit, status toggle, photo upload
-- Eliminated all `::ng-deep` from component SCSS files; all PrimeNG overrides now live in `styles.scss` with `styleClass` hooks
-- Added Rule 21 to CLAUDE.md forbidding `::ng-deep` going forward
+**Just completed:**
+- Phase 2 fully done — Student UI (2.3) + Teacher UI (2.4) with list, add, edit, status toggle, photo upload
+- Codebase-wide `::ng-deep` elimination; all PrimeNG overrides in `styles.scss`
+- Dialog X-button fixed across all forms using `(visibleChange)` pattern
 
 *(Tenant-branded auth pages complete: `/t/:slug/login|register|verify-email|forgot-password|reset-password` all implemented with branded left-panel shell and slug-scoped routing)*
 

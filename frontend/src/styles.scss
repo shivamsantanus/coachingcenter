@@ -254,8 +254,9 @@ html, body { height: 100%; }
 // ── Student list — status filter select ──────────────────
 .p-select.status-select { min-width: 160px; }
 
-// ── Student form dialog ───────────────────────────────────
-.p-dialog.student-dialog {
+// ── Student / Teacher form dialogs ────────────────────────
+.p-dialog.student-dialog,
+.p-dialog.teacher-dialog {
   width: 600px;
   max-width: 95vw;
 }

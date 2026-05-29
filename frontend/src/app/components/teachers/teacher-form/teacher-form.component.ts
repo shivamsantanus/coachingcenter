@@ -8,73 +8,74 @@ import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
-import { TextareaModule } from 'primeng/textarea';
+import { SelectModule } from 'primeng/select';
 import { DialogModule } from 'primeng/dialog';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
-import { StudentService } from '../../../services/student.service';
-import { StudentDetail, CreateStudentRequest, UpdateStudentRequest } from '../../../models/student.models';
+import { TeacherService } from '../../../services/teacher.service';
+import { TeacherDetail, CreateTeacherRequest, UpdateTeacherRequest } from '../../../models/teacher.models';
 import { environment } from '../../../../environments/environment';
 
+interface SalaryOption { label: string; value: string; }
+
 @Component({
-  selector: 'app-student-form',
+  selector: 'app-teacher-form',
   standalone: true,
   imports: [
     CommonModule, ReactiveFormsModule,
-    ButtonModule, InputTextModule, TextareaModule, DialogModule, ToastModule
+    ButtonModule, InputTextModule, SelectModule, DialogModule, ToastModule
   ],
   providers: [MessageService],
-  templateUrl: './student-form.component.html',
-  styleUrls: ['./student-form.component.scss']
+  templateUrl: './teacher-form.component.html',
+  styleUrls: ['./teacher-form.component.scss']
 })
-export class StudentFormComponent implements OnInit, OnDestroy, OnChanges {
-  @Input() studentId: string | null = null;
+export class TeacherFormComponent implements OnInit, OnDestroy, OnChanges {
+  @Input() teacherId: string | null = null;
   @Input() visible = false;
   @Output() saved  = new EventEmitter<void>();
   @Output() closed = new EventEmitter<void>();
 
   private readonly fb             = inject(FormBuilder);
-  private readonly studentService = inject(StudentService);
+  private readonly teacherService = inject(TeacherService);
   private readonly messageService = inject(MessageService);
   private readonly platformId     = inject(PLATFORM_ID);
   private readonly destroy$       = new Subject<void>();
 
-  readonly apiBase      = environment.apiBaseUrl.replace('/api', '');
-  readonly isLoading    = signal(false);
-  readonly isSaving     = signal(false);
-  readonly isUploading  = signal(false);
+  readonly apiBase     = environment.apiBaseUrl.replace('/api', '');
+  readonly isLoading   = signal(false);
+  readonly isSaving    = signal(false);
+  readonly isUploading = signal(false);
   readonly errorMessage = signal<string | null>(null);
 
-  // Edit mode: photo URL from the server.
-  readonly currentPhoto = signal<string | null>(null);
-
-  // Create mode: file held locally until the student record is created.
-  readonly pendingPhotoFile     = signal<File | null>(null);
-  readonly pendingPhotoPreview  = signal<string | null>(null);
+  readonly currentPhoto        = signal<string | null>(null);
+  readonly pendingPhotoFile    = signal<File | null>(null);
+  readonly pendingPhotoPreview = signal<string | null>(null);
 
   private hasSaved = false;
 
+  readonly salaryOptions: SalaryOption[] = [
+    { label: 'Monthly',   value: 'MONTHLY'  },
+    { label: 'Per class', value: 'PER_CLASS' },
+  ];
+
   readonly form = this.fb.group({
-    fullName:     ['', [Validators.required, Validators.maxLength(200)]],
-    admissionNo:  ['', [Validators.required, Validators.maxLength(50)]],
-    guardianName: ['', [Validators.required, Validators.maxLength(200)]],
-    guardianPhone:['', [Validators.required, Validators.maxLength(20)]],
-    address:      ['', Validators.maxLength(500)],
-    dateOfBirth:  [''],
+    fullName:      ['', [Validators.required, Validators.maxLength(200)]],
+    employeeCode:  ['', [Validators.required, Validators.maxLength(50)]],
+    qualification: ['', Validators.maxLength(200)],
+    salaryType:    ['' as string],
   });
 
-  get isEditMode(): boolean { return !!this.studentId; }
-
-  get dialogTitle(): string { return this.isEditMode ? 'Edit Student' : 'Add Student'; }
+  get isEditMode(): boolean { return !!this.teacherId; }
+  get dialogTitle(): string { return this.isEditMode ? 'Edit Teacher' : 'Add Teacher'; }
 
   get submitLabel(): string {
     if (this.isSaving() || this.isUploading()) return 'Saving…';
-    return this.isEditMode ? 'Save Changes' : 'Add Student';
+    return this.isEditMode ? 'Save Changes' : 'Add Teacher';
   }
 
   get avatarPhotoUrl(): string | null {
     if (this.isEditMode) return this.resolveUrl(this.currentPhoto());
-    return this.pendingPhotoPreview();   // blob URL — already absolute
+    return this.pendingPhotoPreview();
   }
 
   get avatarInitials(): string {
@@ -82,15 +83,15 @@ export class StudentFormComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   ngOnInit(): void {
-    if (this.isEditMode && this.studentId) {
-      this.loadStudent(this.studentId);
+    if (this.isEditMode && this.teacherId) {
+      this.loadTeacher(this.teacherId);
     }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['studentId'] && !changes['studentId'].firstChange) {
+    if (changes['teacherId'] && !changes['teacherId'].firstChange) {
       this.resetState();
-      if (this.studentId) this.loadStudent(this.studentId);
+      if (this.teacherId) this.loadTeacher(this.teacherId);
     }
   }
 
@@ -101,7 +102,7 @@ export class StudentFormComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   private resetState(): void {
-    this.form.reset();
+    this.form.reset({ salaryType: '' });
     this.errorMessage.set(null);
     this.currentPhoto.set(null);
     this.revokePendingPreview();
@@ -115,23 +116,21 @@ export class StudentFormComponent implements OnInit, OnDestroy, OnChanges {
     if (url && isPlatformBrowser(this.platformId)) URL.revokeObjectURL(url);
   }
 
-  private loadStudent(studentId: string): void {
+  private loadTeacher(teacherId: string): void {
     this.isLoading.set(true);
     this.errorMessage.set(null);
 
-    this.studentService.getStudent(studentId)
+    this.teacherService.getTeacher(teacherId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (student: StudentDetail) => {
+        next: (teacher: TeacherDetail) => {
           this.isLoading.set(false);
-          this.currentPhoto.set(student.photoUrl);
+          this.currentPhoto.set(teacher.photoUrl);
           this.form.patchValue({
-            fullName:     student.fullName,
-            admissionNo:  student.admissionNo,
-            guardianName: student.guardianName,
-            guardianPhone:student.guardianPhone,
-            address:      student.address,
-            dateOfBirth:  student.dateOfBirth ?? '',
+            fullName:      teacher.fullName,
+            employeeCode:  teacher.employeeCode,
+            qualification: teacher.qualification ?? '',
+            salaryType:    teacher.salaryType ?? '',
           });
         },
         error: (err: Error) => {
@@ -151,25 +150,23 @@ export class StudentFormComponent implements OnInit, OnDestroy, OnChanges {
     this.isSaving.set(true);
     this.errorMessage.set(null);
 
-    if (this.isEditMode && this.studentId) {
-      this.saveUpdate(this.studentId, raw);
+    if (this.isEditMode && this.teacherId) {
+      this.saveUpdate(this.teacherId, raw);
     } else {
       this.saveCreate(raw);
     }
   }
 
   private saveCreate(raw: typeof this.form.value): void {
-    const request: CreateStudentRequest = {
-      fullName:     raw.fullName     ?? '',
-      admissionNo:  raw.admissionNo  ?? '',
-      guardianName: raw.guardianName ?? '',
-      guardianPhone:raw.guardianPhone ?? '',
-      address:      raw.address      ?? '',
-      dateOfBirth:  raw.dateOfBirth  || null,
-      branchId:     null,
+    const request: CreateTeacherRequest = {
+      fullName:      raw.fullName      ?? '',
+      employeeCode:  raw.employeeCode  ?? '',
+      qualification: raw.qualification || null,
+      salaryType:    raw.salaryType    || null,
+      branchId:      null,
     };
 
-    this.studentService.createStudent(request)
+    this.teacherService.createTeacher(request)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: result => {
@@ -181,7 +178,7 @@ export class StudentFormComponent implements OnInit, OnDestroy, OnChanges {
             this.uploadPhotoAfterCreate(result.id, result.fullName, photo);
           } else {
             this.messageService.add({
-              severity: 'success', summary: 'Student added',
+              severity: 'success', summary: 'Teacher added',
               detail: `${result.fullName} has been added.`
             });
             setTimeout(() => this.saved.emit(), 800);
@@ -194,50 +191,47 @@ export class StudentFormComponent implements OnInit, OnDestroy, OnChanges {
       });
   }
 
-  private uploadPhotoAfterCreate(studentId: string, fullName: string, photo: File): void {
+  private uploadPhotoAfterCreate(teacherId: string, fullName: string, photo: File): void {
     this.isUploading.set(true);
 
-    this.studentService.uploadPhoto(studentId, photo)
+    this.teacherService.uploadPhoto(teacherId, photo)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
           this.isUploading.set(false);
           this.messageService.add({
-            severity: 'success', summary: 'Student added',
+            severity: 'success', summary: 'Teacher added',
             detail: `${fullName} has been added with photo.`
           });
           setTimeout(() => this.saved.emit(), 800);
         },
         error: (err: Error) => {
           this.isUploading.set(false);
-          // Student was created; don't block closing on photo failure.
           this.messageService.add({
-            severity: 'warn', summary: 'Student added',
-            detail: `Student created but photo upload failed: ${err.message}`
+            severity: 'warn', summary: 'Teacher added',
+            detail: `Teacher created but photo upload failed: ${err.message}`
           });
           setTimeout(() => this.saved.emit(), 1200);
         }
       });
   }
 
-  private saveUpdate(studentId: string, raw: typeof this.form.value): void {
-    const request: UpdateStudentRequest = {
-      fullName:     raw.fullName     ?? undefined,
-      admissionNo:  raw.admissionNo  ?? undefined,
-      guardianName: raw.guardianName ?? undefined,
-      guardianPhone:raw.guardianPhone ?? undefined,
-      address:      raw.address      ?? '',
-      dateOfBirth:  raw.dateOfBirth  || null,
+  private saveUpdate(teacherId: string, raw: typeof this.form.value): void {
+    const request: UpdateTeacherRequest = {
+      fullName:      raw.fullName      ?? undefined,
+      employeeCode:  raw.employeeCode  ?? undefined,
+      qualification: raw.qualification || null,
+      salaryType:    raw.salaryType    || null,
     };
 
-    this.studentService.updateStudent(studentId, request)
+    this.teacherService.updateTeacher(teacherId, request)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
           this.isSaving.set(false);
           this.hasSaved = true;
           this.messageService.add({
-            severity: 'success', summary: 'Student updated',
+            severity: 'success', summary: 'Teacher updated',
             detail: 'Changes have been saved.'
           });
           setTimeout(() => this.saved.emit(), 800);
@@ -271,8 +265,8 @@ export class StudentFormComponent implements OnInit, OnDestroy, OnChanges {
       return;
     }
 
-    if (this.isEditMode && this.studentId) {
-      this.uploadPhotoNow(this.studentId, file);
+    if (this.isEditMode && this.teacherId) {
+      this.uploadPhotoNow(this.teacherId, file);
     } else {
       this.revokePendingPreview();
       this.pendingPhotoFile.set(file);
@@ -282,10 +276,10 @@ export class StudentFormComponent implements OnInit, OnDestroy, OnChanges {
     }
   }
 
-  private uploadPhotoNow(studentId: string, file: File): void {
+  private uploadPhotoNow(teacherId: string, file: File): void {
     this.isUploading.set(true);
 
-    this.studentService.uploadPhoto(studentId, file)
+    this.teacherService.uploadPhoto(teacherId, file)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: result => {
@@ -293,7 +287,7 @@ export class StudentFormComponent implements OnInit, OnDestroy, OnChanges {
           this.currentPhoto.set(result.photoUrl);
           this.messageService.add({
             severity: 'success', summary: 'Photo uploaded',
-            detail: 'Student photo has been updated.'
+            detail: 'Teacher photo has been updated.'
           });
         },
         error: (err: Error) => {
@@ -303,7 +297,6 @@ export class StudentFormComponent implements OnInit, OnDestroy, OnChanges {
       });
   }
 
-  // Called by the Cancel button — respects hasSaved so the parent reloads if needed.
   onClose(): void {
     if (this.hasSaved) {
       this.saved.emit();

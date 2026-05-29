@@ -1,0 +1,140 @@
+<p-toast position="top-right" />
+
+<div class="teachers-page">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Teachers</h1>
+      <p class="page-subtitle">Manage your teaching staff</p>
+    </div>
+    @if (isOrgAdmin) {
+      <button pButton label="Add Teacher" icon="pi pi-plus" (click)="openAddForm()"></button>
+    }
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar">
+    <span class="search-wrapper">
+      <i class="pi pi-search search-icon"></i>
+      <input
+        pInputText
+        type="text"
+        placeholder="Search by name or employee code…"
+        class="search-input"
+        (input)="onSearchChange($any($event.target).value)" />
+    </span>
+
+    <p-select
+      [options]="statusOptions"
+      optionLabel="label"
+      optionValue="value"
+      [ngModel]="statusFilter()"
+      (ngModelChange)="statusFilter.set($event); onStatusFilterChange()"
+      styleClass="status-select" />
+  </div>
+
+  <!-- Table card -->
+  <div class="table-card">
+    @if (isLoading()) {
+      <div class="loading-state">
+        <i class="pi pi-spin pi-spinner"></i>
+        <p>Loading teachers…</p>
+      </div>
+    } @else if (teachers().length === 0) {
+      <div class="empty-state">
+        <i class="pi pi-graduation-cap"></i>
+        <p>No teachers found</p>
+        <span>{{ searchTerm() || statusFilter() ? 'Try adjusting your filters.' : 'Add your first teacher to get started.' }}</span>
+      </div>
+    } @else {
+      <table class="teacher-table">
+        <thead>
+          <tr>
+            <th>Teacher</th>
+            <th>Employee Code</th>
+            <th>Qualification</th>
+            <th>Salary Type</th>
+            <th>Status</th>
+            <th>Joined</th>
+            <th class="actions-col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (teacher of teachers(); track teacher.id) {
+            <tr>
+              <td>
+                <div class="teacher-cell">
+                  <div class="avatar">
+                    @if (photoUrl(teacher.photoUrl)) {
+                      <img [src]="photoUrl(teacher.photoUrl)!" [alt]="teacher.fullName" />
+                    } @else {
+                      {{ initials(teacher.fullName) }}
+                    }
+                  </div>
+                  <span class="teacher-name">{{ teacher.fullName }}</span>
+                </div>
+              </td>
+              <td><span class="mono">{{ teacher.employeeCode }}</span></td>
+              <td>{{ teacher.qualification || '—' }}</td>
+              <td>{{ formatSalaryType(teacher.salaryType) }}</td>
+              <td>
+                <span class="status-badge" [class.active]="teacher.status === 'ACTIVE'" [class.inactive]="teacher.status === 'INACTIVE'">
+                  {{ teacher.status === 'ACTIVE' ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td>{{ teacher.createdAt | date: 'dd MMM yyyy' }}</td>
+              <td>
+                <div class="action-buttons">
+                  @if (isOrgAdmin) {
+                    <button
+                      pButton
+                      [icon]="togglingId() === teacher.id ? 'pi pi-spin pi-spinner' : (teacher.status === 'ACTIVE' ? 'pi pi-ban' : 'pi pi-check-circle')"
+                      [pTooltip]="teacher.status === 'ACTIVE' ? 'Deactivate' : 'Activate'"
+                      tooltipPosition="top"
+                      class="p-button-text p-button-sm"
+                      [class.action-btn--deactivate]="teacher.status === 'ACTIVE'"
+                      [class.action-btn--activate]="teacher.status === 'INACTIVE'"
+                      [disabled]="!!togglingId()"
+                      (click)="toggleStatus(teacher)">
+                    </button>
+                    <button
+                      pButton
+                      icon="pi pi-pencil"
+                      pTooltip="Edit"
+                      tooltipPosition="top"
+                      class="p-button-text p-button-sm"
+                      [disabled]="!!togglingId()"
+                      (click)="openEditForm(teacher.id)">
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <!-- Pagination -->
+      @if (totalPages > 1) {
+        <div class="pagination">
+          <button pButton icon="pi pi-chevron-left" class="p-button-text p-button-sm"
+            [disabled]="currentPage() === 1" (click)="goToPage(currentPage() - 1)"></button>
+          <span class="page-info">Page {{ currentPage() }} of {{ totalPages }}</span>
+          <button pButton icon="pi pi-chevron-right" class="p-button-text p-button-sm"
+            [disabled]="currentPage() === totalPages" (click)="goToPage(currentPage() + 1)"></button>
+        </div>
+      }
+    }
+  </div>
+
+</div>
+
+@if (showForm()) {
+  <app-teacher-form
+    [teacherId]="editTeacherId()"
+    [visible]="showForm()"
+    (saved)="onFormSaved()"
+    (closed)="onFormClosed()">
+  </app-teacher-form>
+}

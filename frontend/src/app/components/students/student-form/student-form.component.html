@@ -8,7 +8,7 @@
   [draggable]="false"
   [resizable]="false"
   styleClass="student-dialog"
-  (onHide)="onDialogHide()">
+  (visibleChange)="onDialogVisibleChange($event)">
 
   @if (isLoading()) {
     <div class="dialog-loading">

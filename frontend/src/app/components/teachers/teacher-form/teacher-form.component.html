@@ -1,0 +1,116 @@
+<p-toast position="top-right" />
+
+<p-dialog
+  [header]="dialogTitle"
+  [visible]="visible"
+  [modal]="true"
+  [closable]="true"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="teacher-dialog"
+  (visibleChange)="onDialogVisibleChange($event)">
+
+  @if (isLoading()) {
+    <div class="dialog-loading">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>Loading teacher…</span>
+    </div>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="teacher-form">
+
+      <!-- Photo -->
+      <div class="photo-section">
+        <div class="photo-avatar">
+          @if (avatarPhotoUrl) {
+            <img [src]="avatarPhotoUrl" [alt]="form.get('fullName')?.value || 'Teacher'" />
+          } @else {
+            {{ avatarInitials || '?' }}
+          }
+        </div>
+        <div class="photo-actions">
+          <label class="upload-btn" [class.uploading]="isUploading()">
+            <i class="pi pi-camera"></i>
+            {{ isEditMode ? 'Change Photo' : 'Add Photo' }}
+            <input type="file" accept="image/jpeg,image/png,image/webp" hidden
+              [disabled]="isUploading()" (change)="onPhotoSelected($event)" />
+          </label>
+          @if (isUploading()) {
+            <span class="photo-hint">Uploading…</span>
+          } @else if (pendingPhotoFile()) {
+            <span class="photo-hint photo-hint--selected">
+              <i class="pi pi-check-circle"></i> {{ pendingPhotoFile()!.name }}
+            </span>
+          } @else {
+            <span class="photo-hint">JPG, PNG or WebP · max 2 MB</span>
+          }
+        </div>
+      </div>
+
+      @if (errorMessage()) {
+        <div class="form-error-banner">
+          <i class="pi pi-exclamation-circle"></i>
+          <span>{{ errorMessage() }}</span>
+        </div>
+      }
+
+      <!-- Fields -->
+      <div class="form-grid">
+
+        <div class="field">
+          <label for="tf-fullName">Full Name <span class="required">*</span></label>
+          <input pInputText id="tf-fullName" type="text"
+            formControlName="fullName" placeholder="e.g. Ravi Kumar" />
+          @if (fieldError('fullName')) {
+            <span class="field-error">{{ fieldError('fullName') }}</span>
+          }
+        </div>
+
+        <div class="field">
+          <label for="tf-employeeCode">Employee Code <span class="required">*</span></label>
+          <input pInputText id="tf-employeeCode" type="text"
+            formControlName="employeeCode" placeholder="e.g. EMP-001" />
+          @if (fieldError('employeeCode')) {
+            <span class="field-error">{{ fieldError('employeeCode') }}</span>
+          }
+        </div>
+
+        <div class="field">
+          <label for="tf-qualification">Qualification</label>
+          <input pInputText id="tf-qualification" type="text"
+            formControlName="qualification" placeholder="e.g. B.Ed, M.Sc" />
+          @if (fieldError('qualification')) {
+            <span class="field-error">{{ fieldError('qualification') }}</span>
+          }
+        </div>
+
+        <div class="field">
+          <label for="tf-salaryType">Salary Type</label>
+          <p-select
+            inputId="tf-salaryType"
+            formControlName="salaryType"
+            [options]="salaryOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Not specified"
+            styleClass="w-full" />
+        </div>
+
+      </div>
+
+      <!-- Footer -->
+      <div class="form-footer">
+        <button pButton type="button" label="Cancel" class="p-button-text"
+          (click)="onClose()" [disabled]="isSaving() || isUploading()">
+        </button>
+        <button pButton type="submit"
+          [label]="submitLabel"
+          [icon]="(isSaving() || isUploading()) ? 'pi pi-spin pi-spinner' : ''"
+          class="p-button-primary"
+          [disabled]="isSaving() || isUploading()">
+        </button>
+      </div>
+
+    </form>
+  }
+
+</p-dialog>
