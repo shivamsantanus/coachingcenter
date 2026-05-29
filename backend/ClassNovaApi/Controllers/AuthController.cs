@@ -149,13 +149,13 @@ namespace ClassNovaApi.Controllers
             _logger.LogInformation("User logged in. Email: {Email}, Tenant: {Slug}",
                 user.Email, tenant.Slug);
 
-            return Ok(new ApiResponse<object>(new
+            return Ok(new ApiResponse<AuthResponseDto>(new AuthResponseDto
             {
-                token,
-                role       = tenantUserRole.Role.Code,
-                tenantSlug = tenant.Slug,
-                tenantName = tenant.Name,
-                fullName   = user.FullName
+                Token      = token,
+                Role       = tenantUserRole.Role.Code,
+                TenantSlug = tenant.Slug,
+                TenantName = tenant.Name,
+                FullName   = user.FullName
             }));
         }
 
@@ -270,13 +270,13 @@ namespace ClassNovaApi.Controllers
 
             _logger.LogInformation("Platform admin logged in. Email: {Email}", user.Email);
 
-            return Ok(new ApiResponse<object>(new
+            return Ok(new ApiResponse<AuthResponseDto>(new AuthResponseDto
             {
-                token,
-                role       = "PLATFORM_ADMIN",
-                tenantSlug = "classnova",
-                tenantName = "ClassNova Platform",
-                fullName   = user.FullName
+                Token      = token,
+                Role       = "PLATFORM_ADMIN",
+                TenantSlug = "classnova",
+                TenantName = "ClassNova Platform",
+                FullName   = user.FullName
             }));
         }
 

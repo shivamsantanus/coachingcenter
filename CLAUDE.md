@@ -39,7 +39,8 @@ Coaching Centre App/
 └── docs/
     ├── mvp-scope.md
     ├── db-design-v1.md
-    └── features/               # One .md file per feature (created before coding)
+    ├── features/               # One .md file per feature (created before coding)
+    └── concepts/               # One .md file per technology/concept used (Rule 23)
 ```
 
 ---
@@ -409,6 +410,44 @@ For properties with no token (font-family, transitions), use plain CSS selectors
 
 **Dark mode rule:** `darkModeSelector` is set to `'.dark-mode'`. Dark theme only activates when you explicitly add `.dark-mode` to `<html>`. Never change this to `system` or `media`.
 
+### 23. Parallel Concept Documentation
+
+Every technology, pattern, or non-trivial concept introduced in this project must have a corresponding learning doc in `docs/concepts/`.
+
+**The rule:** When you write code that uses a concept for the first time (or uses it in a meaningfully new way), create or update `docs/concepts/<concept-name>.md` in the same session — not later.
+
+**What counts as a concept worth documenting:**
+- A library or framework (PrimeNG, EF Core, RxJS, JWT, BCrypt, Angular Signals…)
+- A design pattern (multi-tenancy, route guards, HTTP interceptors, reactive forms…)
+- A backend technique (JWT claims, password hashing, DTO mapping, LINQ queries…)
+- A frontend technique (Signals, AsyncPipe, takeUntil, CSS design tokens…)
+- A platform concept (EF Core migrations, snake_case naming, response envelopes…)
+
+**What each concept doc must contain:**
+
+```markdown
+# <Concept Name>
+
+## What it is
+One short paragraph — plain-English definition, no jargon.
+
+## Why we use it in ClassNova
+Specific reason: what problem it solves in this project.
+
+## How we use it — with examples
+Concrete code snippets pulled from this codebase.
+
+## Key rules / gotchas
+Bullet list of things that tripped us up or are easy to get wrong.
+
+## Where to find it in the codebase
+File paths + line context so you can navigate straight to it.
+```
+
+**Index:** `docs/concepts/INDEX.md` lists every concept doc — update it whenever you add a new one.
+
+**This runs in parallel with feature development.** A concept doc does not block a feature, but the feature is not fully "done" until its new concepts are documented.
+
 ### 20. Feature Completion Checklist
 
 A feature is NOT complete until ALL of the following are true:
@@ -420,6 +459,7 @@ A feature is NOT complete until ALL of the following are true:
 - [ ] No `console.log`, no magic strings, no unexplained `any`
 - [ ] Observable subscriptions cleaned up (Angular)
 - [ ] Manual test of the happy path and at least one error/edge case
+- [ ] New concepts/technologies introduced are documented in `docs/concepts/`
 
 ---
 
@@ -444,6 +484,7 @@ A feature is NOT complete until ALL of the following are true:
 17. ✅ Always be tenant-aware — every query, service method, and response must respect tenant boundaries
 18. ✅ Always return the standard API response envelope `{ success, data, error }`
 19. ✅ Ask before refactoring existing working code
+20. ✅ Always create or update a concept doc in `docs/concepts/` when a new technology or pattern is introduced — see Rule 23
 
 ---
 

@@ -66,6 +66,7 @@ export class LandingPageComponent implements OnInit, OnDestroy {
     this.route.paramMap.pipe(
       switchMap(params => {
         this.slug = params.get('slug') ?? this.tenantContext.slug();
+        this.tenantContext.setSlugFromRoute(this.slug);
         this.isSignedInHere.set(
           this.authService.isLoggedIn() &&
           this.authService.getTenantSlug() === this.slug
@@ -130,7 +131,7 @@ export class LandingPageComponent implements OnInit, OnDestroy {
   }
 
   navigateToDashboard(): void {
-    this.router.navigate(['/dashboard']);
+    this.router.navigate([this.tenantContext.authPath('dashboard')]);
   }
 
   safeMapUrl(url: string): SafeResourceUrl {

@@ -1,4 +1,4 @@
-import { Routes, CanMatchFn } from '@angular/router';
+import { Routes, Route, CanMatchFn } from '@angular/router';
 import { inject } from '@angular/core';
 import { LoginComponent } from './components/login/login.component';
 import { RegisterComponent } from './components/register/register.component';
@@ -17,8 +17,9 @@ import { TenantVerifyEmailComponent } from './components/tenant-auth/tenant-veri
 import { TenantForgotPasswordComponent } from './components/tenant-auth/tenant-forgot-password/tenant-forgot-password.component';
 import { TenantResetPasswordComponent } from './components/tenant-auth/tenant-reset-password/tenant-reset-password.component';
 import { TenantContextService } from './services/tenant-context.service';
-import { authGuard } from './guards/auth.guard';
 import { platformAdminGuard } from './guards/platform-admin.guard';
+import { tenantAuthGuard } from './guards/tenant-auth.guard';
+import { redirectIfLoggedInGuard } from './guards/redirect-if-logged-in.guard';
 import { PlatformAdminLoginComponent } from './components/platform-admin/platform-admin-login/platform-admin-login.component';
 import { PlatformAdminShellComponent } from './components/platform-admin/platform-admin-shell/platform-admin-shell.component';
 import { TenantListComponent } from './components/platform-admin/tenant-list/tenant-list.component';
@@ -26,8 +27,30 @@ import { CreateTenantComponent } from './components/platform-admin/create-tenant
 
 const onCustomDomain: CanMatchFn = () => inject(TenantContextService).isCustomDomain();
 
+// ── Shell children — all protected pages inside the app ──────────────────────
+// path: '**' at the end catches unimplemented routes (teachers, fees, etc.)
+// and redirects them to dashboard instead of silently failing.
+const shellChildren: Route[] = [
+  { path: 'dashboard',         component: DashboardComponent      },
+  { path: 'students',          component: StudentListComponent     },
+  { path: 'settings',          redirectTo: 'settings/branding', pathMatch: 'full' },
+  { path: 'settings/branding', component: BrandingEditorComponent  },
+  { path: '',                  redirectTo: 'dashboard', pathMatch: 'full' },
+  { path: '**',                redirectTo: 'dashboard'             },
+];
+
+// ── Tenant auth children — login / register / password flows ─────────────────
+const tenantAuthChildren: Route[] = [
+  { path: 'login',           component: TenantLoginComponent           },
+  { path: 'register',        component: TenantRegisterComponent        },
+  { path: 'verify-email',    component: TenantVerifyEmailComponent     },
+  { path: 'forgot-password', component: TenantForgotPasswordComponent  },
+  { path: 'reset-password',  component: TenantResetPasswordComponent   },
+];
+
 export const routes: Routes = [
-  // ── Platform Admin ──────────────────────────────────────
+
+  // ── Platform Admin ────────────────────────────────────────────────────────
   { path: 'admin/login', component: PlatformAdminLoginComponent },
   {
     path: 'admin',
@@ -40,22 +63,24 @@ export const routes: Routes = [
     ]
   },
 
-  // ── Custom domain routes (only matched when APP_INITIALIZER resolved a custom domain) ──
+  // ── Custom domain routes ──────────────────────────────────────────────────
+  // canMatch only passes when APP_INITIALIZER resolved a custom domain.
   { path: '', canMatch: [onCustomDomain], component: LandingPageComponent, pathMatch: 'full' },
   {
     path: '',
     canMatch: [onCustomDomain],
     component: TenantAuthComponent,
-    children: [
-      { path: 'login',           component: TenantLoginComponent           },
-      { path: 'register',        component: TenantRegisterComponent        },
-      { path: 'verify-email',    component: TenantVerifyEmailComponent     },
-      { path: 'forgot-password', component: TenantForgotPasswordComponent  },
-      { path: 'reset-password',  component: TenantResetPasswordComponent   },
-    ]
+    children: tenantAuthChildren,
+  },
+  {
+    path: '',
+    canMatch: [onCustomDomain],
+    component: ShellComponent,
+    canActivate: [tenantAuthGuard],
+    children: shellChildren,
   },
 
-  // ── ClassNova domain routes ──
+  // ── ClassNova domain — tenant routes under /t/:slug ──────────────────────
   {
     path: 't/:slug',
     children: [
@@ -63,31 +88,29 @@ export const routes: Routes = [
       {
         path: '',
         component: TenantAuthComponent,
-        children: [
-          { path: 'login',           component: TenantLoginComponent           },
-          { path: 'register',        component: TenantRegisterComponent        },
-          { path: 'verify-email',    component: TenantVerifyEmailComponent     },
-          { path: 'forgot-password', component: TenantForgotPasswordComponent  },
-          { path: 'reset-password',  component: TenantResetPasswordComponent   },
-        ]
-      }
+        children: tenantAuthChildren,
+      },
+      {
+        path: '',
+        component: ShellComponent,
+        canActivate: [tenantAuthGuard],
+        children: shellChildren,
+      },
     ]
   },
-  { path: 'login',           component: LoginComponent           },
-  { path: 'register',        component: RegisterComponent        },
-  { path: 'verify-email',    component: VerifyEmailComponent     },
-  { path: 'forgot-password', component: ForgotPasswordComponent  },
-  { path: 'reset-password',  component: ResetPasswordComponent   },
-  {
-    path: '',
-    component: ShellComponent,
-    canActivate: [authGuard],
-    children: [
-      { path: 'dashboard',          component: DashboardComponent       },
-      { path: 'students',           component: StudentListComponent      },
-      { path: 'settings',           redirectTo: 'settings/branding', pathMatch: 'full' },
-      { path: 'settings/branding',  component: BrandingEditorComponent   },
-      { path: '',                   redirectTo: 'dashboard', pathMatch: 'full' },
-    ]
-  }
+
+  // ── Platform auth pages ───────────────────────────────────────────────────
+  // redirectIfLoggedInGuard sends already-authenticated users to their home
+  // screen so these pages never render for a logged-in user.
+  { path: 'login',           component: LoginComponent,           canActivate: [redirectIfLoggedInGuard] },
+  { path: 'register',        component: RegisterComponent,        canActivate: [redirectIfLoggedInGuard] },
+  { path: 'verify-email',    component: VerifyEmailComponent,     canActivate: [redirectIfLoggedInGuard] },
+  { path: 'forgot-password', component: ForgotPasswordComponent,  canActivate: [redirectIfLoggedInGuard] },
+  { path: 'reset-password',  component: ResetPasswordComponent,   canActivate: [redirectIfLoggedInGuard] },
+
+  // ── Fallbacks ─────────────────────────────────────────────────────────────
+  // Root with no path → send to platform login.
+  { path: '',  redirectTo: 'login', pathMatch: 'full' },
+  // Catch-all for any completely unmatched URL at the root level.
+  { path: '**', redirectTo: 'login' },
 ];

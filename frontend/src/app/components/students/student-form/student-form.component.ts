@@ -303,10 +303,20 @@ export class StudentFormComponent implements OnInit, OnDestroy, OnChanges {
       });
   }
 
+  // Called by the Cancel button — respects hasSaved so the parent reloads if needed.
   onClose(): void {
     if (this.hasSaved) {
       this.saved.emit();
     } else {
+      this.closed.emit();
+    }
+  }
+
+  // Called by PrimeNG's (onHide) — fires for both user-triggered (X button)
+  // and programmatic closes ([visible] going false). Guard with this.visible so
+  // we only emit when the user actively closed; the programmatic re-fire is ignored.
+  onDialogHide(): void {
+    if (this.visible) {
       this.closed.emit();
     }
   }

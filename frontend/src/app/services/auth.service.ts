@@ -31,7 +31,12 @@ export class AuthService {
   private readonly platformId = inject(PLATFORM_ID);
 
   private get storage(): Storage | null {
-    return isPlatformBrowser(this.platformId) ? localStorage : null;
+    try {
+      return isPlatformBrowser(this.platformId) ? localStorage : null;
+    } catch {
+      // SecurityError thrown by browser Tracking Prevention or iframe restrictions
+      return null;
+    }
   }
 
   platformLogin(credentials: PlatformLoginRequest): Observable<AuthData> {
@@ -177,7 +182,27 @@ export class AuthService {
   }
 
   isLoggedIn(): boolean {
-    return !!this.getContext()?.token;
+    const context = this.getContext();
+    if (!context?.token) return false;
+
+    // JWT uses base64url (RFC 7519): replace url-safe chars then re-pad to a
+    // multiple of 4 before passing to atob(), which requires standard base64.
+    try {
+      const base64Url = context.token.split('.')[1];
+      const base64    = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const padded    = base64 + '='.repeat((4 - base64.length % 4) % 4);
+      const payload   = JSON.parse(atob(padded)) as { exp?: number };
+      if (payload.exp && Date.now() / 1000 > payload.exp) {
+        this.logout();
+        return false;
+      }
+    } catch {
+      // Unparseable token — clear it so the user can log in cleanly
+      this.logout();
+      return false;
+    }
+
+    return true;
   }
 
   getToken(): string | null {

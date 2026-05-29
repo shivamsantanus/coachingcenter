@@ -8,7 +8,7 @@
   [draggable]="false"
   [resizable]="false"
   styleClass="student-dialog"
-  (onHide)="onClose()">
+  (onHide)="onDialogHide()">
 
   @if (isLoading()) {
     <div class="dialog-loading">

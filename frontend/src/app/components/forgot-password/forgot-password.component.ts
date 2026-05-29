@@ -30,9 +30,13 @@ export class ForgotPasswordComponent implements OnInit, OnDestroy {
   errorMessage: string | null = null;
 
   ngOnInit(): void {
-    if (this.authService.isLoggedIn()) {
-      this.router.navigate(['/dashboard']);
+    if (!this.authService.isLoggedIn()) return;
+    if (this.authService.getRole() === 'PLATFORM_ADMIN') {
+      this.router.navigate(['/admin/tenants']);
+      return;
     }
+    const slug = this.authService.getTenantSlug();
+    if (slug) this.router.navigate([`/t/${slug}/dashboard`]);
   }
 
   onSubmit(): void {

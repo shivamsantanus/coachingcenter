@@ -42,7 +42,8 @@ export class BrandingEditorComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     const role = this.authService.getRole();
     if (role !== 'ORG_ADMIN') {
-      this.router.navigate(['/dashboard']);
+      const slug = this.authService.getTenantSlug();
+      this.router.navigate(slug ? [`/t/${slug}/dashboard`] : ['/login']);
       return;
     }
     this.loadExistingBranding();

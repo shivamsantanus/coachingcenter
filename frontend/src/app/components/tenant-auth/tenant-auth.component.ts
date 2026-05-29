@@ -29,6 +29,7 @@ export class TenantAuthComponent implements OnInit, OnDestroy {
     const slug = this.resolveSlug();
     if (!slug) { this.notFound.set(true); return; }
 
+    this.tenantContext.setSlugFromRoute(slug);
     this.brandingService.loadBranding(slug)
       .pipe(takeUntil(this.destroy$))
       .subscribe({

@@ -37,7 +37,9 @@ export class TenantRegisterComponent implements OnInit, OnDestroy {
   readonly errorMsg  = signal<string | null>(null);
 
   ngOnInit(): void {
-    if (this.authService.isLoggedIn()) this.router.navigate(['/dashboard']);
+    if (this.authService.isLoggedIn() && this.authService.getRole() !== 'PLATFORM_ADMIN') {
+      this.router.navigate([this.tenantContext.authPath('dashboard')]);
+    }
   }
 
   onSubmit(): void {

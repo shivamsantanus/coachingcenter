@@ -9,7 +9,7 @@
 
     <nav class="sidebar-nav">
       <a
-        *ngFor="let item of visibleNavItems"
+        *ngFor="let item of visibleNavItems(); trackBy: trackNavItem"
         [routerLink]="item.route"
         routerLinkActive="active"
         class="nav-item">

@@ -35,7 +35,13 @@ export class TenantLoginComponent implements OnInit, OnDestroy {
   readonly errorMsg  = signal<string | null>(null);
 
   ngOnInit(): void {
-    if (this.authService.isLoggedIn()) this.router.navigate(['/dashboard']);
+    if (this.authService.isLoggedIn() && this.authService.getRole() !== 'PLATFORM_ADMIN') {
+      const savedSlug = this.authService.getTenantSlug() ?? this.slug;
+      const path = this.tenantContext.isCustomDomain()
+        ? '/dashboard'
+        : `/t/${savedSlug}/dashboard`;
+      this.router.navigate([path]);
+    }
   }
 
   onSubmit(): void {
@@ -47,8 +53,18 @@ export class TenantLoginComponent implements OnInit, OnDestroy {
     this.authService.login({ tenantSlug: this.slug, email: email!, password: password! })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next:  ()           => { this.isLoading.set(false); this.router.navigate(['/dashboard']); },
-        error: (err: Error) => { this.isLoading.set(false); this.errorMsg.set(err.message); }
+        next: () => {
+          this.isLoading.set(false);
+          const savedSlug = this.authService.getTenantSlug() ?? this.slug;
+          const path      = this.tenantContext.isCustomDomain()
+            ? '/dashboard'
+            : `/t/${savedSlug}/dashboard`;
+          this.router.navigate([path]);
+        },
+        error: (err: Error) => {
+          this.isLoading.set(false);
+          this.errorMsg.set(err.message);
+        }
       });
   }
 
