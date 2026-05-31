@@ -1,0 +1,288 @@
+<p-toast position="top-right" />
+
+<div class="tab-content">
+
+  <div class="tab-header">
+    <div>
+      <h2 class="tab-title">Student Enrollments</h2>
+      <p class="tab-subtitle">Select a batch to view and manage enrollments</p>
+    </div>
+    @if (isOrgAdmin && batchSelected) {
+      <button pButton label="Add Students" icon="pi pi-user-plus" (click)="openAddDialog()"></button>
+    }
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar">
+    <p-select
+      [options]="allAyOptions()"
+      optionLabel="label"
+      optionValue="value"
+      [ngModel]="filterAyId()"
+      (ngModelChange)="onAyChange($event)"
+      styleClass="filter-select"
+      placeholder="Select academic year" />
+
+    <p-select
+      [options]="batchOptions()"
+      optionLabel="label"
+      optionValue="value"
+      [ngModel]="filterBatchId()"
+      (ngModelChange)="onBatchChange($event)"
+      [disabled]="!filterAyId()"
+      styleClass="filter-select"
+      placeholder="Select batch" />
+  </div>
+
+  <!-- Enrollments table -->
+  <div class="table-card">
+    @if (!batchSelected) {
+      <div class="empty-state">
+        <i class="pi pi-filter"></i>
+        <p>Select a batch</p>
+        <span>Choose an academic year and batch to view enrollments.</span>
+      </div>
+    } @else if (isLoadingEnrollments()) {
+      <div class="empty-state">
+        <i class="pi pi-spin pi-spinner"></i>
+        <p>Loading enrollments…</p>
+      </div>
+    } @else if (enrollments().length === 0) {
+      <div class="empty-state">
+        <i class="pi pi-users"></i>
+        <p>No students enrolled yet</p>
+        <span>Click "Add Students" to enroll students in this batch.</span>
+      </div>
+    } @else {
+      <!-- Selection action bar -->
+      @if (isOrgAdmin) {
+        <div class="selection-bar">
+          <span class="selection-bar__count">
+            {{ selectedRowCount() > 0 ? selectedRowCount() + ' selected' : 'Select rows to delete' }}
+          </span>
+          <button pButton
+            icon="pi pi-trash"
+            label="Delete Selected"
+            class="p-button-danger p-button-sm"
+            [disabled]="selectedRowCount() === 0"
+            (click)="openBulkDeleteConfirm()">
+          </button>
+          <button pButton
+            label="Clear"
+            class="p-button-text p-button-sm"
+            [disabled]="selectedRowCount() === 0"
+            (click)="clearRowSelection()">
+          </button>
+        </div>
+      }
+
+      <table class="enrollment-table">
+        <thead>
+          <tr>
+            @if (isOrgAdmin) {
+              <th class="cb-col">
+                <p-checkbox
+                  [binary]="true"
+                  [ngModel]="allRowsSelected()"
+                  (onChange)="toggleAllRows()" />
+              </th>
+            }
+            <th>Name</th>
+            <th>Admission No</th>
+            <th>Enrolled On</th>
+            <th>Status</th>
+            @if (isOrgAdmin) { <th class="actions-col">Actions</th> }
+          </tr>
+        </thead>
+        <tbody>
+          @for (enrollment of enrollments(); track enrollment.id) {
+            <tr
+              [class.row-selected]="isRowSelected(enrollment.id)"
+              (click)="toggleRowSelection(enrollment.id)"
+              class="selectable-row">
+              @if (isOrgAdmin) {
+                <td class="cb-col" (click)="$event.stopPropagation()">
+                  <p-checkbox
+                    [binary]="true"
+                    [ngModel]="isRowSelected(enrollment.id)"
+                    (onChange)="toggleRowSelection(enrollment.id)" />
+                </td>
+              }
+              <td><span class="student-name">{{ enrollment.studentName }}</span></td>
+              <td><span class="mono">{{ enrollment.admissionNo }}</span></td>
+              <td>{{ enrollment.enrolledOn | date: 'dd MMM yyyy' }}</td>
+              <td>
+                <span class="status-badge" [class.active]="enrollment.isActive" [class.inactive]="!enrollment.isActive">
+                  {{ enrollment.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              @if (isOrgAdmin) {
+                <td (click)="$event.stopPropagation()">
+                  <div class="action-buttons">
+                    <button
+                      pButton
+                      [icon]="togglingId() === enrollment.id ? 'pi pi-spin pi-spinner' : (enrollment.isActive ? 'pi pi-ban' : 'pi pi-check-circle')"
+                      [pTooltip]="enrollment.isActive ? 'Deactivate' : 'Activate'"
+                      tooltipPosition="top"
+                      class="p-button-text p-button-sm"
+                      [class.action-btn--deactivate]="enrollment.isActive"
+                      [class.action-btn--activate]="!enrollment.isActive"
+                      [disabled]="isDeleting()"
+                      (click)="toggleEnrollment(enrollment)">
+                    </button>
+                    <button
+                      pButton
+                      [icon]="deletingId() === enrollment.id ? 'pi pi-spin pi-spinner' : 'pi pi-trash'"
+                      pTooltip="Delete"
+                      tooltipPosition="top"
+                      class="p-button-text p-button-sm action-btn--danger"
+                      [disabled]="isDeleting()"
+                      (click)="deleteEnrollment(enrollment)">
+                    </button>
+                  </div>
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+
+</div>
+
+<!-- Add Students Dialog -->
+<p-dialog
+  header="Add Students to Batch"
+  [visible]="showDialog()"
+  (visibleChange)="!$event && closeDialog()"
+  [modal]="true"
+  [closable]="true"
+  [style]="{ width: '580px' }">
+
+  <!-- ── Selected chips ───────────────────────────────────────────────────── -->
+  @if (selectedStudents().length > 0) {
+    <div class="chips-section">
+      <div class="chips-header">
+        <span class="chips-label">Selected ({{ selectedCount() }})</span>
+        <button class="chips-clear-btn" (click)="clearAllSelected()">Clear all</button>
+      </div>
+      <div class="chips-list">
+        @for (student of selectedStudents(); track student.id) {
+          <div class="chip">
+            <span class="chip-name">{{ student.fullName }}</span>
+            <button class="chip-remove" (click)="toggleStudent(student.id)" aria-label="Remove">
+              <i class="pi pi-times"></i>
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ── Search ────────────────────────────────────────────────────────────── -->
+  <div class="dialog-search-bar">
+    <i class="pi pi-search"></i>
+    <input
+      type="text"
+      placeholder="Search by name or admission no…"
+      class="dialog-search-input"
+      [value]="dialogSearchTerm()"
+      (input)="onSearchInput($any($event.target).value)" />
+    @if (dialogSearchTerm()) {
+      <button class="clear-search" (click)="onSearchInput('')">
+        <i class="pi pi-times"></i>
+      </button>
+    }
+  </div>
+
+  <!-- ── Select all visible ────────────────────────────────────────────────── -->
+  @if (!isLoadingAvailable() && visibleStudents().length > 0) {
+    <div class="select-all-row">
+      <button class="select-all-btn" (click)="selectAllVisible()">
+        <i class="pi pi-check-square"></i>
+        Select all {{ dialogSearchTerm() ? 'matching' : 'available' }} ({{ visibleStudents().length }})
+      </button>
+    </div>
+  }
+
+  <!-- ── Student list (unselected only) ───────────────────────────────────── -->
+  <div class="student-list">
+    @if (isLoadingAvailable()) {
+      <div class="list-empty">
+        <i class="pi pi-spin pi-spinner"></i>
+        <span>Loading students…</span>
+      </div>
+    } @else if (allAvailableStudents().length === 0) {
+      <div class="list-empty">
+        <i class="pi pi-info-circle"></i>
+        <span>All active students are already enrolled in a batch.</span>
+      </div>
+    } @else if (visibleStudents().length === 0 && dialogSearchTerm()) {
+      <div class="list-empty">
+        <i class="pi pi-search"></i>
+        <span>No unselected students match "{{ dialogSearchTerm() }}".</span>
+      </div>
+    } @else if (visibleStudents().length === 0) {
+      <div class="list-empty">
+        <i class="pi pi-check-circle"></i>
+        <span>All available students are selected.</span>
+      </div>
+    } @else {
+      @for (student of visibleStudents(); track student.id) {
+        <div class="student-row" (click)="toggleStudent(student.id)">
+          <p-checkbox
+            [binary]="true"
+            [ngModel]="false"
+            (click)="$event.stopPropagation()" />
+          <div class="student-info">
+            <span class="student-name">{{ student.fullName }}</span>
+            <span class="student-admission">{{ student.admissionNo }}</span>
+          </div>
+        </div>
+      }
+    }
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="dialog-footer">
+      <button pButton label="Cancel" class="p-button-text" (click)="closeDialog()" [disabled]="isSaving()"></button>
+      <button
+        pButton
+        [label]="selectedCount() > 0 ? 'Enroll ' + selectedCount() + ' Student(s)' : 'Enroll'"
+        [loading]="isSaving()"
+        [disabled]="selectedCount() === 0"
+        (click)="enrollSelected()">
+      </button>
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- Confirm Delete Dialog -->
+<p-dialog
+  header="Confirm Delete"
+  [visible]="showConfirmDialog()"
+  (visibleChange)="!$event && cancelDelete()"
+  [modal]="true"
+  [closable]="!isDeleting()"
+  [style]="{ width: '420px' }">
+
+  <div class="confirm-body">
+    <i class="pi pi-exclamation-triangle confirm-icon"></i>
+    <p class="confirm-message">{{ confirmDialogMessage() }}</p>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="dialog-footer">
+      <button pButton label="Cancel" class="p-button-text" (click)="cancelDelete()" [disabled]="isDeleting()"></button>
+      <button
+        pButton
+        label="Delete"
+        icon="pi pi-trash"
+        class="p-button-danger"
+        [loading]="isDeleting()"
+        (click)="confirmDelete()">
+      </button>
+    </div>
+  </ng-template>
+</p-dialog>

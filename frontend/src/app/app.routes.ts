@@ -7,6 +7,8 @@ import { ForgotPasswordComponent } from './components/forgot-password/forgot-pas
 import { ResetPasswordComponent } from './components/reset-password/reset-password.component';
 import { LandingPageComponent } from './components/landing-page/landing-page.component';
 import { BrandingEditorComponent } from './components/settings/branding-editor/branding-editor.component';
+import { SettingsShellComponent } from './components/settings/settings-shell/settings-shell.component';
+import { BranchesComponent } from './components/settings/branches/branches.component';
 import { ShellComponent } from './components/shell/shell.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { StudentListComponent } from './components/students/student-list/student-list.component';
@@ -25,6 +27,8 @@ import { PlatformAdminLoginComponent } from './components/platform-admin/platfor
 import { PlatformAdminShellComponent } from './components/platform-admin/platform-admin-shell/platform-admin-shell.component';
 import { TenantListComponent } from './components/platform-admin/tenant-list/tenant-list.component';
 import { CreateTenantComponent } from './components/platform-admin/create-tenant/create-tenant.component';
+import { AcademicComponent } from './components/academic/academic.component';
+import { AttendanceComponent } from './components/attendance/attendance.component';
 
 const onCustomDomain: CanMatchFn = () => inject(TenantContextService).isCustomDomain();
 
@@ -34,8 +38,17 @@ const shellChildren: Route[] = [
   { path: 'dashboard',         component: DashboardComponent      },
   { path: 'students',          component: StudentListComponent     },
   { path: 'teachers',          component: TeacherListComponent     },
-  { path: 'settings',          redirectTo: 'settings/branding', pathMatch: 'full' },
-  { path: 'settings/branding', component: BrandingEditorComponent  },
+  {
+    path: 'settings',
+    component: SettingsShellComponent,
+    children: [
+      { path: 'branding', component: BrandingEditorComponent },
+      { path: 'branches', component: BranchesComponent       },
+      { path: '',         redirectTo: 'branding', pathMatch: 'full' }
+    ]
+  },
+  { path: 'academic',           component: AcademicComponent          },
+  { path: 'attendance',         component: AttendanceComponent        },
   { path: '',                  redirectTo: 'dashboard', pathMatch: 'full' },
   { path: '**',                redirectTo: 'dashboard'             },
 ];

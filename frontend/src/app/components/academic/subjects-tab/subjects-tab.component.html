@@ -1,0 +1,164 @@
+<p-toast position="top-right" />
+
+<div class="tab-content">
+
+  <!-- Tab header -->
+  <div class="tab-header">
+    <div>
+      <h2 class="tab-title">Subjects</h2>
+      <p class="tab-subtitle">Manage subjects taught across batches</p>
+    </div>
+    @if (isOrgAdmin) {
+      <button pButton label="Add Subject" icon="pi pi-plus" (click)="openAddDialog()"></button>
+    }
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar">
+    <span class="search-wrapper">
+      <i class="pi pi-search search-icon"></i>
+      <input
+        pInputText
+        type="text"
+        placeholder="Search by name or code…"
+        class="search-input"
+        (input)="onSearchChange($any($event.target).value)" />
+    </span>
+  </div>
+
+  <!-- Table card -->
+  <div class="table-card">
+    @if (isLoading()) {
+      <div class="loading-state">
+        <i class="pi pi-spin pi-spinner"></i>
+        <p>Loading subjects…</p>
+      </div>
+    } @else if (subjects().length === 0) {
+      <div class="empty-state">
+        <i class="pi pi-book"></i>
+        <p>No subjects found</p>
+        <span>{{ searchTerm() ? 'Try adjusting your search.' : 'Add your first subject to get started.' }}</span>
+      </div>
+    } @else {
+      <table class="subjects-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Code</th>
+            @if (isOrgAdmin) {
+              <th class="actions-col">Actions</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (subject of subjects(); track subject.id) {
+            <tr>
+              <td class="subject-name">{{ subject.name }}</td>
+              <td>
+                @if (subject.code) {
+                  <span class="mono">{{ subject.code }}</span>
+                } @else {
+                  <span class="no-value">—</span>
+                }
+              </td>
+              @if (isOrgAdmin) {
+                <td>
+                  <div class="action-buttons">
+                    <button
+                      pButton
+                      icon="pi pi-pencil"
+                      pTooltip="Edit"
+                      tooltipPosition="top"
+                      class="p-button-text p-button-sm"
+                      [disabled]="!!deletingId()"
+                      (click)="openEditDialog(subject)">
+                    </button>
+                    <button
+                      pButton
+                      [icon]="deletingId() === subject.id ? 'pi pi-spin pi-spinner' : 'pi pi-trash'"
+                      pTooltip="Delete"
+                      tooltipPosition="top"
+                      class="p-button-text p-button-sm action-btn--delete"
+                      [disabled]="!!deletingId()"
+                      (click)="deleteSubject(subject)">
+                    </button>
+                  </div>
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+
+</div>
+
+<!-- Add / Edit dialog -->
+<p-dialog
+  [header]="dialogTitle"
+  [visible]="showDialog()"
+  (visibleChange)="showDialog.set($event)"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="subject-dialog"
+  [style]="{ width: '480px' }">
+
+  <form [formGroup]="subjectForm" (ngSubmit)="saveSubject()" class="dialog-form">
+
+    <!-- Name -->
+    <div class="field">
+      <label for="subjectName" class="field-label">
+        Name <span class="required-mark">*</span>
+      </label>
+      <input
+        pInputText
+        id="subjectName"
+        formControlName="name"
+        placeholder="e.g. Mathematics"
+        class="field-input" />
+      @if (nameControl?.invalid && nameControl?.touched) {
+        <span class="field-error">
+          @if (nameControl?.errors?.['required']) { Name is required. }
+          @else if (nameControl?.errors?.['maxlength']) { Name cannot exceed 200 characters. }
+        </span>
+      }
+    </div>
+
+    <!-- Code (optional) -->
+    <div class="field">
+      <label for="subjectCode" class="field-label">Code <span class="optional-mark">(optional)</span></label>
+      <input
+        pInputText
+        id="subjectCode"
+        formControlName="code"
+        placeholder="e.g. MATH101"
+        class="field-input" />
+      @if (codeControl?.invalid && codeControl?.touched) {
+        <span class="field-error">
+          @if (codeControl?.errors?.['maxlength']) { Code cannot exceed 50 characters. }
+        </span>
+      }
+    </div>
+
+  </form>
+
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      label="Cancel"
+      class="p-button-text"
+      [disabled]="isSaving()"
+      (click)="closeDialog()">
+    </button>
+    <button
+      pButton
+      [label]="isSaving() ? 'Saving…' : 'Save'"
+      [icon]="isSaving() ? 'pi pi-spin pi-spinner' : ''"
+      [disabled]="isSaving()"
+      (click)="saveSubject()">
+    </button>
+  </ng-template>
+
+</p-dialog>

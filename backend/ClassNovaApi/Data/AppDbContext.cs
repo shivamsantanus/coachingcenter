@@ -27,6 +27,7 @@ namespace ClassNovaApi.Data
         public DbSet<Exam> Exams { get; set; }
         public DbSet<ExamSubject> ExamSubjects { get; set; }
         public DbSet<Mark> Marks { get; set; }
+        public DbSet<Attendance> Attendances { get; set; }
         public DbSet<ClassSchedule> ClassSchedules { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<PendingRegistration> PendingRegistrations { get; set; }
@@ -172,6 +173,17 @@ namespace ClassNovaApi.Data
                 .Property(pr => pr.OtpSalt)
                 .HasMaxLength(32)
                 .IsRequired();
+
+            // Attendance — one record per student per batch per day
+            modelBuilder.Entity<Attendance>()
+                .HasIndex(a => new { a.TenantId, a.BatchId, a.StudentId, a.Date })
+                .IsUnique();
+
+            modelBuilder.Entity<Attendance>()
+                .HasIndex(a => new { a.TenantId, a.BatchId, a.Date });
+
+            modelBuilder.Entity<Attendance>()
+                .HasIndex(a => new { a.TenantId, a.StudentId, a.Date });
 
             // Restrict cascade deletes on all FKs to avoid accidental data loss
             foreach (var fk in modelBuilder.Model.GetEntityTypes()

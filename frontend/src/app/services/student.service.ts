@@ -35,6 +35,7 @@ export interface StudentListFilters {
   pageSize?: number;
   search?: string;
   status?: string;
+  availableForBatchEnrollment?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -49,6 +50,7 @@ export class StudentService {
 
     if (filters.search) params = params.set('search', filters.search);
     if (filters.status) params = params.set('status', filters.status);
+    if (filters.availableForBatchEnrollment) params = params.set('availableForBatchEnrollment', 'true');
 
     return this.http.get<StudentListResponse>(this.baseUrl, { params }).pipe(
       catchError(err => {

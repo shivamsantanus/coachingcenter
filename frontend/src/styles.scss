@@ -267,3 +267,133 @@ html, body { height: 100%; }
   .p-dialog-content { padding: 0.75rem 1.5rem 1rem; }
   .p-dialog-footer  { padding: 0.75rem 1.5rem 1.25rem; }
 }
+
+// ── Print styles (attendance monthly report — 2-page layout) ─
+@media print {
+  // Portrait: each page is ~180mm usable width (A4 portrait)
+  // Landscape works too but portrait keeps it tidy with ~11 cols per page
+  @page { size: A4 landscape; margin: 1cm 1.2cm; }
+
+  // Isolate: everything invisible except .print-region
+  body * { visibility: hidden; }
+  .print-region,
+  .print-region * { visibility: visible; }
+
+  .print-region {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: #fff;
+  }
+
+  // ── Each print page sits on its own CSS page ───────────────
+  .print-page {
+    page-break-after: avoid; // the explicit break below handles the split
+  }
+
+  .print-page-break {
+    page-break-after: always;
+    height: 0;
+    display: block;
+  }
+
+  // Screen-only labels
+  .print-page-label { display: none !important; }
+  .no-print { display: none !important; }
+
+  // ── Header — repeated on both pages ───────────────────────
+  .print-report-header {
+    display: block !important;
+    margin-bottom: 6pt;
+    padding-bottom: 5pt;
+    border-bottom: 1.5pt solid #222;
+  }
+
+  .print-header-row {
+    display: flex !important;
+    align-items: center;
+    gap: 10pt;
+    margin-bottom: 3pt;
+  }
+
+  .print-logo {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+    height: 36pt;
+    width: auto;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
+
+  .print-header-text {
+    flex: 1;
+  }
+
+  .print-org   { font-size: 14pt; font-weight: 700; line-height: 1.2; }
+  .print-meta  { font-size: 8pt;  color: #444; margin-top: 2pt; }
+  .print-title { font-size: 9.5pt; font-weight: 600; margin-top: 4pt; }
+
+  // ── Table ─────────────────────────────────────────────────
+  .report-table-wrap { overflow: visible !important; }
+
+  .report-table {
+    // ~11 day cols per page: 11×22pt + fixed = comfortable fit
+    font-size: 8.5pt;
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+
+    th, td {
+      border: 0.5pt solid #bbb !important;
+      padding: 2pt 3pt !important;
+      overflow: hidden;
+      white-space: nowrap;
+      text-align: center;
+    }
+  }
+
+  // ── Column widths: ~11 days + fixed cols per page ─────────
+  // # = 16pt, Name = 100pt, Adm = 58pt, each day = 22pt,
+  // summary cols on page 2: Total=24, P/A/L/E=18, % = 26pt
+  // Page 1: 16+100+58 + 11×22 = 416pt  (A4 landscape ≈ 696pt usable) ✓
+  // Page 2: 16+100+58 + 11×22 + 24+18×4+26 = 498pt ✓
+  .col-sno     { width: 16pt !important; }
+  .col-name    { width: 100pt !important; text-align: left !important; text-overflow: ellipsis; }
+  .col-adm     { width: 58pt !important; text-align: left !important; }
+  .col-day     { width: 22pt !important; }
+  .col-summary { width: 24pt !important; }
+  .col-p,
+  .col-a,
+  .col-l,
+  .col-e       { width: 18pt !important; }
+  .col-pct     { width: 26pt !important; }
+
+  // ── Status cells: coloured bold letter, no box ────────────
+  .status-cell {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+    display: inline !important;
+    width: auto !important;
+    height: auto !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    font-size: 8.5pt !important;
+    font-weight: 700 !important;
+    background: none !important;
+
+    &[data-status="PRESENT"] { color: #1a7a1a !important; }
+    &[data-status="ABSENT"]  { color: #cc0000 !important; }
+    &[data-status="LATE"]    { color: #c05c00 !important; }
+    &[data-status="EXCUSED"] { color: #0055bb !important; }
+    &--none                  { color: #bbb    !important; }
+  }
+
+  .col-pct.pct--low { color: #cc0000 !important; font-weight: 700 !important; }
+
+  // ── Summary column colours ─────────────────────────────────
+  .col-p { color: #1a7a1a !important; }
+  .col-a { color: #cc0000 !important; }
+  .col-l { color: #c05c00 !important; }
+  .col-e { color: #0055bb !important; }
+}

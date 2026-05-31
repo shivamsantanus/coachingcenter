@@ -1,0 +1,186 @@
+<p-toast position="top-right" />
+
+<div class="tab-content">
+
+  <!-- Header -->
+  <div class="tab-header">
+    <div>
+      <h2 class="page-title">Classes</h2>
+      <p class="page-subtitle">Manage classes within each academic year</p>
+    </div>
+    @if (isOrgAdmin) {
+      <button pButton label="Add Class" icon="pi pi-plus" (click)="openAddDialog()"></button>
+    }
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar">
+    <p-select
+      [options]="academicYearFilterOptions()"
+      optionLabel="label"
+      optionValue="value"
+      [ngModel]="selectedAcademicYearId()"
+      (ngModelChange)="selectedAcademicYearId.set($event); onAcademicYearFilterChange()"
+      placeholder="All academic years"
+      styleClass="year-filter-select" />
+
+    <span class="search-wrapper">
+      <i class="pi pi-search search-icon"></i>
+      <input
+        pInputText
+        type="text"
+        placeholder="Search by name…"
+        class="search-input"
+        (input)="onSearchChange($any($event.target).value)" />
+    </span>
+  </div>
+
+  <!-- Table card -->
+  <div class="table-card">
+    @if (isLoading()) {
+      <div class="loading-state">
+        <i class="pi pi-spin pi-spinner"></i>
+        <p>Loading classes…</p>
+      </div>
+    } @else if (classes().length === 0) {
+      <div class="empty-state">
+        <i class="pi pi-th-large"></i>
+        <p>No classes found</p>
+        <span>{{ searchTerm() || selectedAcademicYearId() ? 'Try adjusting your filters.' : 'Add your first class to get started.' }}</span>
+      </div>
+    } @else {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Academic Year</th>
+            <th>Sort Order</th>
+            <th>Status</th>
+            <th class="actions-col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (classItem of classes(); track classItem.id) {
+            <tr>
+              <td class="name-cell">{{ classItem.name }}</td>
+              <td>{{ classItem.academicYearName }}</td>
+              <td>{{ classItem.sortOrder ?? '—' }}</td>
+              <td>
+                <span
+                  class="status-badge"
+                  [class.active]="classItem.status === 'ACTIVE'"
+                  [class.inactive]="classItem.status === 'INACTIVE'">
+                  {{ classItem.status === 'ACTIVE' ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td>
+                <div class="action-buttons">
+                  @if (isOrgAdmin) {
+                    <button
+                      pButton
+                      [icon]="togglingId() === classItem.id ? 'pi pi-spin pi-spinner' : (classItem.status === 'ACTIVE' ? 'pi pi-ban' : 'pi pi-check-circle')"
+                      [pTooltip]="classItem.status === 'ACTIVE' ? 'Deactivate' : 'Activate'"
+                      tooltipPosition="top"
+                      class="p-button-text p-button-sm"
+                      [class.action-btn--deactivate]="classItem.status === 'ACTIVE'"
+                      [class.action-btn--activate]="classItem.status === 'INACTIVE'"
+                      [disabled]="!!togglingId()"
+                      (click)="toggleStatus(classItem)">
+                    </button>
+                    <button
+                      pButton
+                      icon="pi pi-pencil"
+                      pTooltip="Edit"
+                      tooltipPosition="top"
+                      class="p-button-text p-button-sm"
+                      [disabled]="!!togglingId()"
+                      (click)="openEditDialog(classItem)">
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+
+</div>
+
+<!-- Add / Edit Dialog -->
+<p-dialog
+  [header]="editClassId() ? 'Edit Class' : 'Add Class'"
+  [visible]="showDialog()"
+  (visibleChange)="!$event && closeDialog()"
+  [modal]="true"
+  [closable]="true"
+  [draggable]="false"
+  styleClass="class-dialog"
+  [style]="{ width: '480px' }">
+
+  <form [formGroup]="classForm" (ngSubmit)="saveClass()" class="class-form">
+
+    <!-- Academic Year -->
+    <div class="form-field">
+      <label for="academicYearId" class="form-label">Academic Year <span class="required">*</span></label>
+      <p-select
+        inputId="academicYearId"
+        formControlName="academicYearId"
+        [options]="academicYearOptions()"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Select academic year"
+        [class.ng-invalid]="isFieldInvalid('academicYearId')"
+        [class.ng-dirty]="isFieldInvalid('academicYearId')"
+        styleClass="full-width-select" />
+      @if (isFieldInvalid('academicYearId')) {
+        <small class="field-error">Academic year is required.</small>
+      }
+    </div>
+
+    <!-- Name -->
+    <div class="form-field">
+      <label for="name" class="form-label">Class Name <span class="required">*</span></label>
+      <input
+        pInputText
+        id="name"
+        formControlName="name"
+        type="text"
+        placeholder="e.g. Grade 10"
+        class="full-width-input"
+        [class.ng-invalid]="isFieldInvalid('name')" />
+      @if (isFieldInvalid('name')) {
+        <small class="field-error">Class name is required.</small>
+      }
+    </div>
+
+    <!-- Sort Order -->
+    <div class="form-field">
+      <label for="sortOrder" class="form-label">Sort Order</label>
+      <input
+        pInputText
+        id="sortOrder"
+        formControlName="sortOrder"
+        type="number"
+        placeholder="e.g. 1"
+        class="full-width-input"
+        min="0" />
+      <small class="field-hint">Optional. Controls display order (lower = first).</small>
+    </div>
+
+  </form>
+
+  <ng-template #footer>
+    <div class="dialog-footer">
+      <button pButton label="Cancel" class="p-button-text" (click)="closeDialog()" [disabled]="isSaving()"></button>
+      <button
+        pButton
+        [label]="isSaving() ? 'Saving…' : (editClassId() ? 'Save Changes' : 'Add Class')"
+        [icon]="isSaving() ? 'pi pi-spin pi-spinner' : ''"
+        [disabled]="isSaving()"
+        (click)="saveClass()">
+      </button>
+    </div>
+  </ng-template>
+</p-dialog>

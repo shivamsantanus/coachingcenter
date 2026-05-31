@@ -4,7 +4,7 @@
 > Never start a feature without a row in the plan. Never finish one without marking it done
 > and linking the feature doc. This is the single source of truth for project state.
 
-**Last updated:** 2026-05-30 (Phase 2 complete — Teacher management UI done; starting Phase 3 Academic Structure)
+**Last updated:** 2026-05-31 (Phase 4 attendance recording + marking UI complete)
 
 ---
 
@@ -56,23 +56,30 @@
 | 2.3 | Student management UI | ✅ Done | [student-management.md](features/student-management.md) | List, add, edit, status toggle, photo upload; ORG_ADMIN + TEACHER |
 | 2.4 | Teacher management UI | ✅ Done | [teacher-management.md](features/teacher-management.md) | List, add, edit, status toggle, photo upload; ORG_ADMIN only |
 
-> **Note:** Backend endpoints for Students and Teachers are fully implemented. Angular UI is the next step.
-
 ---
 
 ## Phase 3 — Academic Structure
 
 | # | Feature | Status | Feature Doc | Notes |
 |---|---|---|---|---|
-| 3.1 | Academic Year management | 📋 Planned | — | CRUD for academic years per tenant |
-| 3.2 | Class management | 📋 Planned | — | CRUD for classes (grades) per tenant |
-| 3.3 | Batch / Section management | 📋 Planned | — | CRUD for batches within classes |
-| 3.4 | Subject management | 📋 Planned | — | CRUD for subjects per tenant |
-| 3.5 | Batch-Subject-Teacher assignment | 📋 Planned | — | Assign teachers to subjects within batches |
-| 3.6 | Student enrollment in batches | 📋 Planned | — | Enroll students into class/batch |
-| 3.7 | Academic structure UI | 💡 Backlog | — | Admin UI for all the above |
+| 3.1 | Academic Year management | ✅ Done | [academic-structure.md](features/academic-structure.md) | CRUD + activate; client-side endDate > startDate validation |
+| 3.2 | Class management | ✅ Done | [academic-structure.md](features/academic-structure.md) | CRUD + status toggle; filtered by AY |
+| 3.3 | Batch / Section management | ✅ Done | [academic-structure.md](features/academic-structure.md) | CRUD + status toggle; startTime/endTime; dates validated against AY range; branch assignment |
+| 3.4 | Subject management | ✅ Done | [academic-structure.md](features/academic-structure.md) | CRUD + delete guard (409 if assigned) |
+| 3.5 | Batch-Subject-Teacher assignment | ✅ Done | [academic-structure.md](features/academic-structure.md) | Backend + UI tab; AY→Batch filter; subject+teacher dropdowns with search |
+| 3.6 | Student enrollment in batches | ✅ Done | [academic-structure.md](features/academic-structure.md) | Backend + UI tab; student search; AY→class/batch filter; toggle active |
+| 3.7 | Academic structure UI | ✅ Done | [academic-structure.md](features/academic-structure.md) | 6 tabs: Academic Years, Classes, Batches, Subjects, Assignments, Enrollments |
+| 3.8 | Branch management | ✅ Done | — | Full CRUD at /settings/branches; name/code uniqueness; status toggle; MapUrl for directions; SettingsShellComponent with Branding \| Branches nav |
 
-> DB models exist for all academic structure tables. Controllers not yet created.
+**DB migrations applied (Phase 3):**
+- `20260531063355_AddBatchTimingFields` *(rolled back — superseded)*
+- `20260531083132_AddBatchTimingAndBranchMapUrl` — adds `start_time`, `end_time` to `batches`; `map_url` to `branches`
+
+**Cross-cutting improvements (2026-05-31):**
+- All 6 academic controllers standardised to `{ success, data, error }` response envelope
+- All 6 academic frontend services updated to `ApiResponse<T>` generic type
+- Batch dates validated against academic year date range (backend + frontend)
+- Batch time range validated (endTime > startTime)
 
 ---
 
@@ -80,10 +87,13 @@
 
 | # | Feature | Status | Feature Doc | Notes |
 |---|---|---|---|---|
-| 4.1 | Attendance recording API | 💡 Backlog | — | Teacher marks attendance per batch/date |
-| 4.2 | Attendance summary API | 💡 Backlog | — | Aggregate per student/batch/date range |
-| 4.3 | Attendance UI (teacher) | 💡 Backlog | — | Mark attendance by batch |
-| 4.4 | Attendance UI (student view) | 💡 Backlog | — | Student views own attendance % |
+| 4.1 | Attendance recording API | ✅ Done | [attendance.md](features/attendance.md) | `POST /api/attendance/mark` — bulk upsert; ORG_ADMIN + TEACHER |
+| 4.2 | Attendance summary API | ✅ Done | [attendance.md](features/attendance.md) | `GET /api/attendance/summary` — aggregate per student/batch/date range |
+| 4.3 | Attendance UI (teacher) | ✅ Done | [attendance.md](features/attendance.md) | `/attendance` route; AY → batch → date picker; P/A/L/E per student; bulk mark-all; save |
+| 4.4 | Attendance UI (student view) | 💡 Backlog | — | Student views own attendance % (summary endpoint ready; UI not yet built) |
+
+**DB migrations applied (Phase 4):**
+- `20260531142407_AddAttendance` — creates `attendances` table with unique index on (tenant_id, batch_id, student_id, date)
 
 ---
 
@@ -116,7 +126,7 @@
 
 | # | Feature | Status | Feature Doc | Notes |
 |---|---|---|---|---|
-| 7.1 | Class schedule API | 💡 Backlog | — | Weekly timetable per batch |
+| 7.1 | Class schedule API | 💡 Backlog | — | Weekly timetable per batch; per-day overrides for batch default timing |
 | 7.2 | Timetable UI | 💡 Backlog | — | Visual schedule grid |
 
 > `ClassSchedule` DB model exists. No controller yet.
@@ -154,7 +164,7 @@
 | 10.3 | Backend: PUT /api/tenant/branding + teachers-preview | ✅ Done | [tenant-landing-page.md](features/tenant-landing-page.md) | BrandingService + 2 new controller actions |
 | 10.4 | Angular BrandingService + CSS variable theming | ✅ Done | [tenant-landing-page.md](features/tenant-landing-page.md) | applyTheme() wired into shell on init |
 | 10.5 | LandingPageComponent (/t/:slug) | ✅ Done | [tenant-landing-page.md](features/tenant-landing-page.md) | Public, no auth, all 7 sections |
-| 10.6 | BrandingEditorComponent (/settings/branding) | ✅ Done | [branding-editor.md](features/branding-editor.md) | 8-tab form; ORG_ADMIN only; save + preview |
+| 10.6 | BrandingEditorComponent (/settings/branding) | ✅ Done | [branding-editor.md](features/branding-editor.md) | 8-tab form; ORG_ADMIN only; save + preview; now inside SettingsShellComponent |
 | 10.7 | Achievements section — landing page + editor | ✅ Done | [tenant-landing-page.md](features/tenant-landing-page.md) | AchievementItem DTO; achievement-card UI; editor tab (max 12) |
 | 10.8 | Tenant-branded auth pages (/t/:slug/login etc.) | ✅ Done | [tenant-auth-pages.md](features/tenant-auth-pages.md) | TenantAuthComponent shell + 5 child forms; branded left panel; slug-scoped routing |
 | 10.9 | Custom domain routing | ✅ Done | — | custom_domain column + migration; GET /api/tenant/by-domain; TenantContextService; DomainResolverService (APP_INITIALIZER); canMatch guard; all nav uses authPath() |
@@ -163,18 +173,19 @@
 
 ## What to Work on Next
 
-**Immediate next steps:**
+**Just completed (2026-05-31):**
+- Phase 3 fully done — branch management, BST tab, student enrollment tab all complete
+- Standard API envelope enforced across all academic controllers
+- Batch date/time validation (AY bounds, date range, time range)
 
-1. **Phase 3 — Academic Structure** — backend controllers first, then UI
-   - Start with: Academic Year → Class → Batch → Subject (in that order — each depends on the previous)
-   - Feature doc required before any code: `docs/features/academic-structure.md`
+**Just completed (2026-05-31):**
+- Phase 4 attendance recording API and mark-attendance UI complete
+- `attendances` table migrated with bulk upsert (PRESENT/ABSENT/LATE/EXCUSED)
+- `/attendance` route + shell nav link for ORG_ADMIN + TEACHER
 
-**Just completed:**
-- Phase 2 fully done — Student UI (2.3) + Teacher UI (2.4) with list, add, edit, status toggle, photo upload
-- Codebase-wide `::ng-deep` elimination; all PrimeNG overrides in `styles.scss`
-- Dialog X-button fixed across all forms using `(visibleChange)` pattern
-
-*(Tenant-branded auth pages complete: `/t/:slug/login|register|verify-email|forgot-password|reset-password` all implemented with branded left-panel shell and slug-scoped routing)*
+**Next:**
+1. **Phase 4.4** — Student attendance view (can reuse `AttendanceSummary` endpoint — just needs a `/my-attendance` or tab in student profile)
+2. **Phase 5 — Fees** — fee plan management + payment recording
 
 ---
 

@@ -1,0 +1,197 @@
+<p-toast position="top-right" />
+
+<div class="tab-content">
+
+  <div class="tab-header">
+    <div>
+      <h2 class="tab-title">Batch–Subject–Teacher</h2>
+      <p class="tab-subtitle">Assign teachers to subjects within a batch</p>
+    </div>
+    @if (isOrgAdmin && batchSelected) {
+      <button pButton label="Manage Assignments" icon="pi pi-pencil" (click)="openDialog()"></button>
+    }
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar">
+    <p-select
+      [options]="allAyOptions()"
+      optionLabel="label"
+      optionValue="value"
+      [ngModel]="filterAyId()"
+      (ngModelChange)="onAyChange($event)"
+      styleClass="filter-select"
+      placeholder="Select academic year" />
+
+    <p-select
+      [options]="batchOptions()"
+      optionLabel="label"
+      optionValue="value"
+      [ngModel]="filterBatchId()"
+      (ngModelChange)="onBatchChange($event)"
+      [disabled]="!filterAyId()"
+      styleClass="filter-select"
+      placeholder="Select batch" />
+  </div>
+
+  <!-- Summary table -->
+  <div class="table-card">
+    @if (!batchSelected) {
+      <div class="empty-state">
+        <i class="pi pi-filter"></i>
+        <p>Select a batch</p>
+        <span>Choose an academic year and batch to view assignments.</span>
+      </div>
+    } @else if (isLoading()) {
+      <div class="empty-state">
+        <i class="pi pi-spin pi-spinner"></i>
+        <p>Loading assignments…</p>
+      </div>
+    } @else if (assignments().length === 0) {
+      <div class="empty-state">
+        <i class="pi pi-book"></i>
+        <p>No assignments yet</p>
+        <span>Click "Manage Assignments" to assign teachers to subjects.</span>
+      </div>
+    } @else {
+      <table class="bst-table">
+        <thead>
+          <tr>
+            <th>Subject</th>
+            <th>Code</th>
+            <th>Teacher</th>
+            <th>Employee Code</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (a of assignments(); track a.id) {
+            <tr>
+              <td><span class="subject-name">{{ a.subjectName }}</span></td>
+              <td>{{ a.subjectCode ?? '—' }}</td>
+              <td>{{ a.teacherName }}</td>
+              <td><span class="mono">{{ a.teacherEmployeeCode }}</span></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+
+</div>
+
+<!-- Manage Assignments Dialog -->
+<p-dialog
+  header="Manage Assignments"
+  [visible]="showDialog()"
+  (visibleChange)="!$event && closeDialog()"
+  [modal]="true"
+  [closable]="true"
+  [style]="{ width: '640px' }">
+
+  <div class="dialog-body">
+
+    <!-- Existing assignments -->
+    @if (assignments().length > 0) {
+      <div class="section-label">Current assignments</div>
+      <div class="existing-list">
+        @for (a of assignments(); track a.id) {
+          <div class="existing-row">
+            <div class="existing-row__subject">
+              <span class="pill subject-pill">{{ a.subjectName }}@if (a.subjectCode) { <em>({{ a.subjectCode }})</em> }</span>
+            </div>
+            <i class="pi pi-arrow-right row-arrow"></i>
+            <div class="existing-row__teacher">
+              <span class="pill teacher-pill">{{ a.teacherName }}</span>
+              <span class="emp-code">{{ a.teacherEmployeeCode }}</span>
+            </div>
+            @if (isOrgAdmin) {
+              <button
+                pButton
+                [icon]="deletingId() === a.id ? 'pi pi-spin pi-spinner' : 'pi pi-trash'"
+                class="p-button-text p-button-sm remove-btn"
+                pTooltip="Remove"
+                tooltipPosition="top"
+                [disabled]="!!deletingId()"
+                (click)="deleteAssignment(a)">
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="section-divider"></div>
+    }
+
+    <!-- New assignment rows -->
+    @if (isOrgAdmin) {
+      <div class="section-label">Add new assignments</div>
+
+      <div class="new-rows">
+        @for (row of newRows(); track row.localId) {
+          <div class="new-row">
+            <p-select
+              [options]="subjectOptions()"
+              optionLabel="label"
+              optionValue="value"
+              [ngModel]="row.subjectId"
+              (ngModelChange)="updateRow(row.localId, 'subjectId', $event)"
+              placeholder="Subject"
+              styleClass="row-select"
+              [filter]="true"
+              filterPlaceholder="Search…"
+              appendTo="body" />
+
+            <i class="pi pi-arrow-right row-arrow"></i>
+
+            <p-select
+              [options]="teacherOptions()"
+              optionLabel="label"
+              optionValue="value"
+              [ngModel]="row.teacherId"
+              (ngModelChange)="updateRow(row.localId, 'teacherId', $event)"
+              placeholder="Teacher"
+              styleClass="row-select"
+              [filter]="true"
+              filterPlaceholder="Search…"
+              appendTo="body" />
+
+            <button
+              pButton
+              icon="pi pi-times"
+              class="p-button-text p-button-sm remove-btn"
+              (click)="removeRow(row.localId)">
+            </button>
+
+            @if (row.error) {
+              <span class="row-error">{{ row.error }}</span>
+            }
+          </div>
+        }
+      </div>
+
+      <button
+        pButton
+        label="Add Row"
+        icon="pi pi-plus"
+        class="p-button-text p-button-sm add-row-btn"
+        (click)="addRow()">
+      </button>
+    }
+
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="dialog-footer">
+      <button pButton label="Close" class="p-button-text" (click)="closeDialog()" [disabled]="isSaving()"></button>
+      @if (isOrgAdmin) {
+        <button
+          pButton
+          [label]="validNewRows().length > 0 ? 'Save ' + validNewRows().length + ' Assignment(s)' : 'Save'"
+          [loading]="isSaving()"
+          [disabled]="validNewRows().length === 0"
+          (click)="saveNewRows()">
+        </button>
+      }
+    </div>
+  </ng-template>
+</p-dialog>

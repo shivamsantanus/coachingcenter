@@ -1,0 +1,41 @@
+.settings-layout {
+  display: flex;
+  gap: 0;
+  min-height: calc(100vh - 64px);
+}
+
+// ── Side nav ──────────────────────────────────────────────────────────────────
+.settings-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  width: 180px;
+  flex-shrink: 0;
+  padding: 1.5rem 0.75rem;
+  border-right: 1px solid #e2e8f0;
+
+  &__link {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.625rem 0.875rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #64748b;
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s;
+
+    i { font-size: 1rem; }
+
+    &:hover { background: #f1f5f9; color: #1e293b; }
+
+    &--active { background: #e0f2fe; color: #0369a1; font-weight: 600; }
+  }
+}
+
+// ── Content area ──────────────────────────────────────────────────────────────
+.settings-content {
+  flex: 1;
+  min-width: 0;
+}

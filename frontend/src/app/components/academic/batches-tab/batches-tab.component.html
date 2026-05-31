@@ -1,0 +1,280 @@
+<p-toast position="top-right" />
+
+<div class="tab-content">
+
+  <!-- Tab header -->
+  <div class="tab-header">
+    <div>
+      <h2 class="tab-title">Batches</h2>
+      <p class="tab-subtitle">Manage batches within classes and academic years</p>
+    </div>
+    @if (isOrgAdmin) {
+      <button pButton label="Add Batch" icon="pi pi-plus" (click)="openAddDialog()"></button>
+    }
+  </div>
+
+  <!-- Filters bar -->
+  <div class="filters-bar">
+    <p-select
+      [options]="allAcademicYearOptions()"
+      optionLabel="label"
+      optionValue="value"
+      [ngModel]="filterAcademicYearId()"
+      (ngModelChange)="onFilterAcademicYearChange($event)"
+      styleClass="filter-select ay-filter-select"
+      placeholder="All academic years" />
+
+    <p-select
+      [options]="allClassFilterOptions()"
+      optionLabel="label"
+      optionValue="value"
+      [ngModel]="filterClassId()"
+      (ngModelChange)="onFilterClassChange($event)"
+      [disabled]="!filterAcademicYearId()"
+      styleClass="filter-select class-filter-select"
+      placeholder="All classes" />
+
+    <span class="search-wrapper">
+      <i class="pi pi-search search-icon"></i>
+      <input
+        pInputText
+        type="text"
+        placeholder="Search by batch name…"
+        class="search-input"
+        (input)="onSearchChange($any($event.target).value)" />
+    </span>
+  </div>
+
+  <!-- Table card -->
+  <div class="table-card">
+    @if (isLoading()) {
+      <div class="loading-state">
+        <i class="pi pi-spin pi-spinner"></i>
+        <p>Loading batches…</p>
+      </div>
+    } @else if (batches().length === 0) {
+      <div class="empty-state">
+        <i class="pi pi-sitemap"></i>
+        <p>No batches found</p>
+        <span>{{ hasActiveFilters ? 'Try adjusting your filters.' : 'Add your first batch to get started.' }}</span>
+      </div>
+    } @else {
+      <table class="batches-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Academic Year</th>
+            <th>Class</th>
+            <th>Branch</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Timing</th>
+            <th>Status</th>
+            <th class="actions-col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (batch of batches(); track batch.id) {
+            <tr>
+              <td><span class="batch-name">{{ batch.name }}</span></td>
+              <td>{{ batch.academicYearName }}</td>
+              <td>{{ batch.className ?? '—' }}</td>
+              <td>{{ batch.branchName ?? '—' }}</td>
+              <td>{{ batch.startDate ? (batch.startDate | date: 'dd MMM yyyy') : '—' }}</td>
+              <td>{{ batch.endDate ? (batch.endDate | date: 'dd MMM yyyy') : '—' }}</td>
+              <td>
+                @if (batch.startTime || batch.endTime) {
+                  <span class="batch-timing">{{ batch.startTime ?? '—' }} – {{ batch.endTime ?? '—' }}</span>
+                } @else {
+                  —
+                }
+              </td>
+              <td>
+                <span
+                  class="status-badge"
+                  [class.active]="batch.status === 'ACTIVE'"
+                  [class.inactive]="batch.status === 'INACTIVE'">
+                  {{ batch.status === 'ACTIVE' ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td>
+                <div class="action-buttons">
+                  @if (isOrgAdmin) {
+                    <button
+                      pButton
+                      [icon]="togglingId() === batch.id ? 'pi pi-spin pi-spinner' : (batch.status === 'ACTIVE' ? 'pi pi-ban' : 'pi pi-check-circle')"
+                      [pTooltip]="batch.status === 'ACTIVE' ? 'Deactivate' : 'Activate'"
+                      tooltipPosition="top"
+                      class="p-button-text p-button-sm"
+                      [class.action-btn--deactivate]="batch.status === 'ACTIVE'"
+                      [class.action-btn--activate]="batch.status === 'INACTIVE'"
+                      [disabled]="!!togglingId()"
+                      (click)="toggleStatus(batch)">
+                    </button>
+                    <button
+                      pButton
+                      icon="pi pi-pencil"
+                      pTooltip="Edit"
+                      tooltipPosition="top"
+                      class="p-button-text p-button-sm"
+                      [disabled]="!!togglingId()"
+                      (click)="openEditDialog(batch)">
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+
+</div>
+
+<!-- Add / Edit Dialog -->
+<p-dialog
+  [header]="dialogTitle"
+  [visible]="showDialog()"
+  (visibleChange)="!$event && closeDialog()"
+  [modal]="true"
+  [closable]="true"
+  styleClass="batch-dialog"
+  [style]="{ width: '480px' }">
+
+  <form [formGroup]="batchForm" (ngSubmit)="saveBatch()" class="batch-form">
+
+    <!-- Academic Year -->
+    <div class="form-field">
+      <label class="field-label" for="batchAcademicYear">Academic Year <span class="required-mark">*</span></label>
+      <p-select
+        inputId="batchAcademicYear"
+        [options]="academicYearOptions()"
+        optionLabel="label"
+        optionValue="value"
+        formControlName="academicYearId"
+        (ngModelChange)="onDialogAcademicYearChange($event)"
+        placeholder="Select academic year"
+        styleClass="dialog-select"
+        [class.field-invalid]="isFieldInvalid('academicYearId')" />
+      @if (isFieldInvalid('academicYearId')) {
+        <span class="field-error">Academic year is required.</span>
+      }
+    </div>
+
+    <!-- Class (optional) -->
+    <div class="form-field">
+      <label class="field-label" for="batchClass">Class <span class="optional-mark">(optional)</span></label>
+      <p-select
+        inputId="batchClass"
+        [options]="dialogClassOptions()"
+        optionLabel="label"
+        optionValue="value"
+        formControlName="classId"
+        placeholder="Select class"
+        styleClass="dialog-select"
+        [disabled]="!batchForm.get('academicYearId')?.value" />
+    </div>
+
+    <!-- Branch (optional) -->
+    <div class="form-field">
+      <label class="field-label" for="batchBranch">Branch <span class="optional-mark">(optional)</span></label>
+      <p-select
+        inputId="batchBranch"
+        [options]="branchOptions()"
+        optionLabel="label"
+        optionValue="value"
+        formControlName="branchId"
+        placeholder="Select branch"
+        styleClass="dialog-select"
+        [showClear]="true" />
+    </div>
+
+    <!-- Name -->
+    <div class="form-field">
+      <label class="field-label" for="batchName">Batch Name <span class="required-mark">*</span></label>
+      <input
+        pInputText
+        id="batchName"
+        type="text"
+        placeholder="e.g. Morning Batch A"
+        formControlName="name"
+        class="dialog-input"
+        [class.field-invalid]="isFieldInvalid('name')" />
+      @if (isFieldInvalid('name')) {
+        <span class="field-error">Batch name is required.</span>
+      }
+    </div>
+
+    <!-- Date row — Start + End side by side -->
+    <div class="form-row">
+      <div class="form-field">
+        <label class="field-label" for="batchStartDate">Start Date <span class="optional-mark">(optional)</span></label>
+        <input
+          pInputText
+          id="batchStartDate"
+          type="date"
+          formControlName="startDate"
+          class="dialog-input"
+          [min]="selectedAyDateRange?.start ?? ''"
+          [max]="selectedAyDateRange?.end ?? ''" />
+      </div>
+      <div class="form-field">
+        <label class="field-label" for="batchEndDate">End Date <span class="optional-mark">(optional)</span></label>
+        <input
+          pInputText
+          id="batchEndDate"
+          type="date"
+          formControlName="endDate"
+          class="dialog-input"
+          [min]="selectedAyDateRange?.start ?? ''"
+          [max]="selectedAyDateRange?.end ?? ''" />
+      </div>
+    </div>
+
+    <!-- Date cross-field errors -->
+    @if (formErrors?.['endDateBeforeStartDate']) {
+      <span class="field-error">End date must be after start date.</span>
+    }
+    @if (formErrors?.['batchStartBeforeAyStart']) {
+      <span class="field-error">Start date cannot be before the academic year start ({{ formErrors?.['batchStartBeforeAyStart']?.ayStart }}).</span>
+    }
+    @if (formErrors?.['batchEndAfterAyEnd']) {
+      <span class="field-error">End date cannot be after the academic year end ({{ formErrors?.['batchEndAfterAyEnd']?.ayEnd }}).</span>
+    }
+
+    <!-- Timing row — Start Time + End Time side by side -->
+    <div class="form-row">
+      <div class="form-field">
+        <label class="field-label" for="batchStartTime">Start Time <span class="optional-mark">(optional)</span></label>
+        <input
+          pInputText
+          id="batchStartTime"
+          type="time"
+          formControlName="startTime"
+          class="dialog-input" />
+      </div>
+      <div class="form-field">
+        <label class="field-label" for="batchEndTime">End Time <span class="optional-mark">(optional)</span></label>
+        <input
+          pInputText
+          id="batchEndTime"
+          type="time"
+          formControlName="endTime"
+          class="dialog-input" />
+      </div>
+    </div>
+
+    @if (formErrors?.['endTimeBeforeStartTime']) {
+      <span class="field-error">End time must be after start time.</span>
+    }
+
+  </form>
+
+  <ng-template pTemplate="footer">
+    <div class="dialog-footer">
+      <button pButton label="Cancel" class="p-button-text" (click)="closeDialog()" [disabled]="isSaving()"></button>
+      <button pButton [label]="editBatchId() ? 'Save Changes' : 'Add Batch'" [loading]="isSaving()" (click)="saveBatch()"></button>
+    </div>
+  </ng-template>
+</p-dialog>

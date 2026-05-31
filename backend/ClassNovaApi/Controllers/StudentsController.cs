@@ -26,7 +26,8 @@ namespace ClassNovaApi.Controllers
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 20,
             [FromQuery] string? search = null,
-            [FromQuery] string? status = null)
+            [FromQuery] string? status = null,
+            [FromQuery] bool availableForBatchEnrollment = false)
         {
             var tenantId = User.GetTenantId();
 
@@ -43,6 +44,17 @@ namespace ClassNovaApi.Controllers
 
             if (!string.IsNullOrWhiteSpace(status))
                 query = query.Where(s => s.Status == status.ToUpper());
+
+            // Only active students not currently enrolled in any batch
+            if (availableForBatchEnrollment)
+            {
+                query = query.Where(s => s.Status == "ACTIVE");
+                var enrolledStudentIds = _context.StudentEnrollments
+                    .Where(e => e.TenantId == tenantId && e.BatchId != null && e.IsActive)
+                    .Select(e => e.StudentId)
+                    .Distinct();
+                query = query.Where(s => !enrolledStudentIds.Contains(s.Id));
+            }
 
             var total = query.Count();
 

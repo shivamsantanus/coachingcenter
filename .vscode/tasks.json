@@ -36,6 +36,78 @@
                 "${workspaceFolder}/backend/ClassNovaApi/ClassNovaApi.csproj"
             ],
             "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Dev: Run Backend",
+            "type": "shell",
+            "command": "dotnet run --project backend/ClassNovaApi",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "presentation": {
+                "label": "Backend (API :5188)",
+                "group": "dev",
+                "panel": "dedicated",
+                "reveal": "always"
+            },
+            "isBackground": true,
+            "problemMatcher": {
+                "pattern": {
+                    "regexp": "^$"
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "^.*Building.*$",
+                    "endsPattern": "^.*Now listening on.*$"
+                }
+            }
+        },
+        {
+            "label": "Dev: Run Frontend",
+            "type": "shell",
+            "command": "npm start",
+            "options": {
+                "cwd": "${workspaceFolder}/frontend"
+            },
+            "presentation": {
+                "label": "Frontend (Angular :4200)",
+                "group": "dev",
+                "panel": "dedicated",
+                "reveal": "always"
+            },
+            "isBackground": true,
+            "problemMatcher": {
+                "pattern": {
+                    "regexp": "^$"
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "^.*Building.*$",
+                    "endsPattern": "^.*Application bundle generation complete.*$"
+                }
+            }
+        },
+        {
+            "label": "Dev: Start All",
+            "dependsOn": ["Dev: Run Backend"],
+            "dependsOrder": "parallel",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Dev: Stop All",
+            "type": "shell",
+            "command": "Get-NetTCPConnection -LocalPort 5188,4200 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }; Write-Host 'Dev servers stopped.'",
+            "presentation": {
+                "label": "Stop Dev Servers",
+                "reveal": "always",
+                "panel": "shared",
+                "close": false
+            },
+            "problemMatcher": []
         }
     ]
 }

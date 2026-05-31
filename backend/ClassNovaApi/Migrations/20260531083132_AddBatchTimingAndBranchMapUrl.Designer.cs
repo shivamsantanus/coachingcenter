@@ -3,6 +3,7 @@ using System;
 using ClassNovaApi.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ClassNovaApi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260531083132_AddBatchTimingAndBranchMapUrl")]
+    partial class AddBatchTimingAndBranchMapUrl
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -65,75 +68,6 @@ namespace ClassNovaApi.Migrations
                         .HasDatabaseName("ix_academic_years_tenant_id");
 
                     b.ToTable("academic_years", (string)null);
-                });
-
-            modelBuilder.Entity("ClassNovaApi.Models.Attendance", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("BatchId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("batch_id");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<DateOnly>("Date")
-                        .HasColumnType("date")
-                        .HasColumnName("date");
-
-                    b.Property<Guid>("MarkedById")
-                        .HasColumnType("uuid")
-                        .HasColumnName("marked_by_id");
-
-                    b.Property<string>("Note")
-                        .HasColumnType("text")
-                        .HasColumnName("note");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("status");
-
-                    b.Property<Guid>("StudentId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("student_id");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("tenant_id");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.HasKey("Id")
-                        .HasName("pk_attendances");
-
-                    b.HasIndex("BatchId")
-                        .HasDatabaseName("ix_attendances_batch_id");
-
-                    b.HasIndex("MarkedById")
-                        .HasDatabaseName("ix_attendances_marked_by_id");
-
-                    b.HasIndex("StudentId")
-                        .HasDatabaseName("ix_attendances_student_id");
-
-                    b.HasIndex("TenantId", "BatchId", "Date")
-                        .HasDatabaseName("ix_attendances_tenant_id_batch_id_date");
-
-                    b.HasIndex("TenantId", "StudentId", "Date")
-                        .HasDatabaseName("ix_attendances_tenant_id_student_id_date");
-
-                    b.HasIndex("TenantId", "BatchId", "StudentId", "Date")
-                        .IsUnique()
-                        .HasDatabaseName("ix_attendances_tenant_id_batch_id_student_id_date");
-
-                    b.ToTable("attendances", (string)null);
                 });
 
             modelBuilder.Entity("ClassNovaApi.Models.AuditLog", b =>
@@ -1465,45 +1399,6 @@ namespace ClassNovaApi.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_academic_years_tenants_tenant_id");
-
-                    b.Navigation("Tenant");
-                });
-
-            modelBuilder.Entity("ClassNovaApi.Models.Attendance", b =>
-                {
-                    b.HasOne("ClassNovaApi.Models.Batch", "Batch")
-                        .WithMany()
-                        .HasForeignKey("BatchId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_attendances_batches_batch_id");
-
-                    b.HasOne("ClassNovaApi.Models.User", "MarkedBy")
-                        .WithMany()
-                        .HasForeignKey("MarkedById")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_attendances_users_marked_by_id");
-
-                    b.HasOne("ClassNovaApi.Models.Student", "Student")
-                        .WithMany()
-                        .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_attendances_students_student_id");
-
-                    b.HasOne("ClassNovaApi.Models.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_attendances_tenants_tenant_id");
-
-                    b.Navigation("Batch");
-
-                    b.Navigation("MarkedBy");
-
-                    b.Navigation("Student");
 
                     b.Navigation("Tenant");
                 });

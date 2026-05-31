@@ -1,0 +1,398 @@
+<p-toast position="top-right" />
+
+<div class="attendance-page">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Attendance</h1>
+      <p class="page-subtitle">Mark daily attendance or generate monthly reports</p>
+    </div>
+  </div>
+
+  <!-- Tab bar -->
+  <div class="tab-bar">
+    <button
+      class="tab-btn"
+      [class.active]="activeTab() === 'mark'"
+      (click)="switchTab('mark')">
+      <i class="pi pi-pencil"></i> Mark Attendance
+    </button>
+    <button
+      class="tab-btn"
+      [class.active]="activeTab() === 'report'"
+      (click)="switchTab('report')">
+      <i class="pi pi-file-pdf"></i> Monthly Report
+    </button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- TAB 1: MARK ATTENDANCE                                               -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  @if (activeTab() === 'mark') {
+    <div class="filters-bar">
+      <p-select
+        [options]="academicYearOptions()"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="markAcademicYearId()"
+        (ngModelChange)="onMarkAyChange($event)"
+        styleClass="filter-select"
+        placeholder="Academic year"
+        [loading]="isLoadingYears()" />
+
+      <p-select
+        [options]="markBatchOptions()"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="markBatchId()"
+        (ngModelChange)="onMarkBatchChange($event)"
+        [disabled]="!markAcademicYearId() || isLoadingMarkBatches()"
+        styleClass="filter-select"
+        placeholder="Select batch"
+        [loading]="isLoadingMarkBatches()" />
+
+      <p-datepicker
+        [ngModel]="markDate()"
+        (ngModelChange)="onMarkDateChange($event)"
+        [maxDate]="maxDate"
+        [disabled]="!markBatchId()"
+        dateFormat="dd M yy"
+        styleClass="filter-datepicker"
+        placeholder="Select date" />
+
+      <button
+        pButton
+        label="Load"
+        icon="pi pi-search"
+        [disabled]="!markBatchId() || !markDate() || isLoadingSheet()"
+        [loading]="isLoadingSheet()"
+        (click)="loadAttendanceSheet()">
+      </button>
+    </div>
+
+    <div class="table-card">
+      @if (!markBatchId() || !markDate()) {
+        <div class="empty-state">
+          <i class="pi pi-calendar"></i>
+          <p>Select a batch and date</p>
+          <span>Choose an academic year, batch and date, then click Load.</span>
+        </div>
+      } @else if (!sheetLoaded()) {
+        <div class="empty-state">
+          <i class="pi pi-arrow-up"></i>
+          <p>Ready to load</p>
+          <span>Click the Load button above to fetch the attendance sheet.</span>
+        </div>
+      } @else if (studentRows().length === 0) {
+        <div class="empty-state">
+          <i class="pi pi-users"></i>
+          <p>No enrolled students</p>
+          <span>This batch has no active enrollments.</span>
+        </div>
+      } @else {
+
+        <!-- Summary chips + bulk actions -->
+        <div class="sheet-toolbar">
+          <div class="summary-chips">
+            <span class="chip chip--present"><i class="pi pi-check-circle"></i> {{ presentCount() }} Present</span>
+            <span class="chip chip--absent"><i class="pi pi-times-circle"></i> {{ absentCount() }} Absent</span>
+            @if (lateCount() > 0) {
+              <span class="chip chip--late"><i class="pi pi-clock"></i> {{ lateCount() }} Late</span>
+            }
+            @if (excusedCount() > 0) {
+              <span class="chip chip--excused"><i class="pi pi-info-circle"></i> {{ excusedCount() }} Excused</span>
+            }
+          </div>
+          <div class="bulk-actions">
+            <span class="bulk-label">Mark all:</span>
+            <button pButton label="Present" severity="success" size="small" outlined (click)="markAll('PRESENT')"></button>
+            <button pButton label="Absent"  severity="danger"  size="small" outlined (click)="markAll('ABSENT')"></button>
+          </div>
+        </div>
+
+        <!-- Student table -->
+        <div class="attendance-table-wrap">
+          <table class="attendance-table">
+            <thead>
+              <tr>
+                <th class="col-no">#</th>
+                <th>Student</th>
+                <th>Adm. No</th>
+                <th>Status</th>
+                <th>Note</th>
+                <th>Last marked by</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of studentRows(); track trackByStudentId($index, row); let i = $index) {
+                <tr [class.row--absent]="row.status === 'ABSENT'" [class.row--late]="row.status === 'LATE'">
+                  <td class="col-no">{{ i + 1 }}</td>
+                  <td class="col-name">{{ row.studentName }}</td>
+                  <td class="col-adm">{{ row.admissionNo }}</td>
+                  <td class="col-status">
+                    <div class="status-buttons">
+                      @for (opt of statusOptions; track opt.value) {
+                        <button
+                          class="status-btn"
+                          [class.active]="row.status === opt.value"
+                          [attr.data-status]="opt.value"
+                          (click)="setStudentStatus(row.studentId, $any(opt.value))"
+                          [pTooltip]="opt.label"
+                          tooltipPosition="top">
+                          {{ opt.value === 'PRESENT' ? 'P' : opt.value === 'ABSENT' ? 'A' : opt.value === 'LATE' ? 'L' : 'E' }}
+                        </button>
+                      }
+                    </div>
+                  </td>
+                  <td class="col-note">
+                    <input class="note-input" type="text" [(ngModel)]="row.note" placeholder="Optional note" maxlength="500" />
+                  </td>
+                  <td class="col-marker">{{ row.markedByName ?? '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="save-row">
+          <button pButton label="Save Attendance" icon="pi pi-save" [loading]="isSaving()" (click)="saveAttendance()"></button>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- TAB 2: MONTHLY REPORT                                                -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  @if (activeTab() === 'report') {
+    <div class="filters-bar no-print">
+      <p-select
+        [options]="academicYearOptions()"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="reportAcademicYearId()"
+        (ngModelChange)="onReportAyChange($event)"
+        styleClass="filter-select"
+        placeholder="Academic year"
+        [loading]="isLoadingYears()" />
+
+      <p-select
+        [options]="reportBatchOptions()"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="reportBatchId()"
+        (ngModelChange)="onReportBatchChange($event)"
+        [disabled]="!reportAcademicYearId() || isLoadingReportBatches()"
+        styleClass="filter-select"
+        placeholder="Select batch"
+        [loading]="isLoadingReportBatches()" />
+
+      <p-datepicker
+        [ngModel]="reportMonth()"
+        (ngModelChange)="onReportMonthChange($event)"
+        view="month"
+        dateFormat="MM yy"
+        [disabled]="!reportBatchId()"
+        styleClass="filter-datepicker"
+        placeholder="Select month" />
+
+      <button
+        pButton
+        label="Generate"
+        icon="pi pi-refresh"
+        [disabled]="!reportBatchId() || !reportMonth() || isLoadingReport()"
+        [loading]="isLoadingReport()"
+        (click)="loadReport()">
+      </button>
+
+      @if (reportData()) {
+        <button
+          pButton
+          label="Print"
+          icon="pi pi-print"
+          severity="secondary"
+          outlined
+          (click)="printReport()">
+        </button>
+      }
+    </div>
+
+    <div class="table-card">
+      @if (!reportBatchId() || !reportMonth()) {
+        <div class="empty-state">
+          <i class="pi pi-calendar"></i>
+          <p>Select a batch and month</p>
+          <span>Choose an academic year, batch and month, then click Generate.</span>
+        </div>
+      } @else if (!reportData()) {
+        <div class="empty-state">
+          <i class="pi pi-chart-bar"></i>
+          <p>Ready to generate</p>
+          <span>Click Generate to load the monthly attendance register.</span>
+        </div>
+      } @else if (reportData()!.students.length === 0) {
+        <div class="empty-state">
+          <i class="pi pi-users"></i>
+          <p>No enrolled students</p>
+          <span>This batch has no active enrollments.</span>
+        </div>
+      } @else if (reportData()!.markedDates.length === 0) {
+        <div class="empty-state">
+          <i class="pi pi-calendar-times"></i>
+          <p>No attendance recorded</p>
+          <span>No attendance has been marked for this batch in {{ reportTitle() }}.</span>
+        </div>
+      } @else {
+
+        <!-- Print region: only this div is rendered during window.print() -->
+        <div class="print-region">
+
+          <!-- Reusable print header — rendered on both pages -->
+          <ng-template #printHeader>
+            <div class="print-report-header">
+              <div class="print-header-row">
+                @if (logoUrl()) {
+                  <img class="print-logo" [src]="logoUrl()!" alt="{{ orgName }} logo" />
+                }
+                <div class="print-header-text">
+                  <div class="print-org">{{ orgName }}</div>
+                  <div class="print-meta">
+                    Academic Year: {{ selectedReportBatch()?.academicYearName ?? '' }}
+                    @if (selectedReportBatch()?.className) {
+                      &nbsp;|&nbsp; Class: {{ selectedReportBatch()!.className }}
+                    }
+                    &nbsp;|&nbsp; Batch: {{ reportData()!.batchName }}
+                  </div>
+                </div>
+              </div>
+              <div class="print-title">Attendance Register — {{ reportTitle() }}</div>
+            </div>
+          </ng-template>
+
+          <!-- ════════ PAGE 1 — first half of dates ════════ -->
+          <div class="print-page">
+            <ng-container *ngTemplateOutlet="printHeader" />
+            <p class="print-page-label no-print">Page 1 — Days {{ getDayLabel(firstPageDates()[0]) }} to {{ getDayLabel(firstPageDates()[firstPageDates().length - 1]) }}</p>
+
+            <div class="report-table-wrap">
+              <table class="report-table">
+                <thead>
+                  <tr class="row-dow">
+                    <th class="col-sno" rowspan="2">#</th>
+                    <th class="col-name" rowspan="2">Student</th>
+                    <th class="col-adm" rowspan="2">Adm. No</th>
+                    @for (dateStr of firstPageDates(); track trackByDate($index, dateStr)) {
+                      <th class="col-day">{{ getDayOfWeek(dateStr) }}</th>
+                    }
+                  </tr>
+                  <tr class="row-date">
+                    @for (dateStr of firstPageDates(); track trackByDate($index, dateStr)) {
+                      <th class="col-day">{{ getDayLabel(dateStr) }}</th>
+                    }
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (student of reportData()!.students; track trackByStudentId($index, student); let i = $index) {
+                    <tr>
+                      <td class="col-sno">{{ i + 1 }}</td>
+                      <td class="col-name">{{ student.studentName }}</td>
+                      <td class="col-adm">{{ student.admissionNo }}</td>
+                      @for (dateStr of firstPageDates(); track trackByDate($index, dateStr)) {
+                        <td class="col-day">
+                          @let s1 = getStudentDayStatus(student, dateStr);
+                          @if (s1) {
+                            <span class="status-cell" [attr.data-status]="s1">
+                              {{ s1 === 'PRESENT' ? 'P' : s1 === 'ABSENT' ? 'A' : s1 === 'LATE' ? 'L' : 'E' }}
+                            </span>
+                          } @else {
+                            <span class="status-cell status-cell--none">—</span>
+                          }
+                        </td>
+                      }
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Page break -->
+          <div class="print-page-break"></div>
+
+          <!-- ════════ PAGE 2 — second half + summary ════════ -->
+          <div class="print-page">
+            <ng-container *ngTemplateOutlet="printHeader" />
+            <p class="print-page-label no-print">Page 2 — Days {{ getDayLabel(secondPageDates()[0]) }} to {{ getDayLabel(secondPageDates()[secondPageDates().length - 1]) }} + Summary</p>
+
+            <div class="report-table-wrap">
+              <table class="report-table">
+                <thead>
+                  <tr class="row-dow">
+                    <th class="col-sno" rowspan="2">#</th>
+                    <th class="col-name" rowspan="2">Student</th>
+                    <th class="col-adm" rowspan="2">Adm. No</th>
+                    @for (dateStr of secondPageDates(); track trackByDate($index, dateStr)) {
+                      <th class="col-day">{{ getDayOfWeek(dateStr) }}</th>
+                    }
+                    <th class="col-summary" rowspan="2">Total</th>
+                    <th class="col-summary col-p" rowspan="2">P</th>
+                    <th class="col-summary col-a" rowspan="2">A</th>
+                    <th class="col-summary col-l" rowspan="2">L</th>
+                    <th class="col-summary col-e" rowspan="2">E</th>
+                    <th class="col-pct" rowspan="2">%</th>
+                  </tr>
+                  <tr class="row-date">
+                    @for (dateStr of secondPageDates(); track trackByDate($index, dateStr)) {
+                      <th class="col-day">{{ getDayLabel(dateStr) }}</th>
+                    }
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (student of reportData()!.students; track trackByStudentId($index, student); let i = $index) {
+                    <tr>
+                      <td class="col-sno">{{ i + 1 }}</td>
+                      <td class="col-name">{{ student.studentName }}</td>
+                      <td class="col-adm">{{ student.admissionNo }}</td>
+                      @for (dateStr of secondPageDates(); track trackByDate($index, dateStr)) {
+                        <td class="col-day">
+                          @let s2 = getStudentDayStatus(student, dateStr);
+                          @if (s2) {
+                            <span class="status-cell" [attr.data-status]="s2">
+                              {{ s2 === 'PRESENT' ? 'P' : s2 === 'ABSENT' ? 'A' : s2 === 'LATE' ? 'L' : 'E' }}
+                            </span>
+                          } @else {
+                            <span class="status-cell status-cell--none">—</span>
+                          }
+                        </td>
+                      }
+                      <td class="col-summary">{{ student.totalDays }}</td>
+                      <td class="col-summary col-p">{{ student.present }}</td>
+                      <td class="col-summary col-a">{{ student.absent }}</td>
+                      <td class="col-summary col-l">{{ student.late }}</td>
+                      <td class="col-summary col-e">{{ student.excused }}</td>
+                      <td class="col-pct" [class.pct--low]="student.presentPercentage < 75">
+                        {{ student.presentPercentage }}%
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div><!-- /.print-region -->
+
+        <!-- Legend (screen only) -->
+        <div class="report-legend no-print">
+          <span class="legend-item"><span class="status-cell" data-status="PRESENT">P</span> Present</span>
+          <span class="legend-item"><span class="status-cell" data-status="ABSENT">A</span> Absent</span>
+          <span class="legend-item"><span class="status-cell" data-status="LATE">L</span> Late</span>
+          <span class="legend-item"><span class="status-cell" data-status="EXCUSED">E</span> Excused</span>
+          <span class="legend-item pct--low-sample">% &lt; 75 flagged red</span>
+        </div>
+      }
+    </div>
+  }
+
+</div>

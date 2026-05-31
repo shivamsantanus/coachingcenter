@@ -1,0 +1,154 @@
+<p-toast position="top-right" />
+
+<div class="tab-content">
+
+  <!-- Header -->
+  <div class="tab-header">
+    <h2>Academic Years</h2>
+    @if (isOrgAdmin) {
+      <button pButton label="Add Academic Year" icon="pi pi-plus" (click)="openAddDialog()"></button>
+    }
+  </div>
+
+  <!-- Table card -->
+  <div class="table-card">
+    @if (isLoading()) {
+      <div class="loading-state">
+        <i class="pi pi-spin pi-spinner"></i>
+        <p>Loading academic years...</p>
+      </div>
+    } @else if (years().length === 0) {
+      <div class="empty-state">
+        <i class="pi pi-calendar"></i>
+        <p>No academic years found</p>
+        <span>Add your first academic year to get started.</span>
+      </div>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Status</th>
+            @if (isOrgAdmin) {
+              <th>Actions</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (year of years(); track year.id) {
+            <tr>
+              <td>{{ year.name }}</td>
+              <td>{{ year.startDate | date: 'dd MMM yyyy' }}</td>
+              <td>{{ year.endDate | date: 'dd MMM yyyy' }}</td>
+              <td>
+                <span class="status-badge" [class.active]="year.isActive">
+                  {{ year.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              @if (isOrgAdmin) {
+                <td>
+                  <div class="action-buttons">
+                    @if (!year.isActive) {
+                      <button
+                        pButton
+                        [icon]="activatingId() === year.id ? 'pi pi-spin pi-spinner' : 'pi pi-check-circle'"
+                        pTooltip="Set as Active"
+                        tooltipPosition="top"
+                        class="p-button-text p-button-sm"
+                        [disabled]="!!activatingId()"
+                        (click)="activateYear(year)">
+                      </button>
+                    }
+                    <button
+                      pButton
+                      icon="pi pi-pencil"
+                      pTooltip="Edit"
+                      tooltipPosition="top"
+                      class="p-button-text p-button-sm"
+                      [disabled]="!!activatingId()"
+                      (click)="openEditDialog(year)">
+                    </button>
+                  </div>
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+
+</div>
+
+<!-- Add / Edit Dialog -->
+<p-dialog
+  [header]="editYearId() ? 'Edit Academic Year' : 'Add Academic Year'"
+  [visible]="showDialog()"
+  (visibleChange)="!$event && closeDialog()"
+  [modal]="true"
+  [style]="{ width: '28rem' }"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="academic-year-dialog">
+
+  <form [formGroup]="yearForm" (ngSubmit)="saveYear()">
+
+    <div class="form-field">
+      <label for="yearName">Name <span style="color:#ef4444">*</span></label>
+      <input
+        pInputText
+        id="yearName"
+        formControlName="name"
+        placeholder="e.g. 2024-25"
+        [class.ng-invalid]="yearForm.get('name')!.invalid && yearForm.get('name')!.touched" />
+      @if (yearForm.get('name')!.invalid && yearForm.get('name')!.touched) {
+        <span class="error-msg">Name is required.</span>
+      }
+    </div>
+
+    <div class="form-field">
+      <label for="startDate">Start Date <span style="color:#ef4444">*</span></label>
+      <input
+        pInputText
+        type="date"
+        id="startDate"
+        formControlName="startDate"
+        [class.ng-invalid]="yearForm.get('startDate')!.invalid && yearForm.get('startDate')!.touched" />
+      @if (yearForm.get('startDate')!.invalid && yearForm.get('startDate')!.touched) {
+        <span class="error-msg">Start date is required.</span>
+      }
+    </div>
+
+    <div class="form-field">
+      <label for="endDate">End Date <span style="color:#ef4444">*</span></label>
+      <input
+        pInputText
+        type="date"
+        id="endDate"
+        formControlName="endDate"
+        [class.ng-invalid]="yearForm.get('endDate')!.invalid && yearForm.get('endDate')!.touched" />
+      @if (yearForm.get('endDate')!.invalid && yearForm.get('endDate')!.touched) {
+        <span class="error-msg">End date is required.</span>
+      }
+    </div>
+
+    @if (yearForm.errors?.['endDateBeforeStartDate'] && yearForm.get('startDate')!.touched && yearForm.get('endDate')!.touched) {
+      <span class="error-msg">End date must be after start date.</span>
+    }
+
+    <div class="dialog-footer">
+      <button pButton type="button" label="Cancel" class="p-button-text" (click)="closeDialog()"></button>
+      <button
+        pButton
+        type="submit"
+        [label]="editYearId() ? 'Update' : 'Create'"
+        [icon]="isSaving() ? 'pi pi-spin pi-spinner' : 'pi pi-check'"
+        [disabled]="isSaving()">
+      </button>
+    </div>
+
+  </form>
+
+</p-dialog>

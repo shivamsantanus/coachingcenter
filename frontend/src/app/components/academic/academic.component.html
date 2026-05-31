@@ -1,0 +1,27 @@
+<div class="academic-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Academic Structure</h1>
+      <p class="page-subtitle">Manage years, classes, batches, subjects, and enrollments</p>
+    </div>
+  </div>
+
+  <p-tabs value="academic-years">
+    <p-tablist>
+      <p-tab value="academic-years">Academic Years</p-tab>
+      <p-tab value="classes">Classes</p-tab>
+      <p-tab value="batches">Batches</p-tab>
+      <p-tab value="subjects">Subjects</p-tab>
+      <p-tab value="assignments">Assignments</p-tab>
+      <p-tab value="enrollments">Enrollments</p-tab>
+    </p-tablist>
+    <p-tabpanels>
+      <p-tabpanel value="academic-years"><app-academic-years-tab /></p-tabpanel>
+      <p-tabpanel value="classes"><app-classes-tab /></p-tabpanel>
+      <p-tabpanel value="batches"><app-batches-tab /></p-tabpanel>
+      <p-tabpanel value="subjects"><app-subjects-tab /></p-tabpanel>
+      <p-tabpanel value="assignments"><app-batch-subject-teacher-tab /></p-tabpanel>
+      <p-tabpanel value="enrollments"><app-student-enrollment-tab /></p-tabpanel>
+    </p-tabpanels>
+  </p-tabs>
+</div>

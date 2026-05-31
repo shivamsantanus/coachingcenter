@@ -1,0 +1,148 @@
+<p-toast position="top-right" />
+
+<div class="page-header">
+  <div>
+    <h2 class="page-title">Branches</h2>
+    <p class="page-subtitle">Manage your coaching centre locations</p>
+  </div>
+  @if (isOrgAdmin) {
+    <button pButton label="Add Branch" icon="pi pi-plus" (click)="openAddDialog()"></button>
+  }
+</div>
+
+<!-- Table card -->
+<div class="table-card">
+  @if (isLoading()) {
+    <div class="empty-state">
+      <i class="pi pi-spin pi-spinner"></i>
+      <p>Loading branches…</p>
+    </div>
+  } @else if (branches().length === 0) {
+    <div class="empty-state">
+      <i class="pi pi-building"></i>
+      <p>No branches found</p>
+      <span>Add your first branch to get started.</span>
+    </div>
+  } @else {
+    <table class="branches-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Code</th>
+          <th>Address</th>
+          <th>Phone</th>
+          <th>Map</th>
+          <th>Status</th>
+          @if (isOrgAdmin) {
+            <th class="actions-col">Actions</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (branch of branches(); track branch.id) {
+          <tr>
+            <td><span class="branch-name">{{ branch.name }}</span></td>
+            <td>{{ branch.code ?? '—' }}</td>
+            <td class="address-cell">{{ branch.address ?? '—' }}</td>
+            <td>{{ branch.phone ?? '—' }}</td>
+            <td>
+              @if (branch.mapUrl) {
+                <a [href]="branch.mapUrl" target="_blank" rel="noopener noreferrer" class="map-link">
+                  <i class="pi pi-map-marker"></i> View
+                </a>
+              } @else {
+                —
+              }
+            </td>
+            <td>
+              <span class="status-badge" [class.active]="branch.status === 'ACTIVE'" [class.inactive]="branch.status === 'INACTIVE'">
+                {{ branch.status === 'ACTIVE' ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            @if (isOrgAdmin) {
+              <td>
+                <div class="action-buttons">
+                  <button
+                    pButton
+                    [icon]="togglingId() === branch.id ? 'pi pi-spin pi-spinner' : (branch.status === 'ACTIVE' ? 'pi pi-ban' : 'pi pi-check-circle')"
+                    [pTooltip]="branch.status === 'ACTIVE' ? 'Deactivate' : 'Activate'"
+                    tooltipPosition="top"
+                    class="p-button-text p-button-sm"
+                    [class.action-btn--deactivate]="branch.status === 'ACTIVE'"
+                    [class.action-btn--activate]="branch.status === 'INACTIVE'"
+                    [disabled]="!!togglingId()"
+                    (click)="toggleStatus(branch)">
+                  </button>
+                  <button
+                    pButton
+                    icon="pi pi-pencil"
+                    pTooltip="Edit"
+                    tooltipPosition="top"
+                    class="p-button-text p-button-sm"
+                    [disabled]="!!togglingId()"
+                    (click)="openEditDialog(branch)">
+                  </button>
+                </div>
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+<!-- Add / Edit Dialog -->
+<p-dialog
+  [header]="dialogTitle"
+  [visible]="showDialog()"
+  (visibleChange)="!$event && closeDialog()"
+  [modal]="true"
+  [closable]="true"
+  styleClass="branch-dialog"
+  [style]="{ width: '480px' }">
+
+  <form [formGroup]="branchForm" (ngSubmit)="saveBranch()" class="branch-form">
+
+    <div class="form-field">
+      <label class="field-label" for="branchName">Name <span class="required-mark">*</span></label>
+      <input pInputText id="branchName" type="text" placeholder="e.g. Main Campus" formControlName="name"
+        class="dialog-input" [class.field-invalid]="isFieldInvalid('name')" />
+      @if (isFieldInvalid('name')) {
+        <span class="field-error">Branch name is required.</span>
+      }
+    </div>
+
+    <div class="form-field">
+      <label class="field-label" for="branchCode">Code <span class="optional-mark">(optional)</span></label>
+      <input pInputText id="branchCode" type="text" placeholder="e.g. MAIN" formControlName="code"
+        class="dialog-input" />
+    </div>
+
+    <div class="form-field">
+      <label class="field-label" for="branchAddress">Address <span class="optional-mark">(optional)</span></label>
+      <input pInputText id="branchAddress" type="text" placeholder="e.g. 12 MG Road, Bangalore" formControlName="address"
+        class="dialog-input" />
+    </div>
+
+    <div class="form-field">
+      <label class="field-label" for="branchPhone">Phone <span class="optional-mark">(optional)</span></label>
+      <input pInputText id="branchPhone" type="text" placeholder="e.g. +91 98765 43210" formControlName="phone"
+        class="dialog-input" />
+    </div>
+
+    <div class="form-field">
+      <label class="field-label" for="branchMapUrl">Google Maps Link <span class="optional-mark">(optional)</span></label>
+      <input pInputText id="branchMapUrl" type="url" placeholder="Paste Google Maps share link" formControlName="mapUrl"
+        class="dialog-input" />
+    </div>
+
+  </form>
+
+  <ng-template pTemplate="footer">
+    <div class="dialog-footer">
+      <button pButton label="Cancel" class="p-button-text" (click)="closeDialog()" [disabled]="isSaving()"></button>
+      <button pButton [label]="editBranchId() ? 'Save Changes' : 'Add Branch'" [loading]="isSaving()" (click)="saveBranch()"></button>
+    </div>
+  </ng-template>
+</p-dialog>
