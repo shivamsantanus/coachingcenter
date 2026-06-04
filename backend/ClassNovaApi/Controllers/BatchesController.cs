@@ -26,8 +26,16 @@ namespace ClassNovaApi.Controllers
             [FromQuery] string? search = null)
         {
             var tenantId = User.GetTenantId();
+            var role     = User.GetRole();
 
             var query = _context.Batches.Where(b => b.TenantId == tenantId);
+
+            // TEACHER: restrict to batches they are assigned to via BatchSubjectTeacher
+            if (role == "TEACHER")
+            {
+                var assignedBatchIds = ResolveTeacherBatchIds(tenantId);
+                query = query.Where(b => assignedBatchIds.Contains(b.Id));
+            }
 
             if (academicYearId.HasValue)
                 query = query.Where(b => b.AcademicYearId == academicYearId.Value);
@@ -62,6 +70,26 @@ namespace ClassNovaApi.Controllers
                 .ToList();
 
             return Ok(new { success = true, data, error = (string?)null });
+        }
+
+        // Returns the set of batch IDs the current TEACHER user is assigned to.
+        // Returns an empty set if the user has no linked Teacher record or no assignments.
+        private HashSet<Guid> ResolveTeacherBatchIds(Guid tenantId)
+        {
+            var userId    = User.GetUserId();
+            var teacherId = _context.Teachers
+                .Where(t => t.TenantId == tenantId && t.UserId == userId)
+                .Select(t => t.Id)
+                .FirstOrDefault();
+
+            if (teacherId == Guid.Empty)
+                return [];
+
+            return _context.BatchSubjectTeachers
+                .Where(bst => bst.TenantId == tenantId && bst.TeacherId == teacherId)
+                .Select(bst => bst.BatchId)
+                .Distinct()
+                .ToHashSet();
         }
 
         [HttpGet("{id:guid}")]

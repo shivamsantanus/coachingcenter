@@ -4,7 +4,7 @@
 > Never start a feature without a row in the plan. Never finish one without marking it done
 > and linking the feature doc. This is the single source of truth for project state.
 
-**Last updated:** 2026-06-03 (System IDs, monthly attendance report, role-based nav permissions)
+**Last updated:** 2026-06-04 (User auto-creation for teachers/students, first-login password change, teacher batch scoping)
 
 ---
 
@@ -91,8 +91,8 @@
 | 4.2 | Attendance summary API | ✅ Done | [attendance.md](features/attendance.md) | `GET /api/attendance/summary` — aggregate per student/batch/date range |
 | 4.3 | Attendance UI — mark attendance | ✅ Done | [attendance.md](features/attendance.md) | AY → batch → date; P/A/L/E toggles; bulk mark-all; live counts (signals); save |
 | 4.5 | Monthly attendance report | ✅ Done | [attendance.md](features/attendance.md) | `GET /api/attendance/monthly-report`; 2-page matrix print; org logo in header; PDF filename from org+batch+month |
-| 4.4 | Attendance UI (student view) | ❌ Blocked | — | Blocked on role-specific dashboards — student has no portal yet; summary API ready |
-| 4.6 | Teacher batch-scoped attendance | ❌ Blocked | — | TEACHER sees only assigned batches; blocked on Teacher.UserId being populated (user-linking feature) |
+| 4.4 | Attendance UI (student view) | ❌ Blocked | — | Blocked on student role-specific dashboard — no student portal yet; summary API ready |
+| 4.6 | Teacher batch-scoped attendance | ✅ Done | — | TEACHER sees only assigned batches (via BatchSubjectTeacher); backend guard on mark + read + report |
 
 **DB migrations applied (Phase 4):**
 - `20260531142407_AddAttendance` — creates `attendances` table with unique index on (tenant_id, batch_id, student_id, date)
@@ -198,7 +198,7 @@
 | X.2 | `tenants.code` + `system_id` migration | ✅ Done | [system-id.md](features/system-id.md) | `20260601182306_AddSystemIds` — 11 tables updated; existing rows backfilled via SQL |
 | X.3 | SystemIdService | ✅ Done | [system-id.md](features/system-id.md) | Static service; `Generate()` + `DeriveTenantCode()`; prefix constants |
 | X.4 | Wire SystemId into all Create actions | ✅ Done | — | Students, Teachers, Branches, Batches, Classes, AcademicYears, Tenants, Users (OTP verify) |
-| X.5 | Teacher + Student user-linking | ❌ Blocked | — | `Teacher.UserId` / `Student.UserId` still null for existing records; needs user-creation on entity create |
+| X.5 | Teacher + Student user auto-creation | ✅ Done | — | `Email` added to Teacher/Student; User + TenantUserRole auto-created on entity create; `IsFirstLogin = true`; one-time password shown in credentials dialog; existing seeded records still have null UserId |
 
 ## Cross-cutting — Role-Based Navigation
 
@@ -211,21 +211,27 @@
 | N.5 | RolePermissionsComponent | ✅ Done | — | Settings → Role Permissions; toggle matrix (TEACHER / STUDENT); optimistic UI; saves on toggle |
 | N.6 | API guards remain hard-coded | ✅ Decision | — | Nav toggle is UX only; backend role checks never moved to DB |
 
+## Cross-cutting — Auth Improvements
+
+| # | Feature | Status | Notes |
+|---|---|---|---|
+| A.1 | First-login forced password change | ✅ Done | `IsFirstLogin` on User; `POST /api/auth/change-password`; non-dismissible shell dialog; clears flag on success |
+| A.2 | Teacher/Student credential delivery | ✅ Done | One-time password shown in dialog after create; copy buttons; warning "cannot be retrieved again" |
+
 ## What to Work on Next
 
-**Just completed (2026-06-03):**
-- Monthly attendance report (backend + 2-page print with org logo, proper PDF filename)
-- System ID rollout — `char(28)` on 11 tables, backfilled, wired into all Create actions
-- Role-based navigation — data-driven nav permissions, ORG_ADMIN settings UI to toggle tabs per role
+**Just completed (2026-06-04):**
+- Teacher + Student user auto-creation — email field, User account, one-time password credentials dialog
+- First-login forced password change — non-dismissible dialog in Shell, `POST /api/auth/change-password`
+- Teacher batch-scoped attendance — `GET /api/batches` and all attendance endpoints filtered by BatchSubjectTeacher for TEACHER role
 
-**Pending in Phase 4:**
-1. **4.4 Student attendance view** — blocked on role-specific dashboards (no student portal yet)
-2. **4.6 Teacher batch-scoped attendance** — blocked on Teacher.UserId being populated
+**Remaining in Phase 4:**
+- **4.4 Student attendance view** — still blocked on student role-specific dashboard
 
-**Next logical work:**
-1. **Teacher + Student user-linking** — auto-create User when teacher/student is created; set UserId; unlocks 4.6
-2. **Role-specific dashboards** — Teacher dashboard (my batches, today's attendance) and Student dashboard (my attendance %, fees); unlocks 4.4
-3. **Phase 5 — Fees** — fee plan management + payment recording (models exist, no controllers yet)
+**Next in priority order:**
+1. **Role-specific dashboards** — Teacher dashboard (my batches, today's attendance status, student counts) + Student dashboard (my attendance %, enrolled batch, fees) — unlocks 4.4 and gives teachers/students a meaningful home screen
+2. **Phase 5 — Fees** — fee plan management + payment recording (DB models exist, no controllers yet)
+3. **Phase 6 — Exams** — exam management, marks entry, report cards (DB models exist)
 
 ---
 

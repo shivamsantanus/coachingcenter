@@ -47,7 +47,7 @@ namespace ClassNovaApi.Controllers
             _logger   = logger;
         }
 
-        // POST /api/attendance/mark — ORG_ADMIN or TEACHER
+        // POST /api/attendance/mark — ORG_ADMIN or TEACHER (TEACHER: assigned batches only)
         [HttpPost("mark")]
         public IActionResult MarkAttendance([FromBody] MarkAttendanceRequest request)
         {
@@ -57,6 +57,9 @@ namespace ClassNovaApi.Controllers
 
             var tenantId  = User.GetTenantId();
             var markedById = User.GetUserId();
+
+            if (role == "TEACHER" && !IsTeacherAssignedToBatch(tenantId, request.BatchId))
+                return Forbid();
 
             var batchExists = _context.Batches
                 .Any(b => b.TenantId == tenantId && b.Id == request.BatchId);
@@ -127,6 +130,9 @@ namespace ClassNovaApi.Controllers
                 return BadRequest(new { success = false, data = (object?)null, error = "batchId and date are required." });
 
             var tenantId = User.GetTenantId();
+
+            if (User.GetRole() == "TEACHER" && !IsTeacherAssignedToBatch(tenantId, batchId.Value))
+                return Forbid();
 
             if (!_context.Batches.Any(b => b.TenantId == tenantId && b.Id == batchId.Value))
                 return NotFound(new { success = false, data = (object?)null, error = "Batch not found." });
@@ -257,6 +263,9 @@ namespace ClassNovaApi.Controllers
 
             var tenantId = User.GetTenantId();
 
+            if (User.GetRole() == "TEACHER" && !IsTeacherAssignedToBatch(tenantId, batchId.Value))
+                return Forbid();
+
             var batch = _context.Batches
                 .Where(b => b.TenantId == tenantId && b.Id == batchId.Value)
                 .Select(b => new { b.Id, b.Name })
@@ -336,6 +345,23 @@ namespace ClassNovaApi.Controllers
             };
 
             return Ok(new { success = true, data = reportData, error = (string?)null });
+        }
+        // True if the current TEACHER user is assigned to the given batch via BatchSubjectTeacher.
+        // Always returns true for ORG_ADMIN (caller must check role before calling).
+        private bool IsTeacherAssignedToBatch(Guid tenantId, Guid batchId)
+        {
+            var userId    = User.GetUserId();
+            var teacherId = _context.Teachers
+                .Where(t => t.TenantId == tenantId && t.UserId == userId)
+                .Select(t => t.Id)
+                .FirstOrDefault();
+
+            if (teacherId == Guid.Empty) return false;
+
+            return _context.BatchSubjectTeachers
+                .Any(bst => bst.TenantId  == tenantId
+                         && bst.BatchId   == batchId
+                         && bst.TeacherId == teacherId);
         }
     }
 }
