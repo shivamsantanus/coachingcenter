@@ -1,0 +1,92 @@
+<p-toast position="top-right" />
+
+<div class="permissions-page">
+
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">Role Permissions</h2>
+      <p class="page-subtitle">
+        Control which navigation tabs are visible to Teachers and Students.
+        Changes take effect immediately on next login or page refresh.
+      </p>
+    </div>
+  </div>
+
+  <div class="matrix-card">
+    @if (isLoading()) {
+      <div class="loading-state">
+        <i class="pi pi-spin pi-spinner"></i>
+        <span>Loading permissions…</span>
+      </div>
+    } @else {
+      <table class="matrix-table">
+        <thead>
+          <tr>
+            <th class="col-tab">Tab</th>
+            @for (role of managedRoles; track role.code) {
+              <th class="col-role">{{ role.label }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of matrixRows(); track trackByKey($index, row)) {
+            <tr [class.row--locked]="row.isLocked">
+              <td class="col-tab">
+                <span class="tab-label">{{ row.label }}</span>
+                @if (row.isLocked) {
+                  <span class="locked-badge">
+                    <i class="pi pi-lock"></i> Always on
+                  </span>
+                }
+              </td>
+              @for (role of managedRoles; track role.code) {
+                <td class="col-role">
+                  <button
+                    class="toggle-btn"
+                    [class.toggle-btn--on]="isEnabled(row, role.code)"
+                    [class.toggle-btn--saving]="isSaving(row, role.code)"
+                    [disabled]="row.isLocked || isSaving(row, role.code)"
+                    (click)="toggle(row, role.code)"
+                    [attr.aria-label]="row.label + ' for ' + role.label">
+                    @if (isSaving(row, role.code)) {
+                      <i class="pi pi-spin pi-spinner"></i>
+                    } @else if (isEnabled(row, role.code)) {
+                      <i class="pi pi-check"></i>
+                    } @else {
+                      <i class="pi pi-minus"></i>
+                    }
+                  </button>
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <div class="legend">
+        <span class="legend-item">
+          <span class="toggle-btn toggle-btn--on toggle-btn--demo"><i class="pi pi-check"></i></span>
+          Visible to role
+        </span>
+        <span class="legend-item">
+          <span class="toggle-btn toggle-btn--demo"><i class="pi pi-minus"></i></span>
+          Hidden from role
+        </span>
+        <span class="legend-item">
+          <i class="pi pi-lock legend-lock"></i>
+          Always visible — cannot be toggled
+        </span>
+      </div>
+    }
+  </div>
+
+  <div class="info-box">
+    <i class="pi pi-info-circle"></i>
+    <p>
+      Showing or hiding a tab controls what appears in the sidebar only.
+      API access is governed separately by role guards in the backend —
+      consult the development team before enabling sensitive tabs for new roles.
+    </p>
+  </div>
+
+</div>

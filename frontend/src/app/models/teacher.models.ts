@@ -24,6 +24,7 @@ export interface TeacherListResponse {
 
 export interface CreateTeacherRequest {
   fullName: string;
+  email: string;
   employeeCode: string;
   qualification: string | null;
   salaryType: string | null;
@@ -42,8 +43,18 @@ export interface TeacherCreatedResult {
   fullName: string;
   employeeCode: string;
   status: string;
+  systemId: string;
+  loginEmail: string;
+  oneTimePassword: string;
+  message: string;
 }
 
 export interface TeacherPhotoResult {
   photoUrl: string;
+}
+
+export interface LoginCredentials {
+  fullName: string;
+  loginEmail: string;
+  oneTimePassword: string;
 }

@@ -65,6 +65,19 @@
           }
         </div>
 
+        @if (!isEditMode) {
+          <!-- Login Email (create only) -->
+          <div class="field field--full">
+            <label for="email">Login Email <span class="required">*</span></label>
+            <input id="email" type="email" pInputText formControlName="email"
+              placeholder="e.g. riya.sharma@gmail.com" />
+            <span class="field-hint">Student will use this email to log in.</span>
+            @if (fieldError('email')) {
+              <span class="field-error">{{ fieldError('email') }}</span>
+            }
+          </div>
+        }
+
         <!-- Admission No -->
         <div class="field">
           <label for="admissionNo">Admission No <span class="required">*</span></label>
@@ -130,3 +143,54 @@
   }
 
 </p-dialog>
+
+<!-- ── Credentials dialog (shown once after create) ────────────────────── -->
+@if (showCredentials() && newCredentials()) {
+  <p-dialog
+    header="Student Account Created"
+    [visible]="true"
+    [modal]="true"
+    [closable]="false"
+    [draggable]="false"
+    [resizable]="false"
+    styleClass="credentials-dialog">
+
+    <div class="credentials-body">
+      <div class="credentials-warning">
+        <i class="pi pi-exclamation-triangle"></i>
+        <strong>Save these credentials now.</strong>
+        The password will not be shown again after you close this dialog.
+      </div>
+
+      <p class="credentials-intro">
+        Share the following login details with <strong>{{ newCredentials()!.fullName }}</strong>.
+      </p>
+
+      <div class="credential-row">
+        <span class="credential-label">Email</span>
+        <span class="credential-value">{{ newCredentials()!.loginEmail }}</span>
+        <button pButton icon="pi pi-copy" size="small" outlined severity="secondary"
+          pTooltip="Copy email" tooltipPosition="top"
+          (click)="copyToClipboard(newCredentials()!.loginEmail)"></button>
+      </div>
+
+      <div class="credential-row">
+        <span class="credential-label">Password</span>
+        <span class="credential-value credential-value--password">{{ newCredentials()!.oneTimePassword }}</span>
+        <button pButton icon="pi pi-copy" size="small" outlined severity="secondary"
+          pTooltip="Copy password" tooltipPosition="top"
+          (click)="copyToClipboard(newCredentials()!.oneTimePassword)"></button>
+      </div>
+
+      <p class="credentials-note">
+        The student should change this password after their first login.
+      </p>
+    </div>
+
+    <ng-template pTemplate="footer">
+      <button pButton label="I've noted the credentials — Close"
+        (click)="onCredentialsDismissed()"></button>
+    </ng-template>
+
+  </p-dialog>
+}

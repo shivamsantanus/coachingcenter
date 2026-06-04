@@ -26,6 +26,7 @@ export interface StudentListResponse {
 
 export interface CreateStudentRequest {
   fullName: string;
+  email: string;
   admissionNo: string;
   guardianName: string;
   guardianPhone: string;
@@ -42,4 +43,21 @@ export interface UpdateStudentRequest {
   address?: string | null;
   dateOfBirth?: string | null;
   branchId?: string | null;
+}
+
+export interface StudentCreatedResult {
+  id: string;
+  fullName: string;
+  admissionNo: string;
+  status: string;
+  systemId: string;
+  loginEmail: string;
+  oneTimePassword: string;
+  message: string;
+}
+
+export interface LoginCredentials {
+  fullName: string;
+  loginEmail: string;
+  oneTimePassword: string;
 }

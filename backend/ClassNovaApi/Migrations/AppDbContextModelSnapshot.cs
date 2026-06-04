@@ -50,6 +50,10 @@ namespace ClassNovaApi.Migrations
                         .HasColumnType("date")
                         .HasColumnName("start_date");
 
+                    b.Property<string>("SystemId")
+                        .HasColumnType("char(28)")
+                        .HasColumnName("system_id");
+
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid")
                         .HasColumnName("tenant_id");
@@ -60,6 +64,11 @@ namespace ClassNovaApi.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_academic_years");
+
+                    b.HasIndex("SystemId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_academic_years_system_id")
+                        .HasFilter("system_id IS NOT NULL");
 
                     b.HasIndex("TenantId")
                         .HasDatabaseName("ix_academic_years_tenant_id");
@@ -234,6 +243,10 @@ namespace ClassNovaApi.Migrations
                         .HasColumnType("text")
                         .HasColumnName("status");
 
+                    b.Property<string>("SystemId")
+                        .HasColumnType("char(28)")
+                        .HasColumnName("system_id");
+
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid")
                         .HasColumnName("tenant_id");
@@ -253,6 +266,11 @@ namespace ClassNovaApi.Migrations
 
                     b.HasIndex("ClassId")
                         .HasDatabaseName("ix_batches_class_id");
+
+                    b.HasIndex("SystemId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_batches_system_id")
+                        .HasFilter("system_id IS NOT NULL");
 
                     b.HasIndex("TenantId")
                         .HasDatabaseName("ix_batches_tenant_id");
@@ -339,6 +357,10 @@ namespace ClassNovaApi.Migrations
                         .HasColumnType("text")
                         .HasColumnName("status");
 
+                    b.Property<string>("SystemId")
+                        .HasColumnType("char(28)")
+                        .HasColumnName("system_id");
+
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid")
                         .HasColumnName("tenant_id");
@@ -349,6 +371,11 @@ namespace ClassNovaApi.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_branches");
+
+                    b.HasIndex("SystemId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_branches_system_id")
+                        .HasFilter("system_id IS NOT NULL");
 
                     b.HasIndex("TenantId")
                         .HasDatabaseName("ix_branches_tenant_id");
@@ -389,6 +416,10 @@ namespace ClassNovaApi.Migrations
                         .HasColumnType("text")
                         .HasColumnName("status");
 
+                    b.Property<string>("SystemId")
+                        .HasColumnType("char(28)")
+                        .HasColumnName("system_id");
+
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid")
                         .HasColumnName("tenant_id");
@@ -405,6 +436,11 @@ namespace ClassNovaApi.Migrations
 
                     b.HasIndex("BranchId")
                         .HasDatabaseName("ix_classes_branch_id");
+
+                    b.HasIndex("SystemId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_classes_system_id")
+                        .HasFilter("system_id IS NOT NULL");
 
                     b.HasIndex("TenantId")
                         .HasDatabaseName("ix_classes_tenant_id");
@@ -518,6 +554,10 @@ namespace ClassNovaApi.Migrations
                         .HasColumnType("text")
                         .HasColumnName("status");
 
+                    b.Property<string>("SystemId")
+                        .HasColumnType("char(28)")
+                        .HasColumnName("system_id");
+
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid")
                         .HasColumnName("tenant_id");
@@ -537,6 +577,11 @@ namespace ClassNovaApi.Migrations
 
                     b.HasIndex("BranchId")
                         .HasDatabaseName("ix_exams_branch_id");
+
+                    b.HasIndex("SystemId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_exams_system_id")
+                        .HasFilter("system_id IS NOT NULL");
 
                     b.HasIndex("TenantId", "BatchId", "Status")
                         .HasDatabaseName("ix_exams_tenant_id_batch_id_status");
@@ -630,6 +675,10 @@ namespace ClassNovaApi.Migrations
                         .HasColumnType("text")
                         .HasColumnName("name");
 
+                    b.Property<string>("SystemId")
+                        .HasColumnType("char(28)")
+                        .HasColumnName("system_id");
+
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid")
                         .HasColumnName("tenant_id");
@@ -646,6 +695,11 @@ namespace ClassNovaApi.Migrations
 
                     b.HasIndex("BranchId")
                         .HasDatabaseName("ix_fee_plans_branch_id");
+
+                    b.HasIndex("SystemId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_fee_plans_system_id")
+                        .HasFilter("system_id IS NOT NULL");
 
                     b.HasIndex("TenantId")
                         .HasDatabaseName("ix_fee_plans_tenant_id");
@@ -698,6 +752,46 @@ namespace ClassNovaApi.Migrations
                         .HasDatabaseName("ix_marks_tenant_id_exam_subject_id_student_id");
 
                     b.ToTable("marks", (string)null);
+                });
+
+            modelBuilder.Entity("ClassNovaApi.Models.NavigationItem", b =>
+                {
+                    b.Property<string>("Key")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("key");
+
+                    b.Property<string>("Icon")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("icon");
+
+                    b.Property<bool>("IsAdminOnly")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_admin_only");
+
+                    b.Property<bool>("IsLocked")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_locked");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("label");
+
+                    b.Property<string>("RoutePath")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("route_path");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("sort_order");
+
+                    b.HasKey("Key")
+                        .HasName("pk_navigation_items");
+
+                    b.ToTable("navigation_items", (string)null);
                 });
 
             modelBuilder.Entity("ClassNovaApi.Models.PasswordResetOtp", b =>
@@ -809,6 +903,10 @@ namespace ClassNovaApi.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("student_id");
 
+                    b.Property<string>("SystemId")
+                        .HasColumnType("char(28)")
+                        .HasColumnName("system_id");
+
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid")
                         .HasColumnName("tenant_id");
@@ -825,6 +923,11 @@ namespace ClassNovaApi.Migrations
 
                     b.HasIndex("StudentId")
                         .HasDatabaseName("ix_payments_student_id");
+
+                    b.HasIndex("SystemId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_payments_system_id")
+                        .HasFilter("system_id IS NOT NULL");
 
                     b.HasIndex("TenantId", "StudentId", "PaymentDate")
                         .HasDatabaseName("ix_payments_tenant_id_student_id_payment_date");
@@ -937,6 +1040,41 @@ namespace ClassNovaApi.Migrations
                     b.ToTable("roles", (string)null);
                 });
 
+            modelBuilder.Entity("ClassNovaApi.Models.RoleNavPermission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_enabled");
+
+                    b.Property<string>("NavItemKey")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("nav_item_key");
+
+                    b.Property<string>("RoleCode")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("role_code");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_role_nav_permissions");
+
+                    b.HasIndex("TenantId", "RoleCode", "NavItemKey")
+                        .IsUnique()
+                        .HasDatabaseName("ix_role_nav_permissions_tenant_id_role_code_nav_item_key");
+
+                    b.ToTable("role_nav_permissions", (string)null);
+                });
+
             modelBuilder.Entity("ClassNovaApi.Models.Student", b =>
                 {
                     b.Property<Guid>("Id")
@@ -966,6 +1104,10 @@ namespace ClassNovaApi.Migrations
                         .HasColumnType("date")
                         .HasColumnName("date_of_birth");
 
+                    b.Property<string>("Email")
+                        .HasColumnType("text")
+                        .HasColumnName("email");
+
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasColumnType("text")
@@ -990,6 +1132,10 @@ namespace ClassNovaApi.Migrations
                         .HasColumnType("text")
                         .HasColumnName("status");
 
+                    b.Property<string>("SystemId")
+                        .HasColumnType("char(28)")
+                        .HasColumnName("system_id");
+
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid")
                         .HasColumnName("tenant_id");
@@ -1007,6 +1153,11 @@ namespace ClassNovaApi.Migrations
 
                     b.HasIndex("BranchId")
                         .HasDatabaseName("ix_students_branch_id");
+
+                    b.HasIndex("SystemId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_students_system_id")
+                        .HasFilter("system_id IS NOT NULL");
 
                     b.HasIndex("UserId")
                         .HasDatabaseName("ix_students_user_id");
@@ -1121,6 +1272,10 @@ namespace ClassNovaApi.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<string>("Email")
+                        .HasColumnType("text")
+                        .HasColumnName("email");
+
                     b.Property<string>("EmployeeCode")
                         .IsRequired()
                         .HasColumnType("text")
@@ -1148,6 +1303,10 @@ namespace ClassNovaApi.Migrations
                         .HasColumnType("text")
                         .HasColumnName("status");
 
+                    b.Property<string>("SystemId")
+                        .HasColumnType("char(28)")
+                        .HasColumnName("system_id");
+
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid")
                         .HasColumnName("tenant_id");
@@ -1166,6 +1325,11 @@ namespace ClassNovaApi.Migrations
                     b.HasIndex("BranchId")
                         .HasDatabaseName("ix_teachers_branch_id");
 
+                    b.HasIndex("SystemId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_teachers_system_id")
+                        .HasFilter("system_id IS NOT NULL");
+
                     b.HasIndex("UserId")
                         .HasDatabaseName("ix_teachers_user_id");
 
@@ -1182,6 +1346,11 @@ namespace ClassNovaApi.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("char(5)")
+                        .HasColumnName("code");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -1434,6 +1603,10 @@ namespace ClassNovaApi.Migrations
                         .HasDefaultValue(true)
                         .HasColumnName("is_email_verified");
 
+                    b.Property<bool>("IsFirstLogin")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_first_login");
+
                     b.Property<DateTime?>("LastLoginAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("last_login_at");
@@ -1447,12 +1620,21 @@ namespace ClassNovaApi.Migrations
                         .HasColumnType("text")
                         .HasColumnName("phone");
 
+                    b.Property<string>("SystemId")
+                        .HasColumnType("char(28)")
+                        .HasColumnName("system_id");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
                     b.HasKey("Id")
                         .HasName("pk_users");
+
+                    b.HasIndex("SystemId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_users_system_id")
+                        .HasFilter("system_id IS NOT NULL");
 
                     b.ToTable("users", (string)null);
                 });
@@ -1885,6 +2067,18 @@ namespace ClassNovaApi.Migrations
                         .HasConstraintName("fk_pending_registrations_tenants_tenant_id");
 
                     b.Navigation("Role");
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("ClassNovaApi.Models.RoleNavPermission", b =>
+                {
+                    b.HasOne("ClassNovaApi.Models.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_role_nav_permissions_tenants_tenant_id");
 
                     b.Navigation("Tenant");
                 });

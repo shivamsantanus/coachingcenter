@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
 using ClassNovaApi.Data;
 using ClassNovaApi.Extensions;
 using ClassNovaApi.Models;
+using ClassNovaApi.Services;
 
 namespace ClassNovaApi.Controllers
 {
@@ -118,38 +120,96 @@ namespace ClassNovaApi.Controllers
                 return Forbid();
 
             var tenantId = User.GetTenantId();
+            var email    = request.Email.Trim().ToLower();
 
             if (_context.Students.Any(s => s.TenantId == tenantId && s.AdmissionNo == request.AdmissionNo))
-                return BadRequest(new { error = "Admission number already exists." });
+                return BadRequest(new { success = false, data = (object?)null, error = "Admission number already exists." });
+
+            if (_context.Users.Any(u => u.Email == email))
+                return BadRequest(new { success = false, data = (object?)null, error = "A user with this email already exists." });
 
             if (request.BranchId.HasValue)
             {
                 var branchExists = _context.Branches.Any(b => b.TenantId == tenantId && b.Id == request.BranchId.Value);
                 if (!branchExists)
-                    return BadRequest(new { error = "Branch not found." });
+                    return BadRequest(new { success = false, data = (object?)null, error = "Branch not found." });
             }
 
-            var now = DateTime.UtcNow;
-            var student = new Student
+            var tenantCode  = _context.Tenants.Where(t => t.Id == tenantId).Select(t => t.Code.Trim()).First();
+            var studentRole = _context.Roles.First(r => r.Code == "STUDENT");
+            var oneTimePass = GenerateOneTimePassword();
+            var now         = DateTime.UtcNow;
+
+            var userId = Guid.NewGuid();
+            var user   = new User
             {
-                Id = Guid.NewGuid(),
-                TenantId = tenantId,
-                BranchId = request.BranchId,
-                FullName = request.FullName,
-                AdmissionNo = request.AdmissionNo,
-                GuardianName = request.GuardianName,
-                GuardianPhone = request.GuardianPhone,
-                Address = request.Address,
-                DateOfBirth = request.DateOfBirth,
-                Status = "ACTIVE",
-                CreatedAt = now,
-                UpdatedAt = now
+                Id              = userId,
+                FullName        = request.FullName,
+                Email           = email,
+                PasswordHash    = BCrypt.Net.BCrypt.HashPassword(oneTimePass),
+                IsActive        = true,
+                IsEmailVerified = true,
+                IsFirstLogin    = true,
+                CreatedAt       = now,
+                UpdatedAt       = now
             };
 
+            var tenantUserRole = new TenantUserRole
+            {
+                Id       = Guid.NewGuid(),
+                TenantId = tenantId,
+                UserId   = userId,
+                RoleId   = studentRole.Id,
+                Status   = "ACTIVE"
+            };
+
+            var studentId = Guid.NewGuid();
+            var student   = new Student
+            {
+                Id            = studentId,
+                TenantId      = tenantId,
+                UserId        = userId,
+                BranchId      = request.BranchId,
+                FullName      = request.FullName,
+                Email         = email,
+                AdmissionNo   = request.AdmissionNo,
+                GuardianName  = request.GuardianName,
+                GuardianPhone = request.GuardianPhone,
+                Address       = request.Address,
+                DateOfBirth   = request.DateOfBirth,
+                Status        = "ACTIVE",
+                SystemId      = SystemIdService.Generate(tenantCode, SystemIdService.Student, studentId),
+                CreatedAt     = now,
+                UpdatedAt     = now
+            };
+
+            _context.Users.Add(user);
+            _context.TenantUserRoles.Add(tenantUserRole);
             _context.Students.Add(student);
             _context.SaveChanges();
 
-            return Ok(new { student.Id, student.FullName, student.AdmissionNo, student.Status });
+            return Ok(new
+            {
+                success = true,
+                data    = new
+                {
+                    student.Id,
+                    student.FullName,
+                    student.AdmissionNo,
+                    student.Status,
+                    student.SystemId,
+                    loginEmail      = email,
+                    oneTimePassword = oneTimePass,
+                    message         = "Share these credentials with the student. The password cannot be retrieved again."
+                },
+                error = (string?)null
+            });
+        }
+
+        private static string GenerateOneTimePassword()
+        {
+            const string chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+            return RandomNumberGenerator.GetString(chars, 10);
         }
 
         [HttpPut("{id:guid}")]

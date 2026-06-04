@@ -4,7 +4,7 @@
 > Never start a feature without a row in the plan. Never finish one without marking it done
 > and linking the feature doc. This is the single source of truth for project state.
 
-**Last updated:** 2026-05-31 (Phase 4 attendance recording + marking UI complete)
+**Last updated:** 2026-06-03 (System IDs, monthly attendance report, role-based nav permissions)
 
 ---
 
@@ -89,8 +89,10 @@
 |---|---|---|---|---|
 | 4.1 | Attendance recording API | ✅ Done | [attendance.md](features/attendance.md) | `POST /api/attendance/mark` — bulk upsert; ORG_ADMIN + TEACHER |
 | 4.2 | Attendance summary API | ✅ Done | [attendance.md](features/attendance.md) | `GET /api/attendance/summary` — aggregate per student/batch/date range |
-| 4.3 | Attendance UI (teacher) | ✅ Done | [attendance.md](features/attendance.md) | `/attendance` route; AY → batch → date picker; P/A/L/E per student; bulk mark-all; save |
-| 4.4 | Attendance UI (student view) | 💡 Backlog | — | Student views own attendance % (summary endpoint ready; UI not yet built) |
+| 4.3 | Attendance UI — mark attendance | ✅ Done | [attendance.md](features/attendance.md) | AY → batch → date; P/A/L/E toggles; bulk mark-all; live counts (signals); save |
+| 4.5 | Monthly attendance report | ✅ Done | [attendance.md](features/attendance.md) | `GET /api/attendance/monthly-report`; 2-page matrix print; org logo in header; PDF filename from org+batch+month |
+| 4.4 | Attendance UI (student view) | ❌ Blocked | — | Blocked on role-specific dashboards — student has no portal yet; summary API ready |
+| 4.6 | Teacher batch-scoped attendance | ❌ Blocked | — | TEACHER sees only assigned batches; blocked on Teacher.UserId being populated (user-linking feature) |
 
 **DB migrations applied (Phase 4):**
 - `20260531142407_AddAttendance` — creates `attendances` table with unique index on (tenant_id, batch_id, student_id, date)
@@ -171,21 +173,59 @@
 
 ---
 
+## Phase 11 — Teacher Dashboard & Payments
+
+> Brainstormed 2026-06-02. Not yet scoped for implementation — captured here so ideas are not lost.
+
+| # | Feature | Status | Feature Doc | Notes |
+|---|---|---|---|---|
+| 11.1 | Teacher class log (daily entry by ORG_ADMIN) | 💡 Backlog | — | New `teacher_class_logs` table; ORG_ADMIN logs which teacher took which batch, duration/class count; source of truth for earnings |
+| 11.2 | Teacher transaction ledger | 💡 Backlog | — | New `teacher_transactions` table; types: EARNING (auto from class log), ADVANCE (manual), PAYMENT (settlement), ADJUSTMENT; `system_id char(28)` with prefix `TST` |
+| 11.3 | Teacher pay rate fields | 💡 Backlog | — | Add `PerClassRate`, `PerHourRate`, `MonthlySalary` to Teacher model; SalaryType drives which rate is used; MONTHLY teachers can still log extra classes |
+| 11.4 | Teacher dashboard — today's schedule | 💡 Backlog | — | Show assigned batches with start_time/end_time for today; student count per batch |
+| 11.5 | Teacher dashboard — payment summary card | 💡 Backlog | — | Earnings this month, advances taken, balance due; recent transactions list |
+| 11.6 | Teacher dashboard — stats widgets | 💡 Backlog | — | Total active batches, total students across batches, subjects taught |
+| 11.7 | Teacher rating system | 💡 Backlog | — | New `teacher_ratings` table; student rates teacher once per batch (upsert); 1–5 stars + optional comment; teacher sees avg + distribution only (anonymous); ORG_ADMIN sees full list with student identities |
+| 11.8 | Teacher dashboard — rating card | 💡 Backlog | — | Display avg rating, total count, star distribution breakdown |
+
+---
+
+## Cross-cutting — System IDs
+
+| # | Feature | Status | Feature Doc | Notes |
+|---|---|---|---|---|
+| X.1 | System ID design + rules | ✅ Done | [system-id.md](features/system-id.md) | `char(28)`, format `{TC}-{PREFIX}-{UnixMs}-{UUID4}`, rules in CLAUDE.md |
+| X.2 | `tenants.code` + `system_id` migration | ✅ Done | [system-id.md](features/system-id.md) | `20260601182306_AddSystemIds` — 11 tables updated; existing rows backfilled via SQL |
+| X.3 | SystemIdService | ✅ Done | [system-id.md](features/system-id.md) | Static service; `Generate()` + `DeriveTenantCode()`; prefix constants |
+| X.4 | Wire SystemId into all Create actions | ✅ Done | — | Students, Teachers, Branches, Batches, Classes, AcademicYears, Tenants, Users (OTP verify) |
+| X.5 | Teacher + Student user-linking | ❌ Blocked | — | `Teacher.UserId` / `Student.UserId` still null for existing records; needs user-creation on entity create |
+
+## Cross-cutting — Role-Based Navigation
+
+| # | Feature | Status | Feature Doc | Notes |
+|---|---|---|---|---|
+| N.1 | NavigationItem + RoleNavPermission models | ✅ Done | [role-nav-permissions.md](features/role-nav-permissions.md) | Global nav items seeded at startup; per-tenant role permissions |
+| N.2 | `navigation_items` + `role_nav_permissions` migration | ✅ Done | — | `20260602183910_AddRoleNavPermissions` |
+| N.3 | NavigationController | ✅ Done | [role-nav-permissions.md](features/role-nav-permissions.md) | `GET /my-nav`, `GET /permissions`, `PUT /permissions` |
+| N.4 | Shell — dynamic nav from API | ✅ Done | — | Shell calls `GET /my-nav` on init; shimmer skeleton during load; fallback to Dashboard on error |
+| N.5 | RolePermissionsComponent | ✅ Done | — | Settings → Role Permissions; toggle matrix (TEACHER / STUDENT); optimistic UI; saves on toggle |
+| N.6 | API guards remain hard-coded | ✅ Decision | — | Nav toggle is UX only; backend role checks never moved to DB |
+
 ## What to Work on Next
 
-**Just completed (2026-05-31):**
-- Phase 3 fully done — branch management, BST tab, student enrollment tab all complete
-- Standard API envelope enforced across all academic controllers
-- Batch date/time validation (AY bounds, date range, time range)
+**Just completed (2026-06-03):**
+- Monthly attendance report (backend + 2-page print with org logo, proper PDF filename)
+- System ID rollout — `char(28)` on 11 tables, backfilled, wired into all Create actions
+- Role-based navigation — data-driven nav permissions, ORG_ADMIN settings UI to toggle tabs per role
 
-**Just completed (2026-05-31):**
-- Phase 4 attendance recording API and mark-attendance UI complete
-- `attendances` table migrated with bulk upsert (PRESENT/ABSENT/LATE/EXCUSED)
-- `/attendance` route + shell nav link for ORG_ADMIN + TEACHER
+**Pending in Phase 4:**
+1. **4.4 Student attendance view** — blocked on role-specific dashboards (no student portal yet)
+2. **4.6 Teacher batch-scoped attendance** — blocked on Teacher.UserId being populated
 
-**Next:**
-1. **Phase 4.4** — Student attendance view (can reuse `AttendanceSummary` endpoint — just needs a `/my-attendance` or tab in student profile)
-2. **Phase 5 — Fees** — fee plan management + payment recording
+**Next logical work:**
+1. **Teacher + Student user-linking** — auto-create User when teacher/student is created; set UserId; unlocks 4.6
+2. **Role-specific dashboards** — Teacher dashboard (my batches, today's attendance) and Student dashboard (my attendance %, fees); unlocks 4.4
+3. **Phase 5 — Fees** — fee plan management + payment recording (models exist, no controllers yet)
 
 ---
 

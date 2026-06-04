@@ -135,6 +135,36 @@ Backend base URL must come from `environment.ts` / `environment.prod.ts` — nev
 - New schema changes require a new migration script; never alter existing ones
 - All new tables must include a `tenant_id` foreign key — no tenant-unscoped tables
 
+### System ID Rules
+
+Every entity that represents a real-world object (Teacher, Student, Branch, Batch, Class, Academic Year, Fee Plan, Payment, Exam) must carry a `system_id` column generated at creation time. Internal junction/log tables (attendance, marks, enrollments, audit logs) use UUID only.
+
+**Format:** `{TenantCode}-{PREFIX}-{UnixMs}-{UUID[0..3]}` — e.g. `BF-CNS-1748600123456-A3F2`
+
+| Entity | Prefix |
+|---|---|
+| Teacher | `CNT` |
+| Student | `CNS` |
+| ORG_ADMIN user | `CNA` |
+| Branch | `BRN` |
+| Batch | `BAT` |
+| Class | `CLS` |
+| Academic Year | `ACY` |
+| Fee Plan | `FPL` |
+| Payment / Receipt | `RCT` |
+| Exam | `EXM` |
+
+**Column type:** `char(28)` — the format is always exactly 28 characters; fixed-length is faster for unique index lookups than varchar.
+
+**Generation:** Server-side at row creation using `SystemIdService.Generate(tenantCode, prefix, entityId)`. Never generate on the frontend, never allow client to supply it.
+
+**Critical performance rules — must never be violated:**
+- `system_id` is NEVER a primary key — PK stays `uuid` on every table
+- `system_id` is NEVER used as a foreign key — all FK references use the UUID PK
+- `system_id` has ONE unique index — no additional indexes on this column
+- `system_id` is a display/reference field only — never used in JOIN conditions
+- Violating these rules causes index bloat and slower JOINs at scale
+
 ---
 
 ## Auth Flow
@@ -485,6 +515,10 @@ A feature is NOT complete until ALL of the following are true:
 18. ✅ Always return the standard API response envelope `{ success, data, error }`
 19. ✅ Ask before refactoring existing working code
 20. ✅ Always create or update a concept doc in `docs/concepts/` when a new technology or pattern is introduced — see Rule 23
+21. ❌ **Never use `system_id` as a primary key or foreign key** — it is a display/reference field only; all PKs and FKs must use UUID
+22. ❌ **Never generate `system_id` on the frontend** — always generated server-side by `SystemIdService` at creation time
+23. ❌ **Never use `varchar` for `system_id` columns** — always `char(28)`; the format is fixed-length and fixed-length columns have faster index lookups
+24. ✅ Every entity that represents a real-world object must have a `system_id char(28)` — see System ID Rules in the DB section above
 
 ---
 

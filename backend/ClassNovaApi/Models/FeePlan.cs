@@ -12,6 +12,7 @@ namespace ClassNovaApi.Models
         public string Frequency { get; set; } = string.Empty; // MONTHLY, QUARTERLY, ONE_TIME
         public short? DueDay { get; set; }
         public bool IsActive { get; set; } = true;
+        public string? SystemId { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 

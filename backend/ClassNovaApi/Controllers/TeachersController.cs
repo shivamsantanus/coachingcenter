@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using ClassNovaApi.Data;
 using ClassNovaApi.Extensions;
 using ClassNovaApi.Models;
+using ClassNovaApi.Services;
+using System.Security.Cryptography;
 
 namespace ClassNovaApi.Controllers
 {
@@ -101,36 +103,94 @@ namespace ClassNovaApi.Controllers
                 return Forbid();
 
             var tenantId = User.GetTenantId();
+            var email    = request.Email.Trim().ToLower();
 
             if (_context.Teachers.Any(t => t.TenantId == tenantId && t.EmployeeCode == request.EmployeeCode))
-                return BadRequest(new { error = "Employee code already exists." });
+                return BadRequest(new { success = false, data = (object?)null, error = "Employee code already exists." });
+
+            if (_context.Users.Any(u => u.Email == email))
+                return BadRequest(new { success = false, data = (object?)null, error = "A user with this email already exists." });
 
             if (request.BranchId.HasValue)
             {
                 var branchExists = _context.Branches.Any(b => b.TenantId == tenantId && b.Id == request.BranchId.Value);
                 if (!branchExists)
-                    return BadRequest(new { error = "Branch not found." });
+                    return BadRequest(new { success = false, data = (object?)null, error = "Branch not found." });
             }
 
-            var now = DateTime.UtcNow;
-            var teacher = new Teacher
+            var tenantCode   = _context.Tenants.Where(t => t.Id == tenantId).Select(t => t.Code.Trim()).First();
+            var teacherRole  = _context.Roles.First(r => r.Code == "TEACHER");
+            var oneTimePass  = GenerateOneTimePassword();
+            var now          = DateTime.UtcNow;
+
+            var userId  = Guid.NewGuid();
+            var user    = new User
             {
-                Id = Guid.NewGuid(),
-                TenantId = tenantId,
-                BranchId = request.BranchId,
-                FullName = request.FullName,
-                EmployeeCode = request.EmployeeCode,
-                Qualification = request.Qualification,
-                SalaryType = request.SalaryType,
-                Status = "ACTIVE",
-                CreatedAt = now,
-                UpdatedAt = now
+                Id              = userId,
+                FullName        = request.FullName,
+                Email           = email,
+                PasswordHash    = BCrypt.Net.BCrypt.HashPassword(oneTimePass),
+                IsActive        = true,
+                IsEmailVerified = true,
+                IsFirstLogin    = true,
+                CreatedAt       = now,
+                UpdatedAt       = now
             };
 
+            var tenantUserRole = new TenantUserRole
+            {
+                Id       = Guid.NewGuid(),
+                TenantId = tenantId,
+                UserId   = userId,
+                RoleId   = teacherRole.Id,
+                Status   = "ACTIVE"
+            };
+
+            var teacherId = Guid.NewGuid();
+            var teacher   = new Teacher
+            {
+                Id            = teacherId,
+                TenantId      = tenantId,
+                UserId        = userId,
+                BranchId      = request.BranchId,
+                FullName      = request.FullName,
+                Email         = email,
+                EmployeeCode  = request.EmployeeCode,
+                Qualification = request.Qualification,
+                SalaryType    = request.SalaryType,
+                Status        = "ACTIVE",
+                SystemId      = SystemIdService.Generate(tenantCode, SystemIdService.Teacher, teacherId),
+                CreatedAt     = now,
+                UpdatedAt     = now
+            };
+
+            _context.Users.Add(user);
+            _context.TenantUserRoles.Add(tenantUserRole);
             _context.Teachers.Add(teacher);
             _context.SaveChanges();
 
-            return Ok(new { teacher.Id, teacher.FullName, teacher.EmployeeCode, teacher.Status });
+            return Ok(new
+            {
+                success = true,
+                data    = new
+                {
+                    teacher.Id,
+                    teacher.FullName,
+                    teacher.EmployeeCode,
+                    teacher.Status,
+                    teacher.SystemId,
+                    loginEmail      = email,
+                    oneTimePassword = oneTimePass,
+                    message         = "Share these credentials with the teacher. The password cannot be retrieved again."
+                },
+                error = (string?)null
+            });
+        }
+
+        private static string GenerateOneTimePassword()
+        {
+            const string chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+            return RandomNumberGenerator.GetString(chars, 10);
         }
 
         [HttpPut("{id:guid}")]

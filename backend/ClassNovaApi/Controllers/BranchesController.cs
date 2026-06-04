@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using ClassNovaApi.Data;
 using ClassNovaApi.Extensions;
 using ClassNovaApi.Models;
+using ClassNovaApi.Services;
 
 namespace ClassNovaApi.Controllers
 {
@@ -109,10 +110,16 @@ namespace ClassNovaApi.Controllers
                     return Conflict(new { success = false, data = (object?)null, error = "A branch with this code already exists." });
             }
 
-            var now = DateTime.UtcNow;
-            var branch = new Branch
+            var tenantCode = _context.Tenants
+                .Where(t => t.Id == tenantId)
+                .Select(t => t.Code.Trim())
+                .First();
+
+            var now      = DateTime.UtcNow;
+            var branchId = Guid.NewGuid();
+            var branch   = new Branch
             {
-                Id        = Guid.NewGuid(),
+                Id        = branchId,
                 TenantId  = tenantId,
                 Name      = request.Name.Trim(),
                 Code      = string.IsNullOrWhiteSpace(request.Code)    ? null : request.Code.Trim(),
@@ -120,6 +127,7 @@ namespace ClassNovaApi.Controllers
                 Phone     = string.IsNullOrWhiteSpace(request.Phone)   ? null : request.Phone.Trim(),
                 MapUrl    = string.IsNullOrWhiteSpace(request.MapUrl)  ? null : request.MapUrl.Trim(),
                 Status    = "ACTIVE",
+                SystemId  = SystemIdService.Generate(tenantCode, SystemIdService.Branch, branchId),
                 CreatedAt = now,
                 UpdatedAt = now
             };
@@ -130,7 +138,7 @@ namespace ClassNovaApi.Controllers
             return Ok(new
             {
                 success = true,
-                data    = new { branch.Id, branch.Name, branch.Code, branch.Address, branch.Phone, branch.MapUrl, branch.Status },
+                data    = new { branch.Id, branch.Name, branch.Code, branch.Address, branch.Phone, branch.MapUrl, branch.Status, branch.SystemId },
                 error   = (string?)null
             });
         }

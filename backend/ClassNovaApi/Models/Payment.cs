@@ -11,6 +11,7 @@ namespace ClassNovaApi.Models
         public string PaymentMethod { get; set; } = string.Empty; // CASH, UPI, CARD, BANK
         public string? ReferenceNo { get; set; }
         public string? Notes { get; set; }
+        public string? SystemId { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 

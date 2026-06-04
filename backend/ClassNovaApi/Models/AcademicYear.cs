@@ -8,6 +8,7 @@ namespace ClassNovaApi.Models
         public DateOnly StartDate { get; set; }
         public DateOnly EndDate { get; set; }
         public bool IsActive { get; set; } = false;
+        public string? SystemId { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 

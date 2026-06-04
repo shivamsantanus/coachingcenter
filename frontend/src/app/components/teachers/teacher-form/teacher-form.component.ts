@@ -11,9 +11,10 @@ import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { DialogModule } from 'primeng/dialog';
 import { ToastModule } from 'primeng/toast';
+import { TooltipModule } from 'primeng/tooltip';
 import { MessageService } from 'primeng/api';
 import { TeacherService } from '../../../services/teacher.service';
-import { TeacherDetail, CreateTeacherRequest, UpdateTeacherRequest } from '../../../models/teacher.models';
+import { TeacherDetail, CreateTeacherRequest, UpdateTeacherRequest, LoginCredentials } from '../../../models/teacher.models';
 import { environment } from '../../../../environments/environment';
 
 interface SalaryOption { label: string; value: string; }
@@ -23,7 +24,7 @@ interface SalaryOption { label: string; value: string; }
   standalone: true,
   imports: [
     CommonModule, ReactiveFormsModule,
-    ButtonModule, InputTextModule, SelectModule, DialogModule, ToastModule
+    ButtonModule, InputTextModule, SelectModule, DialogModule, ToastModule, TooltipModule
   ],
   providers: [MessageService],
   templateUrl: './teacher-form.component.html',
@@ -42,10 +43,12 @@ export class TeacherFormComponent implements OnInit, OnDestroy, OnChanges {
   private readonly destroy$       = new Subject<void>();
 
   readonly apiBase     = environment.apiBaseUrl.replace('/api', '');
-  readonly isLoading   = signal(false);
-  readonly isSaving    = signal(false);
-  readonly isUploading = signal(false);
-  readonly errorMessage = signal<string | null>(null);
+  readonly isLoading        = signal(false);
+  readonly isSaving         = signal(false);
+  readonly isUploading      = signal(false);
+  readonly errorMessage     = signal<string | null>(null);
+  readonly newCredentials   = signal<LoginCredentials | null>(null);
+  readonly showCredentials  = signal(false);
 
   readonly currentPhoto        = signal<string | null>(null);
   readonly pendingPhotoFile    = signal<File | null>(null);
@@ -60,6 +63,7 @@ export class TeacherFormComponent implements OnInit, OnDestroy, OnChanges {
 
   readonly form = this.fb.group({
     fullName:      ['', [Validators.required, Validators.maxLength(200)]],
+    email:         ['', [Validators.required, Validators.email, Validators.maxLength(200)]],
     employeeCode:  ['', [Validators.required, Validators.maxLength(50)]],
     qualification: ['', Validators.maxLength(200)],
     salaryType:    ['' as string],
@@ -160,6 +164,7 @@ export class TeacherFormComponent implements OnInit, OnDestroy, OnChanges {
   private saveCreate(raw: typeof this.form.value): void {
     const request: CreateTeacherRequest = {
       fullName:      raw.fullName      ?? '',
+      email:         raw.email         ?? '',
       employeeCode:  raw.employeeCode  ?? '',
       qualification: raw.qualification || null,
       salaryType:    raw.salaryType    || null,
@@ -173,22 +178,33 @@ export class TeacherFormComponent implements OnInit, OnDestroy, OnChanges {
           this.isSaving.set(false);
           this.hasSaved = true;
 
+          // Show credentials dialog — password cannot be retrieved again
+          this.newCredentials.set({
+            fullName:        result.fullName,
+            loginEmail:      result.loginEmail,
+            oneTimePassword: result.oneTimePassword
+          });
+          this.showCredentials.set(true);
+
           const photo = this.pendingPhotoFile();
-          if (photo) {
-            this.uploadPhotoAfterCreate(result.id, result.fullName, photo);
-          } else {
-            this.messageService.add({
-              severity: 'success', summary: 'Teacher added',
-              detail: `${result.fullName} has been added.`
-            });
-            setTimeout(() => this.saved.emit(), 800);
-          }
+          if (photo) this.uploadPhotoAfterCreate(result.id, result.fullName, photo);
         },
         error: (err: Error) => {
           this.isSaving.set(false);
           this.errorMessage.set(err.message);
         }
       });
+  }
+
+  onCredentialsDismissed(): void {
+    this.showCredentials.set(false);
+    this.saved.emit();
+  }
+
+  copyToClipboard(text: string): void {
+    navigator.clipboard.writeText(text).then(() => {
+      this.messageService.add({ severity: 'success', summary: 'Copied', detail: 'Copied to clipboard.', life: 1500 });
+    });
   }
 
   private uploadPhotoAfterCreate(teacherId: string, fullName: string, photo: File): void {
@@ -199,19 +215,13 @@ export class TeacherFormComponent implements OnInit, OnDestroy, OnChanges {
       .subscribe({
         next: () => {
           this.isUploading.set(false);
-          this.messageService.add({
-            severity: 'success', summary: 'Teacher added',
-            detail: `${fullName} has been added with photo.`
-          });
-          setTimeout(() => this.saved.emit(), 800);
         },
         error: (err: Error) => {
           this.isUploading.set(false);
           this.messageService.add({
-            severity: 'warn', summary: 'Teacher added',
-            detail: `Teacher created but photo upload failed: ${err.message}`
+            severity: 'warn', summary: 'Photo upload failed',
+            detail: err.message
           });
-          setTimeout(() => this.saved.emit(), 1200);
         }
       });
   }
@@ -331,6 +341,7 @@ export class TeacherFormComponent implements OnInit, OnDestroy, OnChanges {
     const control = this.form.get(fieldName);
     if (!control || !control.touched || !control.invalid) return null;
     if (control.errors?.['required'])  return 'This field is required.';
+    if (control.errors?.['email'])     return 'Enter a valid email address.';
     if (control.errors?.['maxlength']) return `Too long (max ${control.errors['maxlength'].requiredLength} chars).`;
     return 'Invalid value.';
   }

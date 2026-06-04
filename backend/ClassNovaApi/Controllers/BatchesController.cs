@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using ClassNovaApi.Data;
 using ClassNovaApi.Extensions;
 using ClassNovaApi.Models;
+using ClassNovaApi.Services;
 
 namespace ClassNovaApi.Controllers
 {
@@ -141,10 +142,16 @@ namespace ClassNovaApi.Controllers
                     return BadRequest(new { success = false, data = (object?)null, error = "Branch not found." });
             }
 
-            var now = DateTime.UtcNow;
-            var batch = new Batch
+            var tenantCode = _context.Tenants
+                .Where(t => t.Id == tenantId)
+                .Select(t => t.Code.Trim())
+                .First();
+
+            var now     = DateTime.UtcNow;
+            var batchId = Guid.NewGuid();
+            var batch   = new Batch
             {
-                Id             = Guid.NewGuid(),
+                Id             = batchId,
                 TenantId       = tenantId,
                 BranchId       = request.BranchId,
                 AcademicYearId = request.AcademicYearId,
@@ -155,6 +162,7 @@ namespace ClassNovaApi.Controllers
                 StartTime      = request.StartTime,
                 EndTime        = request.EndTime,
                 Status         = "ACTIVE",
+                SystemId       = SystemIdService.Generate(tenantCode, SystemIdService.Batch, batchId),
                 CreatedAt      = now,
                 UpdatedAt      = now
             };
@@ -165,7 +173,7 @@ namespace ClassNovaApi.Controllers
             return Ok(new
             {
                 success = true,
-                data    = new { batch.Id, batch.Name, batch.Status },
+                data    = new { batch.Id, batch.Name, batch.Status, batch.SystemId },
                 error   = (string?)null
             });
         }

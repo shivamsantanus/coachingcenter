@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using ClassNovaApi.Data;
+using ClassNovaApi.Extensions;
 using ClassNovaApi.Models;
 using ClassNovaApi.Services;
 using Microsoft.IdentityModel.Tokens;
@@ -151,12 +152,41 @@ namespace ClassNovaApi.Controllers
 
             return Ok(new ApiResponse<AuthResponseDto>(new AuthResponseDto
             {
-                Token      = token,
-                Role       = tenantUserRole.Role.Code,
-                TenantSlug = tenant.Slug,
-                TenantName = tenant.Name,
-                FullName   = user.FullName
+                Token        = token,
+                Role         = tenantUserRole.Role.Code,
+                TenantSlug   = tenant.Slug,
+                TenantName   = tenant.Name,
+                FullName     = user.FullName,
+                IsFirstLogin = user.IsFirstLogin
             }));
+        }
+
+        [Authorize]
+        [HttpPost("change-password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+        {
+            var userId = User.GetUserId();
+            var user   = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (user == null)
+                return NotFound(new ApiResponse<object>(null, "User not found."));
+
+            if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.PasswordHash))
+                return BadRequest(new ApiResponse<object>(null, "Current password is incorrect."));
+
+            if (request.NewPassword.Length < 8)
+                return BadRequest(new ApiResponse<object>(null, "New password must be at least 8 characters."));
+
+            if (request.NewPassword == request.CurrentPassword)
+                return BadRequest(new ApiResponse<object>(null, "New password must be different from the current password."));
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            user.IsFirstLogin = false;
+            user.UpdatedAt    = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Password changed for user {UserId}", userId);
+            return Ok(new ApiResponse<object>(new { message = "Password changed successfully." }));
         }
 
         [AllowAnonymous]

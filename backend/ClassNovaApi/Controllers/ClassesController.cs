@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using ClassNovaApi.Data;
 using ClassNovaApi.Extensions;
 using ClassNovaApi.Models;
+using ClassNovaApi.Services;
 
 namespace ClassNovaApi.Controllers
 {
@@ -102,16 +103,23 @@ namespace ClassNovaApi.Controllers
                     return BadRequest(new { success = false, data = (object?)null, error = "Branch not found." });
             }
 
-            var now = DateTime.UtcNow;
+            var tenantCode = _context.Tenants
+                .Where(t => t.Id == tenantId)
+                .Select(t => t.Code.Trim())
+                .First();
+
+            var now     = DateTime.UtcNow;
+            var classId = Guid.NewGuid();
             var newClass = new Class
             {
-                Id             = Guid.NewGuid(),
+                Id             = classId,
                 TenantId       = tenantId,
                 AcademicYearId = request.AcademicYearId,
                 BranchId       = request.BranchId,
                 Name           = request.Name,
                 SortOrder      = request.SortOrder,
                 Status         = "ACTIVE",
+                SystemId       = SystemIdService.Generate(tenantCode, SystemIdService.Class, classId),
                 CreatedAt      = now,
                 UpdatedAt      = now
             };
@@ -122,7 +130,7 @@ namespace ClassNovaApi.Controllers
             return Ok(new
             {
                 success = true,
-                data    = new { newClass.Id, newClass.Name, newClass.Status },
+                data    = new { newClass.Id, newClass.Name, newClass.Status, newClass.SystemId },
                 error   = (string?)null
             });
         }

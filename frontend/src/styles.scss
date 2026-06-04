@@ -1,4 +1,4 @@
-@use '@angular/material' as mat;
+﻿@use '@angular/material' as mat;
 @import 'primeicons/primeicons.css';
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800&display=swap');
 
@@ -13,11 +13,11 @@ html {
   ));
 }
 
-// ── Brand + PrimeNG design token overrides ────────────────
-// Setting tokens here means PrimeNG reads our values internally —
+// â”€â”€ Brand + PrimeNG design token overrides â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Setting tokens here means PrimeNG reads our values internally â€”
 // no selector battles, no !important needed.
 :root {
-  // Brand tokens — overridden at runtime by BrandingService.applyTheme()
+  // Brand tokens â€” overridden at runtime by BrandingService.applyTheme()
   --brand-primary: #3B5FDB;
   --brand-accent:  #F59E0B;
 
@@ -30,7 +30,7 @@ html {
   --cn-text:         #111827;
   --cn-muted:        #6B7280;
 
-  // ── InputText ───────────────────────────────────────────
+  // â”€â”€ InputText â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   --p-inputtext-background:           #ffffff;
   --p-inputtext-border-color:         #D1D5DB;
   --p-inputtext-hover-border-color:   #9CA3AF;
@@ -42,7 +42,7 @@ html {
   --p-inputtext-padding-y:            0.65rem;
   --p-inputtext-shadow:               0 0 0 3px rgba(59, 95, 219, 0.12);
 
-  // ── Select (dropdown) ───────────────────────────────────
+  // â”€â”€ Select (dropdown) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   --p-select-background:              #ffffff;
   --p-select-border-color:            #D1D5DB;
   --p-select-hover-border-color:      #9CA3AF;
@@ -54,7 +54,7 @@ html {
   --p-select-padding-x:               0.875rem;
   --p-select-padding-y:               0.65rem;
 
-  // ── DataTable ───────────────────────────────────────────
+  // â”€â”€ DataTable â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   --p-datatable-header-cell-background:       #f8fafc;
   --p-datatable-header-cell-hover-background: #f1f5f9;
   --p-datatable-header-cell-color:            #374151;
@@ -65,7 +65,7 @@ html {
   --p-datatable-body-cell-border-color:       #f1f5f9;
   --p-datatable-footer-background:            #f8fafc;
 
-  // ── Dialog ──────────────────────────────────────────────
+  // â”€â”€ Dialog â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   --p-dialog-background:              #ffffff;
   --p-dialog-color:                   #111827;
   --p-dialog-border-color:            #e2e8f0;
@@ -80,7 +80,7 @@ html {
   --p-dialog-footer-border-color:     #f1f5f9;
 }
 
-// ── Base ──────────────────────────────────────────────────
+// â”€â”€ Base â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 body {
   color-scheme: light;
   background-color: var(--mat-sys-surface);
@@ -92,7 +92,7 @@ body {
 
 html, body { height: 100%; }
 
-// ── PrimeNG structural overrides ─────────────────────────
+// â”€â”€ PrimeNG structural overrides â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // These handle properties not covered by design tokens
 // (font-family, transitions, etc.). No !important needed
 // since dark mode is now opt-in via .dark-mode class only.
@@ -152,7 +152,7 @@ html, body { height: 100%; }
 // p-select width utility
 .p-select.w-full { width: 100%; }
 
-// DataTable — font and header text transform (no token for these)
+// DataTable â€” font and header text transform (no token for these)
 .p-datatable {
   .p-datatable-thead > tr > th {
     font-size: 0.8rem;
@@ -174,7 +174,7 @@ html, body { height: 100%; }
   }
 }
 
-// ── Auth submit buttons ───────────────────────────────────
+// â”€â”€ Auth submit buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 .p-button.auth-btn {
   width: 100%;
   justify-content: center;
@@ -194,7 +194,7 @@ html, body { height: 100%; }
   }
 }
 
-// Tenant auth pages — uses brand CSS variable
+// Tenant auth pages â€” uses brand CSS variable
 .p-button.tenant-auth-btn {
   width: 100%;
   justify-content: center;
@@ -218,7 +218,7 @@ html, body { height: 100%; }
   font-weight: 600;
 }
 
-// ── Landing page gallery carousel ────────────────────────
+// â”€â”€ Landing page gallery carousel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 .p-carousel.gallery-carousel {
   .p-carousel-item { padding: 0 0.375rem; }
 
@@ -245,30 +245,30 @@ html, body { height: 100%; }
   }
 }
 
-// ── Branding editor tabs ──────────────────────────────────
+// â”€â”€ Branding editor tabs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 .p-tabs.branding-tabs .p-tabpanels {
   padding: 1.5rem 0 0;
   background: transparent;
 }
 
-// ── Student list — status filter select ──────────────────
+// â”€â”€ Student list â€” status filter select â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 .p-select.status-select { min-width: 160px; }
 
-// ── Student / Teacher form dialogs ────────────────────────
+// â”€â”€ Student / Teacher form dialogs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 .p-dialog.student-dialog,
 .p-dialog.teacher-dialog {
   width: 600px;
   max-width: 95vw;
 }
 
-// ── Tenant list — delete confirmation dialog ─────────────
+// â”€â”€ Tenant list â€” delete confirmation dialog â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 .p-dialog.delete-dialog {
   .p-dialog-header  { padding: 1.25rem 1.5rem 0.75rem; }
   .p-dialog-content { padding: 0.75rem 1.5rem 1rem; }
   .p-dialog-footer  { padding: 0.75rem 1.5rem 1.25rem; }
 }
 
-// ── Print styles (attendance monthly report — 2-page layout) ─
+// â”€â”€ Print styles (attendance monthly report â€” 2-page layout) â”€
 @media print {
   // Portrait: each page is ~180mm usable width (A4 portrait)
   // Landscape works too but portrait keeps it tidy with ~11 cols per page
@@ -287,7 +287,7 @@ html, body { height: 100%; }
     background: #fff;
   }
 
-  // ── Each print page sits on its own CSS page ───────────────
+  // â”€â”€ Each print page sits on its own CSS page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   .print-page {
     page-break-after: avoid; // the explicit break below handles the split
   }
@@ -302,7 +302,7 @@ html, body { height: 100%; }
   .print-page-label { display: none !important; }
   .no-print { display: none !important; }
 
-  // ── Header — repeated on both pages ───────────────────────
+  // â”€â”€ Header â€” repeated on both pages â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   .print-report-header {
     display: block !important;
     margin-bottom: 6pt;
@@ -334,11 +334,11 @@ html, body { height: 100%; }
   .print-meta  { font-size: 8pt;  color: #444; margin-top: 2pt; }
   .print-title { font-size: 9.5pt; font-weight: 600; margin-top: 4pt; }
 
-  // ── Table ─────────────────────────────────────────────────
+  // â”€â”€ Table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   .report-table-wrap { overflow: visible !important; }
 
   .report-table {
-    // ~11 day cols per page: 11×22pt + fixed = comfortable fit
+    // ~11 day cols per page: 11Ã—22pt + fixed = comfortable fit
     font-size: 8.5pt;
     width: 100%;
     table-layout: fixed;
@@ -353,11 +353,11 @@ html, body { height: 100%; }
     }
   }
 
-  // ── Column widths: ~11 days + fixed cols per page ─────────
+  // â”€â”€ Column widths: ~11 days + fixed cols per page â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // # = 16pt, Name = 100pt, Adm = 58pt, each day = 22pt,
   // summary cols on page 2: Total=24, P/A/L/E=18, % = 26pt
-  // Page 1: 16+100+58 + 11×22 = 416pt  (A4 landscape ≈ 696pt usable) ✓
-  // Page 2: 16+100+58 + 11×22 + 24+18×4+26 = 498pt ✓
+  // Page 1: 16+100+58 + 11Ã—22 = 416pt  (A4 landscape â‰ˆ 696pt usable) âœ“
+  // Page 2: 16+100+58 + 11Ã—22 + 24+18Ã—4+26 = 498pt âœ“
   .col-sno     { width: 16pt !important; }
   .col-name    { width: 100pt !important; text-align: left !important; text-overflow: ellipsis; }
   .col-adm     { width: 58pt !important; text-align: left !important; }
@@ -369,7 +369,7 @@ html, body { height: 100%; }
   .col-e       { width: 18pt !important; }
   .col-pct     { width: 26pt !important; }
 
-  // ── Status cells: coloured bold letter, no box ────────────
+  // â”€â”€ Status cells: coloured bold letter, no box â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   .status-cell {
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
@@ -391,9 +391,91 @@ html, body { height: 100%; }
 
   .col-pct.pct--low { color: #cc0000 !important; font-weight: 700 !important; }
 
-  // ── Summary column colours ─────────────────────────────────
+  // â”€â”€ Summary column colours â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   .col-p { color: #1a7a1a !important; }
   .col-a { color: #cc0000 !important; }
   .col-l { color: #c05c00 !important; }
   .col-e { color: #0055bb !important; }
 }
+
+// ── Credentials dialog (teacher / student account creation) ──────────────
+.p-dialog.credentials-dialog {
+  width: 480px;
+  max-width: 95vw;
+}
+
+.credentials-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.credentials-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  color: #5d4037;
+
+  .pi { flex-shrink: 0; margin-top: 0.1rem; color: #f59e0b; font-size: 1rem; }
+}
+
+.credentials-intro {
+  font-size: 0.875rem;
+  color: var(--p-text-muted-color);
+  margin: 0;
+}
+
+.credential-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.875rem;
+  background: var(--p-surface-50);
+  border: 1px solid var(--p-content-border-color);
+  border-radius: 0.375rem;
+}
+
+.credential-label {
+  width: 5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--p-text-muted-color);
+  flex-shrink: 0;
+}
+
+.credential-value {
+  flex: 1;
+  font-size: 0.875rem;
+  color: var(--p-text-color);
+  word-break: break-all;
+
+  &--password {
+    font-family: 'Courier New', monospace;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--p-primary-color);
+  }
+}
+
+.credentials-note {
+  font-size: 0.8rem;
+  color: var(--p-text-muted-color);
+  margin: 0;
+}
+
+// ── Field hint (email helper text under inputs) ───────────────────────────
+.field-hint {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--p-text-muted-color);
+  margin-top: 0.2rem;
+}
+
+// -- Change password dialog ---------------------------------------
+.p-dialog.change-password-dialog { width: 420px; max-width: 95vw; }

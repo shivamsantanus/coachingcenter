@@ -13,7 +13,8 @@ import {
   ResendOtpRequest,
   ForgotPasswordRequest,
   ResetPasswordRequest,
-  PlatformLoginRequest
+  PlatformLoginRequest,
+  ChangePasswordRequest
 } from '../models/auth.models';
 
 interface ApiEnvelope<T> {
@@ -229,6 +230,29 @@ export class AuthService {
     } catch {
       return null;
     }
+  }
+
+  changePassword(request: ChangePasswordRequest): Observable<{ message: string }> {
+    return this.http
+      .post<ApiEnvelope<{ message: string }>>(`${this.authUrl}/change-password`, request)
+      .pipe(
+        map(envelope => {
+          if (!envelope.success || !envelope.data) {
+            throw new Error(envelope.error ?? 'Failed to change password.');
+          }
+          return envelope.data;
+        }),
+        catchError(err => {
+          const message = err?.error?.error ?? err?.message ?? 'Failed to change password.';
+          return throwError(() => new Error(message));
+        })
+      );
+  }
+
+  clearFirstLogin(): void {
+    const context = this.getContext();
+    if (!context) return;
+    this.saveContext({ ...context, isFirstLogin: false });
   }
 
   private saveContext(authData: AuthData): void {

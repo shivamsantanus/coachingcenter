@@ -11,7 +11,9 @@ namespace ClassNovaApi.Models
         public string? Qualification { get; set; }
         public string? SalaryType { get; set; } // MONTHLY, PER_CLASS
         public string Status { get; set; } = string.Empty;
+        public string? Email { get; set; }
         public string? PhotoUrl { get; set; }
+        public string? SystemId { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 

@@ -13,7 +13,9 @@ namespace ClassNovaApi.Models
         public string Address { get; set; } = string.Empty;
         public DateOnly? DateOfBirth { get; set; }
         public string Status { get; set; } = string.Empty; // ACTIVE, INACTIVE
+        public string? Email { get; set; }
         public string? PhotoUrl { get; set; }
+        public string? SystemId { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 

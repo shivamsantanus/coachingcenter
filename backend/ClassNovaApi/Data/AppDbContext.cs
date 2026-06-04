@@ -32,6 +32,8 @@ namespace ClassNovaApi.Data
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<PendingRegistration> PendingRegistrations { get; set; }
         public DbSet<PasswordResetOtp>    PasswordResetOtps    { get; set; }
+        public DbSet<NavigationItem>      NavigationItems      { get; set; }
+        public DbSet<RoleNavPermission>   RoleNavPermissions   { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -184,6 +186,48 @@ namespace ClassNovaApi.Data
 
             modelBuilder.Entity<Attendance>()
                 .HasIndex(a => new { a.TenantId, a.StudentId, a.Date });
+
+            // ── System ID columns: char(28), nullable, unique ──────────────────────
+            // Tenant code: char(5)
+            modelBuilder.Entity<Tenant>()
+                .Property(t => t.Code)
+                .HasColumnType("char(5)");
+
+            modelBuilder.Entity<Teacher>()    .Property(e => e.SystemId).HasColumnType("char(28)").IsRequired(false);
+            modelBuilder.Entity<Student>()    .Property(e => e.SystemId).HasColumnType("char(28)").IsRequired(false);
+            modelBuilder.Entity<User>()       .Property(e => e.SystemId).HasColumnType("char(28)").IsRequired(false);
+            modelBuilder.Entity<Branch>()     .Property(e => e.SystemId).HasColumnType("char(28)").IsRequired(false);
+            modelBuilder.Entity<Batch>()      .Property(e => e.SystemId).HasColumnType("char(28)").IsRequired(false);
+            modelBuilder.Entity<Class>()      .Property(e => e.SystemId).HasColumnType("char(28)").IsRequired(false);
+            modelBuilder.Entity<AcademicYear>().Property(e => e.SystemId).HasColumnType("char(28)").IsRequired(false);
+            modelBuilder.Entity<FeePlan>()    .Property(e => e.SystemId).HasColumnType("char(28)").IsRequired(false);
+            modelBuilder.Entity<Payment>()    .Property(e => e.SystemId).HasColumnType("char(28)").IsRequired(false);
+            modelBuilder.Entity<Exam>()       .Property(e => e.SystemId).HasColumnType("char(28)").IsRequired(false);
+
+            // Unique indexes on system_id — NULLs are excluded automatically in PostgreSQL partial unique indexes
+            modelBuilder.Entity<Teacher>()    .HasIndex(e => e.SystemId).IsUnique().HasFilter("system_id IS NOT NULL");
+            modelBuilder.Entity<Student>()    .HasIndex(e => e.SystemId).IsUnique().HasFilter("system_id IS NOT NULL");
+            modelBuilder.Entity<User>()       .HasIndex(e => e.SystemId).IsUnique().HasFilter("system_id IS NOT NULL");
+            modelBuilder.Entity<Branch>()     .HasIndex(e => e.SystemId).IsUnique().HasFilter("system_id IS NOT NULL");
+            modelBuilder.Entity<Batch>()      .HasIndex(e => e.SystemId).IsUnique().HasFilter("system_id IS NOT NULL");
+            modelBuilder.Entity<Class>()      .HasIndex(e => e.SystemId).IsUnique().HasFilter("system_id IS NOT NULL");
+            modelBuilder.Entity<AcademicYear>().HasIndex(e => e.SystemId).IsUnique().HasFilter("system_id IS NOT NULL");
+            modelBuilder.Entity<FeePlan>()    .HasIndex(e => e.SystemId).IsUnique().HasFilter("system_id IS NOT NULL");
+            modelBuilder.Entity<Payment>()    .HasIndex(e => e.SystemId).IsUnique().HasFilter("system_id IS NOT NULL");
+            modelBuilder.Entity<Exam>()       .HasIndex(e => e.SystemId).IsUnique().HasFilter("system_id IS NOT NULL");
+
+            // NavigationItem — string PK
+            modelBuilder.Entity<NavigationItem>()
+                .HasKey(n => n.Key);
+
+            modelBuilder.Entity<NavigationItem>()
+                .Property(n => n.Key)
+                .HasMaxLength(50);
+
+            // RoleNavPermission — one row per (tenant, role, nav item)
+            modelBuilder.Entity<RoleNavPermission>()
+                .HasIndex(r => new { r.TenantId, r.RoleCode, r.NavItemKey })
+                .IsUnique();
 
             // Restrict cascade deletes on all FKs to avoid accidental data loss
             foreach (var fk in modelBuilder.Model.GetEntityTypes()

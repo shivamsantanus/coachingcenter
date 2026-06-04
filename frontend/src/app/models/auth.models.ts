@@ -18,6 +18,7 @@ export interface AuthData {
   tenantSlug: string;
   tenantName: string;
   fullName: string;
+  isFirstLogin: boolean;
 }
 
 export interface AuthContext {
@@ -26,6 +27,7 @@ export interface AuthContext {
   tenantSlug: string;
   tenantName: string;
   fullName: string;
+  isFirstLogin: boolean;
 }
 
 export interface VerifyEmailRequest {
@@ -54,4 +56,9 @@ export interface ResetPasswordRequest {
 export interface PlatformLoginRequest {
   email:    string;
   password: string;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
 }

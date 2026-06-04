@@ -9,7 +9,9 @@ namespace ClassNovaApi.Models
         public string PasswordHash { get; set; } = string.Empty;
         public bool IsActive { get; set; } = true;
         public bool IsEmailVerified { get; set; }
+        public bool IsFirstLogin { get; set; } = false;
         public DateTime? LastLoginAt { get; set; }
+        public string? SystemId { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 

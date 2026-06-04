@@ -1,3 +1,8 @@
+<!-- Forced change-password overlay for first-login users -->
+@if (isFirstLogin()) {
+  <app-change-password (passwordChanged)="isFirstLogin.set(false)" />
+}
+
 <div class="shell">
 
   <!-- Sidebar -->
@@ -8,14 +13,23 @@
     </div>
 
     <nav class="sidebar-nav">
-      <a
-        *ngFor="let item of visibleNavItems(); trackBy: trackNavItem"
-        [routerLink]="item.route"
-        routerLinkActive="active"
-        class="nav-item">
-        <i class="pi {{ item.icon }}"></i>
-        <span>{{ item.label }}</span>
-      </a>
+      @if (!navLoaded()) {
+        <div class="nav-skeleton">
+          <span class="nav-skeleton__item"></span>
+          <span class="nav-skeleton__item"></span>
+          <span class="nav-skeleton__item"></span>
+        </div>
+      } @else {
+        @for (item of navItems(); track trackNavItem($index, item)) {
+          <a
+            [routerLink]="navRoute(item)"
+            routerLinkActive="active"
+            class="nav-item">
+            <i class="pi {{ item.icon }}"></i>
+            <span>{{ item.label }}</span>
+          </a>
+        }
+      }
     </nav>
 
     <div class="sidebar-footer">

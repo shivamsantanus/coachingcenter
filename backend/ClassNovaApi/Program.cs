@@ -92,10 +92,11 @@ builder.Services.AddAuthentication(options =>
 
 var app = builder.Build();
 
-// Seed roles on startup
+// Seed roles and navigation items on startup
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
     var seedRoles = new[]
     {
         new Role { Id = Guid.NewGuid(), Code = "PLATFORM_ADMIN", Name = "Platform Administrator" },
@@ -108,6 +109,39 @@ using (var scope = app.Services.CreateScope())
         if (!db.Roles.Any(r => r.Code == role.Code))
             db.Roles.Add(role);
     }
+
+    // NavigationItem rows are global (not per tenant).
+    // IsAdminOnly  = true  → only ORG_ADMIN ever sees it; never shown in permission matrix.
+    // IsLocked     = true  → cannot be toggled off; always shown to roles that have access.
+    var seedNavItems = new[]
+    {
+        new ClassNovaApi.Models.NavigationItem { Key = "dashboard",  Label = "Dashboard",  Icon = "pi-home",            RoutePath = "dashboard",  SortOrder = 1, IsAdminOnly = false, IsLocked = true  },
+        new ClassNovaApi.Models.NavigationItem { Key = "students",   Label = "Students",   Icon = "pi-users",           RoutePath = "students",   SortOrder = 2, IsAdminOnly = false, IsLocked = false },
+        new ClassNovaApi.Models.NavigationItem { Key = "academic",   Label = "Academic",   Icon = "pi-book",            RoutePath = "academic",   SortOrder = 3, IsAdminOnly = false, IsLocked = false },
+        new ClassNovaApi.Models.NavigationItem { Key = "attendance", Label = "Attendance", Icon = "pi-calendar-clock",  RoutePath = "attendance", SortOrder = 4, IsAdminOnly = false, IsLocked = false },
+        new ClassNovaApi.Models.NavigationItem { Key = "fees",       Label = "Fees",       Icon = "pi-wallet",          RoutePath = "fees",       SortOrder = 5, IsAdminOnly = false, IsLocked = false },
+        new ClassNovaApi.Models.NavigationItem { Key = "exams",      Label = "Exams",      Icon = "pi-file-edit",       RoutePath = "exams",      SortOrder = 6, IsAdminOnly = false, IsLocked = false },
+        new ClassNovaApi.Models.NavigationItem { Key = "timetable",  Label = "Timetable",  Icon = "pi-calendar",        RoutePath = "timetable",  SortOrder = 7, IsAdminOnly = false, IsLocked = false },
+        new ClassNovaApi.Models.NavigationItem { Key = "teachers",   Label = "Teachers",   Icon = "pi-graduation-cap",  RoutePath = "teachers",   SortOrder = 8, IsAdminOnly = true,  IsLocked = false },
+        new ClassNovaApi.Models.NavigationItem { Key = "settings",   Label = "Settings",   Icon = "pi-cog",             RoutePath = "settings",   SortOrder = 9, IsAdminOnly = true,  IsLocked = true  },
+    };
+    foreach (var item in seedNavItems)
+    {
+        var existing = db.NavigationItems.Find(item.Key);
+        if (existing == null)
+            db.NavigationItems.Add(item);
+        else
+        {
+            // Keep label/icon/route up to date on restart
+            existing.Label        = item.Label;
+            existing.Icon         = item.Icon;
+            existing.RoutePath    = item.RoutePath;
+            existing.SortOrder    = item.SortOrder;
+            existing.IsAdminOnly  = item.IsAdminOnly;
+            existing.IsLocked     = item.IsLocked;
+        }
+    }
+
     db.SaveChanges();
 }
 

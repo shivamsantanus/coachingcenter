@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using ClassNovaApi.Data;
 using ClassNovaApi.Extensions;
 using ClassNovaApi.Models;
+using ClassNovaApi.Services;
 
 namespace ClassNovaApi.Controllers
 {
@@ -72,17 +73,23 @@ namespace ClassNovaApi.Controllers
             if (request.StartDate >= request.EndDate)
                 return BadRequest(new { success = false, data = (object?)null, error = "End date must be after start date." });
 
-            var tenantId = User.GetTenantId();
-            var now = DateTime.UtcNow;
+            var tenantId   = User.GetTenantId();
+            var tenantCode = _context.Tenants
+                .Where(t => t.Id == tenantId)
+                .Select(t => t.Code.Trim())
+                .First();
 
-            var academicYear = new AcademicYear
+            var now            = DateTime.UtcNow;
+            var academicYearId = Guid.NewGuid();
+            var academicYear   = new AcademicYear
             {
-                Id        = Guid.NewGuid(),
+                Id        = academicYearId,
                 TenantId  = tenantId,
                 Name      = request.Name,
                 StartDate = request.StartDate,
                 EndDate   = request.EndDate,
                 IsActive  = false,
+                SystemId  = SystemIdService.Generate(tenantCode, SystemIdService.AcademicYear, academicYearId),
                 CreatedAt = now,
                 UpdatedAt = now
             };
@@ -93,7 +100,7 @@ namespace ClassNovaApi.Controllers
             return Ok(new
             {
                 success = true,
-                data    = new { academicYear.Id, academicYear.Name, academicYear.StartDate, academicYear.EndDate, academicYear.IsActive },
+                data    = new { academicYear.Id, academicYear.Name, academicYear.StartDate, academicYear.EndDate, academicYear.IsActive, academicYear.SystemId },
                 error   = (string?)null
             });
         }

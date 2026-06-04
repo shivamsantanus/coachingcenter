@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import {
   TeacherListResponse,
@@ -49,7 +49,8 @@ export class TeacherService {
   }
 
   createTeacher(request: CreateTeacherRequest): Observable<TeacherCreatedResult> {
-    return this.http.post<TeacherCreatedResult>(this.baseUrl, request).pipe(
+    return this.http.post<{ success: boolean; data: TeacherCreatedResult; error: string | null }>(this.baseUrl, request).pipe(
+      map(response => response.data),
       catchError(err => throwError(() =>
         new Error(err?.error?.error ?? err?.message ?? 'Failed to create teacher.')))
     );

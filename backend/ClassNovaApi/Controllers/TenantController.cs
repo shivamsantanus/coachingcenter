@@ -76,6 +76,7 @@ namespace ClassNovaApi.Controllers
                 Id                  = tenantId,
                 Name                = request.Name,
                 Slug                = slug,
+                Code                = SystemIdService.DeriveTenantCode(slug),
                 OrganizationType    = request.OrganizationType,
                 Status              = "ACTIVE",
                 PrimaryContactName  = request.PrimaryContactName,

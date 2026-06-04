@@ -9,6 +9,7 @@ import { LandingPageComponent } from './components/landing-page/landing-page.com
 import { BrandingEditorComponent } from './components/settings/branding-editor/branding-editor.component';
 import { SettingsShellComponent } from './components/settings/settings-shell/settings-shell.component';
 import { BranchesComponent } from './components/settings/branches/branches.component';
+import { RolePermissionsComponent } from './components/settings/role-permissions/role-permissions.component';
 import { ShellComponent } from './components/shell/shell.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { StudentListComponent } from './components/students/student-list/student-list.component';
@@ -42,9 +43,10 @@ const shellChildren: Route[] = [
     path: 'settings',
     component: SettingsShellComponent,
     children: [
-      { path: 'branding', component: BrandingEditorComponent },
-      { path: 'branches', component: BranchesComponent       },
-      { path: '',         redirectTo: 'branding', pathMatch: 'full' }
+      { path: 'branding',          component: BrandingEditorComponent   },
+      { path: 'branches',          component: BranchesComponent         },
+      { path: 'role-permissions',  component: RolePermissionsComponent  },
+      { path: '',                  redirectTo: 'branding', pathMatch: 'full' }
     ]
   },
   { path: 'academic',           component: AcademicComponent          },

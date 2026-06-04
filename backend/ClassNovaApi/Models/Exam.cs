@@ -11,6 +11,7 @@ namespace ClassNovaApi.Models
         public string ExamType { get; set; } = string.Empty; // UNIT_TEST, MID_TERM, FINAL
         public DateOnly? ExamDate { get; set; }
         public string Status { get; set; } = string.Empty; // DRAFT, OPEN, PUBLISHED
+        public string? SystemId { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 

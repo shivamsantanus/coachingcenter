@@ -10,6 +10,7 @@ namespace ClassNovaApi.Models
         public string? Phone { get; set; }
         public string? MapUrl { get; set; }
         public string Status { get; set; } = string.Empty;
+        public string? SystemId { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 

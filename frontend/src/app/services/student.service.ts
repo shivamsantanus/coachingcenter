@@ -1,21 +1,15 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import {
   StudentListResponse,
   StudentDetail,
   CreateStudentRequest,
   UpdateStudentRequest,
+  StudentCreatedResult,
 } from '../models/student.models';
-
-interface StudentCreatedResult {
-  id: string;
-  fullName: string;
-  admissionNo: string;
-  status: string;
-}
 
 interface MessageResult {
   message: string;
@@ -70,7 +64,8 @@ export class StudentService {
   }
 
   createStudent(request: CreateStudentRequest): Observable<StudentCreatedResult> {
-    return this.http.post<StudentCreatedResult>(this.baseUrl, request).pipe(
+    return this.http.post<{ success: boolean; data: StudentCreatedResult; error: string | null }>(this.baseUrl, request).pipe(
+      map(response => response.data),
       catchError(err => {
         const message = err?.error?.error ?? err?.message ?? 'Failed to create student.';
         return throwError(() => new Error(message));

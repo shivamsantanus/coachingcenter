@@ -79,6 +79,11 @@ namespace ClassNovaApi.Services
             var now    = DateTime.UtcNow;
             var userId = Guid.NewGuid();
 
+            var tenantCode = await _context.Tenants
+                .Where(t => t.Id == pending.TenantId)
+                .Select(t => t.Code.Trim())
+                .FirstOrDefaultAsync() ?? "XXXXX";
+
             var user = new User
             {
                 Id              = userId,
@@ -87,6 +92,7 @@ namespace ClassNovaApi.Services
                 PasswordHash    = pending.PasswordHash,
                 IsActive        = true,
                 IsEmailVerified = true,
+                SystemId        = SystemIdService.Generate(tenantCode, SystemIdService.Admin, userId),
                 CreatedAt       = now,
                 UpdatedAt       = now
             };
