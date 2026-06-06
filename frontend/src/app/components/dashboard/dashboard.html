@@ -1,22 +1,30 @@
-<div class="dashboard">
+@if (role === 'TEACHER') {
+  <app-teacher-dashboard />
+} @else if (role === 'STUDENT') {
+  <app-student-dashboard />
+} @else {
 
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Welcome back, {{ context?.fullName }}</h1>
-      <p class="page-subtitle">{{ context?.tenantName }} &mdash; {{ context?.role }}</p>
-    </div>
-  </div>
+  <div class="dashboard">
 
-  <div class="stats-grid">
-    <div class="stat-card" *ngFor="let stat of stats">
-      <div class="stat-icon" [style.background]="stat.color + '1a'" [style.color]="stat.color">
-        <i class="pi {{ stat.icon }}"></i>
-      </div>
-      <div class="stat-body">
-        <span class="stat-value">{{ stat.value }}</span>
-        <span class="stat-label">{{ stat.label }}</span>
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Welcome back, {{ context?.fullName }}</h1>
+        <p class="page-subtitle">{{ context?.tenantName }} &mdash; {{ context?.role }}</p>
       </div>
     </div>
+
+    <div class="stats-grid">
+      <div class="stat-card" *ngFor="let stat of stats">
+        <div class="stat-icon" [style.background]="stat.color + '1a'" [style.color]="stat.color">
+          <i class="pi {{ stat.icon }}"></i>
+        </div>
+        <div class="stat-body">
+          <span class="stat-value">{{ stat.value }}</span>
+          <span class="stat-label">{{ stat.label }}</span>
+        </div>
+      </div>
+    </div>
+
   </div>
 
-</div>
+}

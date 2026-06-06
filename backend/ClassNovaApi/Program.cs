@@ -122,8 +122,9 @@ using (var scope = app.Services.CreateScope())
         new ClassNovaApi.Models.NavigationItem { Key = "fees",       Label = "Fees",       Icon = "pi-wallet",          RoutePath = "fees",       SortOrder = 5, IsAdminOnly = false, IsLocked = false },
         new ClassNovaApi.Models.NavigationItem { Key = "exams",      Label = "Exams",      Icon = "pi-file-edit",       RoutePath = "exams",      SortOrder = 6, IsAdminOnly = false, IsLocked = false },
         new ClassNovaApi.Models.NavigationItem { Key = "timetable",  Label = "Timetable",  Icon = "pi-calendar",        RoutePath = "timetable",  SortOrder = 7, IsAdminOnly = false, IsLocked = false },
-        new ClassNovaApi.Models.NavigationItem { Key = "teachers",   Label = "Teachers",   Icon = "pi-graduation-cap",  RoutePath = "teachers",   SortOrder = 8, IsAdminOnly = true,  IsLocked = false },
-        new ClassNovaApi.Models.NavigationItem { Key = "settings",   Label = "Settings",   Icon = "pi-cog",             RoutePath = "settings",   SortOrder = 9, IsAdminOnly = true,  IsLocked = true  },
+        new ClassNovaApi.Models.NavigationItem { Key = "teachers",        Label = "Teachers",    Icon = "pi-graduation-cap",  RoutePath = "teachers",        SortOrder = 8,  IsAdminOnly = true,  IsLocked = false },
+        new ClassNovaApi.Models.NavigationItem { Key = "teacher-profile", Label = "My Profile",  Icon = "pi-user",            RoutePath = "teacher-profile", SortOrder = 9,  IsAdminOnly = false, IsLocked = false },
+        new ClassNovaApi.Models.NavigationItem { Key = "settings",        Label = "Settings",    Icon = "pi-cog",             RoutePath = "settings",        SortOrder = 10, IsAdminOnly = true,  IsLocked = true  },
     };
     foreach (var item in seedNavItems)
     {

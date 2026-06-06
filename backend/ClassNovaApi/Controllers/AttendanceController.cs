@@ -61,11 +61,22 @@ namespace ClassNovaApi.Controllers
             if (role == "TEACHER" && !IsTeacherAssignedToBatch(tenantId, request.BatchId))
                 return Forbid();
 
-            var batchExists = _context.Batches
-                .Any(b => b.TenantId == tenantId && b.Id == request.BatchId);
+            var batch = _context.Batches
+                .Where(b => b.TenantId == tenantId && b.Id == request.BatchId)
+                .Select(b => new { b.Status, b.StartDate, b.EndDate })
+                .FirstOrDefault();
 
-            if (!batchExists)
+            if (batch == null)
                 return BadRequest(new { success = false, data = (object?)null, error = "Batch not found." });
+
+            if (batch.Status != "ACTIVE")
+                return BadRequest(new { success = false, data = (object?)null, error = "Attendance can only be marked for active batches." });
+
+            if (batch.StartDate.HasValue && request.Date < batch.StartDate.Value)
+                return BadRequest(new { success = false, data = (object?)null, error = $"Attendance date is before the batch start date ({batch.StartDate.Value:dd MMM yyyy})." });
+
+            if (batch.EndDate.HasValue && request.Date > batch.EndDate.Value)
+                return BadRequest(new { success = false, data = (object?)null, error = $"Attendance date is after the batch end date ({batch.EndDate.Value:dd MMM yyyy})." });
 
             if (request.Records.Count == 0)
                 return Ok(new { success = true, data = new { saved = 0, date = request.Date }, error = (string?)null });
@@ -170,6 +181,43 @@ namespace ClassNovaApi.Controllers
             return Ok(new { success = true, data = result, error = (string?)null });
         }
 
+        // GET /api/attendance/marked-dates?batchId=&month=&year=
+        // Returns the distinct dates in a given month that have at least one attendance record.
+        [HttpGet("marked-dates")]
+        public IActionResult GetMarkedDates(
+            [FromQuery] Guid? batchId,
+            [FromQuery] int?  month,
+            [FromQuery] int?  year)
+        {
+            if (!batchId.HasValue || !month.HasValue || !year.HasValue)
+                return BadRequest(new { success = false, data = (object?)null, error = "batchId, month and year are required." });
+
+            if (month.Value < 1 || month.Value > 12)
+                return BadRequest(new { success = false, data = (object?)null, error = "month must be between 1 and 12." });
+
+            var tenantId = User.GetTenantId();
+
+            if (User.GetRole() == "TEACHER" && !IsTeacherAssignedToBatch(tenantId, batchId.Value))
+                return Forbid();
+
+            var firstDay = new DateOnly(year.Value, month.Value, 1);
+            var lastDay  = firstDay.AddMonths(1).AddDays(-1);
+
+            var markedDates = _context.Attendances
+                .Where(a => a.TenantId == tenantId
+                         && a.BatchId  == batchId.Value
+                         && a.Date     >= firstDay
+                         && a.Date     <= lastDay)
+                .Select(a => a.Date)
+                .Distinct()
+                .OrderBy(d => d)
+                .ToList()
+                .Select(d => d.ToString("yyyy-MM-dd"))
+                .ToList();
+
+            return Ok(new { success = true, data = markedDates, error = (string?)null });
+        }
+
         // GET /api/attendance/summary?batchId=&fromDate=&toDate= OR ?studentId=&fromDate=&toDate=
         [HttpGet("summary")]
         public IActionResult GetSummary(
@@ -262,9 +310,28 @@ namespace ClassNovaApi.Controllers
                 return BadRequest(new { success = false, data = (object?)null, error = "month must be between 1 and 12." });
 
             var tenantId = User.GetTenantId();
+            var role     = User.GetRole();
 
-            if (User.GetRole() == "TEACHER" && !IsTeacherAssignedToBatch(tenantId, batchId.Value))
+            if (role == "TEACHER" && !IsTeacherAssignedToBatch(tenantId, batchId.Value))
                 return Forbid();
+
+            // STUDENT: verify they are enrolled in the requested batch
+            Guid? callerStudentId = null;
+            if (role == "STUDENT")
+            {
+                callerStudentId = _context.Students
+                    .Where(s => s.TenantId == tenantId && s.UserId == User.GetUserId())
+                    .Select(s => (Guid?)s.Id)
+                    .FirstOrDefault();
+
+                var isEnrolled = _context.StudentEnrollments
+                    .Any(e => e.TenantId == tenantId
+                           && e.StudentId == callerStudentId
+                           && e.BatchId   == batchId.Value
+                           && e.IsActive);
+
+                if (!isEnrolled) return Forbid();
+            }
 
             var batch = _context.Batches
                 .Where(b => b.TenantId == tenantId && b.Id == batchId.Value)
@@ -277,8 +344,14 @@ namespace ClassNovaApi.Controllers
             var firstDay = new DateOnly(year.Value, month.Value, 1);
             var lastDay  = firstDay.AddMonths(1).AddDays(-1);
 
-            var enrollments = _context.StudentEnrollments
-                .Where(e => e.TenantId == tenantId && e.BatchId == batchId.Value && e.IsActive)
+            // STUDENT sees only their own row; others see all enrolled students
+            var enrollmentQuery = _context.StudentEnrollments
+                .Where(e => e.TenantId == tenantId && e.BatchId == batchId.Value && e.IsActive);
+
+            if (callerStudentId.HasValue)
+                enrollmentQuery = enrollmentQuery.Where(e => e.StudentId == callerStudentId.Value);
+
+            var enrollments = enrollmentQuery
                 .Select(e => new { e.StudentId, e.Student.FullName, e.Student.AdmissionNo })
                 .OrderBy(e => e.FullName)
                 .ToList();

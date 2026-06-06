@@ -1,0 +1,86 @@
+<p-toast position="top-right" />
+
+<div class="tp-page">
+
+  @if (isLoading()) {
+    <div class="tp-loading">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>Loading profile…</span>
+    </div>
+  } @else if (!profile()) {
+    <div class="tp-empty">
+      <i class="pi pi-user-minus"></i>
+      <p>Profile not found. Contact your administrator.</p>
+    </div>
+  } @else {
+
+    <!-- Profile card -->
+    <div class="tp-card tp-profile-card">
+      <div class="tp-avatar">
+        @if (resolvePhoto(profile()!.teacher.photoUrl)) {
+          <img [src]="resolvePhoto(profile()!.teacher.photoUrl)!" [alt]="profile()!.teacher.fullName" />
+        } @else {
+          <span>{{ initials }}</span>
+        }
+      </div>
+
+      <div class="tp-profile-info">
+        <h1 class="tp-name">{{ profile()!.teacher.fullName }}</h1>
+        <p class="tp-code">{{ profile()!.teacher.employeeCode }}</p>
+
+        @if (profile()!.teacher.systemId) {
+          <p class="tp-system-id">{{ profile()!.teacher.systemId }}</p>
+        }
+
+        <div class="tp-details">
+          @if (profile()!.teacher.email) {
+            <span class="tp-detail"><i class="pi pi-envelope"></i> {{ profile()!.teacher.email }}</span>
+          }
+          @if (profile()!.teacher.qualification) {
+            <span class="tp-detail"><i class="pi pi-graduation-cap"></i> {{ profile()!.teacher.qualification }}</span>
+          }
+          @if (profile()!.teacher.branchName) {
+            <span class="tp-detail"><i class="pi pi-building"></i> {{ profile()!.teacher.branchName }}</span>
+          }
+        </div>
+
+        <p-tag
+          [value]="profile()!.teacher.status"
+          [severity]="profile()!.teacher.status === 'ACTIVE' ? 'success' : 'secondary'" />
+      </div>
+    </div>
+
+    <!-- Assigned batches -->
+    <section class="tp-section">
+      <h2 class="tp-section-title"><i class="pi pi-book"></i> My Batches & Subjects</h2>
+
+      @if (batchGroups.length === 0) {
+        <div class="tp-empty-section">
+          No batches assigned yet. Contact your administrator.
+        </div>
+      } @else {
+        <div class="tp-batch-list">
+          @for (group of batchGroups; track trackByBatchId($index, group)) {
+            <div class="tp-batch-row">
+              <div class="tp-batch-info">
+                <span class="tp-batch-name">{{ group.batchName }}</span>
+                @if (group.className) {
+                  <span class="tp-batch-class">{{ group.className }} · {{ group.ayName }}</span>
+                }
+                @if (group.startTime) {
+                  <span class="tp-batch-time">{{ group.startTime }} – {{ group.endTime }}</span>
+                }
+              </div>
+              <div class="tp-batch-subjects">
+                @for (subject of group.subjects; track subject) {
+                  <span class="tp-subject-tag">{{ subject }}</span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </section>
+
+  }
+</div>

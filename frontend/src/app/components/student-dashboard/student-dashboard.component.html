@@ -1,0 +1,106 @@
+<p-toast position="top-right" />
+
+<div class="sd-page">
+
+  @if (isLoading()) {
+    <div class="sd-loading">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>Loading dashboard…</span>
+    </div>
+  } @else if (!dashboard()) {
+    <div class="sd-empty">
+      <i class="pi pi-user-minus"></i>
+      <p>Dashboard unavailable. Contact your administrator.</p>
+    </div>
+  } @else {
+
+    <!-- Welcome bar -->
+    <div class="sd-welcome-bar">
+      <div class="sd-avatar">
+        @if (resolvePhoto(dashboard()!.photoUrl)) {
+          <img [src]="resolvePhoto(dashboard()!.photoUrl)!" [alt]="dashboard()!.fullName" />
+        } @else {
+          <span>{{ initials() }}</span>
+        }
+      </div>
+      <div class="sd-welcome-text">
+        <h1 class="sd-name">Welcome, {{ dashboard()!.fullName }}</h1>
+        <p class="sd-meta">
+          <span>{{ dashboard()!.admissionNo }}</span>
+          @if (dashboard()!.branchName) { <span class="sd-dot">·</span><span>{{ dashboard()!.branchName }}</span> }
+          <span class="sd-dot">·</span><span>{{ today }}</span>
+        </p>
+      </div>
+    </div>
+
+    <!-- Stats strip -->
+    <div class="sd-stats-strip">
+      <div class="sd-stat">
+        <span class="sd-stat-value">{{ dashboard()!.stats.totalBatches }}</span>
+        <span class="sd-stat-label">Enrolled Batch{{ dashboard()!.stats.totalBatches !== 1 ? 'es' : '' }}</span>
+      </div>
+      <div class="sd-stat-divider"></div>
+      <div class="sd-stat">
+        <span class="sd-stat-value" [class.sd-stat-value--low]="dashboard()!.stats.overallPercent < 75">
+          {{ dashboard()!.stats.overallPercent }}%
+        </span>
+        <span class="sd-stat-label">Attendance This Month</span>
+      </div>
+    </div>
+
+    <!-- Enrolled batches -->
+    <section class="sd-section">
+      <h2 class="sd-section-title"><i class="pi pi-book"></i> My Batches</h2>
+
+      @if (dashboard()!.enrolledBatches.length === 0) {
+        <div class="sd-empty-section">
+          Not enrolled in any batch yet. Contact your administrator.
+        </div>
+      } @else {
+        <div class="sd-batch-grid">
+          @for (batch of dashboard()!.enrolledBatches; track batch.batchId) {
+            <div class="sd-batch-card">
+              <div class="sd-batch-header">
+                <span class="sd-batch-name">{{ batch.batchName }}</span>
+                @if (batch.className) {
+                  <span class="sd-batch-class">{{ batch.className }}</span>
+                }
+              </div>
+              <p class="sd-batch-ay">{{ batch.academicYearName }}</p>
+              @if (batch.startTime) {
+                <p class="sd-batch-time">
+                  <i class="pi pi-clock"></i> {{ batch.startTime }} – {{ batch.endTime }}
+                </p>
+              }
+
+              <!-- Attendance progress -->
+              <div class="sd-att-row">
+                <div class="sd-att-bar-wrap">
+                  <div
+                    class="sd-att-bar"
+                    [style.width.%]="batch.attendanceThisMonth.percentage"
+                    [class.sd-att-bar--good]="batch.attendanceThisMonth.percentage >= 75"
+                    [class.sd-att-bar--mid]="batch.attendanceThisMonth.percentage >= 50 && batch.attendanceThisMonth.percentage < 75"
+                    [class.sd-att-bar--low]="batch.attendanceThisMonth.percentage < 50">
+                  </div>
+                </div>
+                <span class="sd-att-pct"
+                  [class.sd-att-pct--low]="batch.attendanceThisMonth.percentage < 75">
+                  {{ batch.attendanceThisMonth.percentage }}%
+                </span>
+              </div>
+              <p class="sd-att-detail">
+                {{ batch.attendanceThisMonth.presentDays }} / {{ batch.attendanceThisMonth.totalDays }} days this month
+              </p>
+
+              <a [routerLink]="['../attendance']" class="sd-view-btn">
+                <i class="pi pi-calendar"></i> View Attendance
+              </a>
+            </div>
+          }
+        </div>
+      }
+    </section>
+
+  }
+</div>

@@ -207,6 +207,25 @@
   border-top: 1px solid var(--p-content-border-color);
 }
 
+// ── Calendar date cell ────────────────────────────────────────────────────────
+// Custom pTemplate="date" rendered inside PrimeNG DatePicker.
+// These are part of this component's template so view encapsulation applies.
+.picker-day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  font-size: 0.875rem;
+
+  &--marked {
+    background: color-mix(in srgb, var(--p-green-500) 18%, transparent);
+    color: var(--p-green-700);
+    font-weight: 700;
+  }
+}
+
 // ── Monthly report ────────────────────────────────────────────────────────────
 // Print header: hidden on screen, revealed by @media print in styles.scss
 .print-report-header { display: none; }

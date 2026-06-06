@@ -11,6 +11,8 @@ import {
   TeacherCreatedResult,
   TeacherPhotoResult,
 } from '../models/teacher.models';
+import { TeacherDashboardData, TeacherProfileData } from '../models/teacher-dashboard.models';
+import { ApiResponse } from '../models/academic.models';
 
 interface MessageResult  { message: string; }
 interface StatusResult   { message: string; status: string; }
@@ -77,6 +79,20 @@ export class TeacherService {
     return this.http.post<TeacherPhotoResult>(`${this.baseUrl}/${teacherId}/photo`, formData).pipe(
       catchError(err => throwError(() =>
         new Error(err?.error?.error ?? err?.message ?? 'Failed to upload photo.')))
+    );
+  }
+
+  getMyDashboard(): Observable<ApiResponse<TeacherDashboardData>> {
+    return this.http.get<ApiResponse<TeacherDashboardData>>(`${this.baseUrl}/my-dashboard`).pipe(
+      catchError(err => throwError(() =>
+        new Error(err?.error?.error ?? err?.message ?? 'Failed to load dashboard.')))
+    );
+  }
+
+  getMyProfile(): Observable<ApiResponse<TeacherProfileData>> {
+    return this.http.get<ApiResponse<TeacherProfileData>>(`${this.baseUrl}/my-profile`).pipe(
+      catchError(err => throwError(() =>
+        new Error(err?.error?.error ?? err?.message ?? 'Failed to load profile.')))
     );
   }
 }

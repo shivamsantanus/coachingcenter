@@ -10,6 +10,8 @@ import {
   UpdateStudentRequest,
   StudentCreatedResult,
 } from '../models/student.models';
+import { ApiResponse } from '../models/academic.models';
+import { StudentDashboardData, StudentEnrollmentInfo } from '../models/student-dashboard.models';
 
 interface MessageResult {
   message: string;
@@ -93,6 +95,24 @@ export class StudentService {
           return throwError(() => new Error(message));
         })
       );
+  }
+
+  getMyDashboard(): Observable<ApiResponse<StudentDashboardData>> {
+    return this.http.get<ApiResponse<StudentDashboardData>>(`${this.baseUrl}/my-dashboard`).pipe(
+      catchError(err => {
+        const message = err?.error?.error ?? err?.message ?? 'Failed to load student dashboard.';
+        return throwError(() => new Error(message));
+      })
+    );
+  }
+
+  getMyEnrollments(): Observable<ApiResponse<StudentEnrollmentInfo[]>> {
+    return this.http.get<ApiResponse<StudentEnrollmentInfo[]>>(`${this.baseUrl}/my-enrollments`).pipe(
+      catchError(err => {
+        const message = err?.error?.error ?? err?.message ?? 'Failed to load enrollments.';
+        return throwError(() => new Error(message));
+      })
+    );
   }
 
   uploadPhoto(studentId: string, file: File): Observable<PhotoResult> {

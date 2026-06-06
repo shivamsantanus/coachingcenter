@@ -6,25 +6,29 @@
   <div class="page-header">
     <div>
       <h1 class="page-title">Attendance</h1>
-      <p class="page-subtitle">Mark daily attendance or generate monthly reports</p>
+      <p class="page-subtitle">
+        {{ isStudent ? 'View your monthly attendance records' : 'Mark daily attendance or generate monthly reports' }}
+      </p>
     </div>
   </div>
 
-  <!-- Tab bar -->
-  <div class="tab-bar">
-    <button
-      class="tab-btn"
-      [class.active]="activeTab() === 'mark'"
-      (click)="switchTab('mark')">
-      <i class="pi pi-pencil"></i> Mark Attendance
-    </button>
-    <button
-      class="tab-btn"
-      [class.active]="activeTab() === 'report'"
-      (click)="switchTab('report')">
-      <i class="pi pi-file-pdf"></i> Monthly Report
-    </button>
-  </div>
+  <!-- Tab bar — students only see the report tab -->
+  @if (!isStudent) {
+    <div class="tab-bar">
+      <button
+        class="tab-btn"
+        [class.active]="activeTab() === 'mark'"
+        (click)="switchTab('mark')">
+        <i class="pi pi-pencil"></i> Mark Attendance
+      </button>
+      <button
+        class="tab-btn"
+        [class.active]="activeTab() === 'report'"
+        (click)="switchTab('report')">
+        <i class="pi pi-file-pdf"></i> Monthly Report
+      </button>
+    </div>
+  }
 
   <!-- ══════════════════════════════════════════════════════════════════════ -->
   <!-- TAB 1: MARK ATTENDANCE                                               -->
@@ -55,11 +59,19 @@
       <p-datepicker
         [ngModel]="markDate()"
         (ngModelChange)="onMarkDateChange($event)"
-        [maxDate]="maxDate"
+        (onMonthChange)="onPickerMonthChange($event)"
+        [minDate]="markMinDate()"
+        [maxDate]="markMaxDate()"
         [disabled]="!markBatchId()"
         dateFormat="dd M yy"
         styleClass="filter-datepicker"
-        placeholder="Select date" />
+        placeholder="Select date">
+        <ng-template pTemplate="date" let-date>
+          <span class="picker-day" [class.picker-day--marked]="isDateMarked(date)">
+            {{ date.day }}
+          </span>
+        </ng-template>
+      </p-datepicker>
 
       <button
         pButton

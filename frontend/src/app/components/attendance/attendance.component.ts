@@ -14,7 +14,9 @@ import { AcademicYearService } from '../../services/academic-year.service';
 import { BatchService } from '../../services/batch.service';
 import { AuthService } from '../../services/auth.service';
 import { BrandingService } from '../../services/branding.service';
+import { StudentService } from '../../services/student.service';
 import { AcademicYearSummary, BatchSummary } from '../../models/academic.models';
+import { StudentEnrollmentInfo } from '../../models/student-dashboard.models';
 import {
   AttendanceRecord,
   AttendanceStatus,
@@ -62,15 +64,23 @@ export class AttendanceComponent implements OnInit, OnDestroy {
   private readonly batchService        = inject(BatchService);
   private readonly authService         = inject(AuthService);
   private readonly brandingService     = inject(BrandingService);
+  private readonly studentService      = inject(StudentService);
   private readonly messageService      = inject(MessageService);
   private readonly destroy$            = new Subject<void>();
 
   // ── Tab state ──────────────────────────────────────────────────────────────
   activeTab = signal<'mark' | 'report'>('mark');
 
+  private readonly isTeacher = this.authService.getContext()?.role === 'TEACHER';
+  readonly isStudent         = this.authService.getContext()?.role === 'STUDENT';
+
   // ── Shared state (AY + batch lists used by both tabs) ─────────────────────
-  academicYears   = signal<AcademicYearSummary[]>([]);
-  isLoadingYears  = signal(false);
+  academicYears        = signal<AcademicYearSummary[]>([]);
+  isLoadingYears       = signal(false);
+  // For TEACHER: all assigned batches loaded once; AY list and tab batch lists are derived from this.
+  private allTeacherBatches    = signal<BatchSummary[]>([]);
+  // For STUDENT: all active enrollments loaded once; AY list and report batch list derived from this.
+  private allStudentEnrollments = signal<StudentEnrollmentInfo[]>([]);
 
   // ── Mark-attendance tab state ──────────────────────────────────────────────
   markBatches        = signal<BatchSummary[]>([]);
@@ -82,7 +92,9 @@ export class AttendanceComponent implements OnInit, OnDestroy {
   isLoadingSheet     = signal(false);
   isSaving           = signal(false);
   sheetLoaded        = signal(false);
-  readonly maxDate   = new Date();
+  markMinDate        = signal<Date | undefined>(undefined);
+  markMaxDate        = signal<Date>(new Date());
+  markedDatesSet     = signal<Set<string>>(new Set());
 
   // ── Report tab state ───────────────────────────────────────────────────────
   reportBatches          = signal<BatchSummary[]>([]);
@@ -148,7 +160,14 @@ export class AttendanceComponent implements OnInit, OnDestroy {
   );
 
   ngOnInit(): void {
-    this.loadAcademicYears();
+    if (this.isStudent) {
+      this.activeTab.set('report');
+      this.loadStudentEnrollments();
+    } else if (this.isTeacher) {
+      this.loadTeacherBatches();
+    } else {
+      this.loadAcademicYears();
+    }
   }
 
   ngOnDestroy(): void {
@@ -160,7 +179,7 @@ export class AttendanceComponent implements OnInit, OnDestroy {
     this.activeTab.set(tab);
   }
 
-  // ── Academic year loading ──────────────────────────────────────────────────
+  // ── Academic year / batch loading ──────────────────────────────────────────
   private loadAcademicYears(): void {
     this.isLoadingYears.set(true);
     this.academicYearService.listAcademicYears()
@@ -177,6 +196,72 @@ export class AttendanceComponent implements OnInit, OnDestroy {
       });
   }
 
+  // For TEACHER: load all assigned batches once, then derive the AY list from them.
+  // No extra API calls when the teacher switches AY — batches are filtered locally.
+  private loadTeacherBatches(): void {
+    this.isLoadingYears.set(true);
+    this.batchService.listBatches()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: response => {
+          const activeBatches = (response.data ?? []).filter(b => b.status === 'ACTIVE');
+          this.allTeacherBatches.set(activeBatches);
+
+          const ayMap = new Map<string, AcademicYearSummary>();
+          for (const batch of activeBatches) {
+            if (!ayMap.has(batch.academicYearId)) {
+              ayMap.set(batch.academicYearId, {
+                id:        batch.academicYearId,
+                name:      batch.academicYearName,
+                startDate: '',
+                endDate:   '',
+                isActive:  true
+              });
+            }
+          }
+          this.academicYears.set([...ayMap.values()]);
+          this.isLoadingYears.set(false);
+        },
+        error: (err: Error) => {
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message });
+          this.isLoadingYears.set(false);
+        }
+      });
+  }
+
+  // For STUDENT: load their active enrollments once, then derive AY list and batch list from them.
+  private loadStudentEnrollments(): void {
+    this.isLoadingYears.set(true);
+    this.studentService.getMyEnrollments()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: response => {
+          const enrollments = response.data ?? [];
+          // Derive unique AYs
+          const ayMap = new Map<string, AcademicYearSummary>();
+          for (const enrollment of enrollments) {
+            if (!ayMap.has(enrollment.academicYearId)) {
+              ayMap.set(enrollment.academicYearId, {
+                id: enrollment.academicYearId,
+                name: enrollment.academicYearName,
+                startDate: '',
+                endDate: '',
+                isActive: true
+              });
+            }
+          }
+          this.academicYears.set([...ayMap.values()]);
+          // Store enrollments as BatchSummary-compatible objects for the report batch selector
+          this.allStudentEnrollments.set(enrollments);
+          this.isLoadingYears.set(false);
+        },
+        error: (err: Error) => {
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message });
+          this.isLoadingYears.set(false);
+        }
+      });
+  }
+
   // ── Mark tab ───────────────────────────────────────────────────────────────
   onMarkAyChange(yearId: string | null): void {
     this.markAcademicYearId.set(yearId);
@@ -184,6 +269,11 @@ export class AttendanceComponent implements OnInit, OnDestroy {
     this.markBatches.set([]);
     this.clearSheet();
     if (!yearId) return;
+
+    if (this.isTeacher) {
+      this.markBatches.set(this.allTeacherBatches().filter(b => b.academicYearId === yearId));
+      return;
+    }
 
     this.isLoadingMarkBatches.set(true);
     this.batchService.listBatches({ academicYearId: yearId })
@@ -202,7 +292,48 @@ export class AttendanceComponent implements OnInit, OnDestroy {
 
   onMarkBatchChange(batchId: string | null): void {
     this.markBatchId.set(batchId);
+    this.markDate.set(null);
+    this.markedDatesSet.set(new Set());
     this.clearSheet();
+
+    const batch = batchId ? this.markBatches().find(b => b.id === batchId) : null;
+    const today = new Date();
+
+    this.markMinDate.set(batch?.startDate ? new Date(batch.startDate) : undefined);
+
+    if (batch?.endDate) {
+      const batchEnd = new Date(batch.endDate);
+      this.markMaxDate.set(batchEnd < today ? batchEnd : today);
+    } else {
+      this.markMaxDate.set(today);
+    }
+
+    if (batchId) {
+      this.loadMarkedDatesForMonth(batchId, today.getMonth() + 1, today.getFullYear());
+    }
+  }
+
+  onPickerMonthChange(event: { month?: number; year?: number }): void {
+    const batchId = this.markBatchId();
+    if (!batchId || event.month == null || event.year == null) return;
+    // PrimeNG onMonthChange emits month as 1-indexed (1=January)
+    this.loadMarkedDatesForMonth(batchId, event.month, event.year);
+  }
+
+  private loadMarkedDatesForMonth(batchId: string, month: number, year: number): void {
+    this.attendanceService.getMarkedDates(batchId, month, year)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: response => this.markedDatesSet.set(new Set(response.data ?? [])),
+        error: () => { /* non-critical — calendar still works without highlights */ }
+      });
+  }
+
+  isDateMarked(date: { year: number; month: number; day: number }): boolean {
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    // PrimeNG date template: month is 0-indexed (0=January)
+    const key = `${date.year}-${pad(date.month + 1)}-${pad(date.day)}`;
+    return this.markedDatesSet().has(key);
   }
 
   onMarkDateChange(date: Date | null): void {
@@ -281,6 +412,9 @@ export class AttendanceComponent implements OnInit, OnDestroy {
             detail:   `Attendance saved for ${response.data.saved} student(s).`
           });
           this.isSaving.set(false);
+          // Refresh the calendar highlights to include the newly saved date
+          const savedDate = this.markDate()!;
+          this.loadMarkedDatesForMonth(batchId, savedDate.getMonth() + 1, savedDate.getFullYear());
         },
         error: (err: Error) => {
           this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message });
@@ -297,6 +431,22 @@ export class AttendanceComponent implements OnInit, OnDestroy {
     this.reportData.set(null);
     this.selectedReportBatch.set(null);
     if (!yearId) return;
+
+    if (this.isTeacher) {
+      this.reportBatches.set(this.allTeacherBatches().filter(b => b.academicYearId === yearId));
+      return;
+    }
+
+    if (this.isStudent) {
+      const enrollments = this.allStudentEnrollments().filter(e => e.academicYearId === yearId);
+      this.reportBatches.set(enrollments.map(e => ({
+        id: e.batchId, name: e.batchName, academicYearId: e.academicYearId,
+        academicYearName: e.academicYearName, classId: null, className: e.className,
+        branchId: null, branchName: null, startDate: e.startDate, endDate: e.endDate,
+        startTime: null, endTime: null, status: e.status
+      })));
+      return;
+    }
 
     this.isLoadingReportBatches.set(true);
     this.batchService.listBatches({ academicYearId: yearId })

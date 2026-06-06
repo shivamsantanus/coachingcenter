@@ -297,5 +297,164 @@ namespace ClassNovaApi.Controllers
 
             return Ok(new { photoUrl = teacher.PhotoUrl });
         }
+
+        // GET /api/teachers/my-dashboard — TEACHER role only
+        [HttpGet("my-dashboard")]
+        public IActionResult GetMyDashboard()
+        {
+            if (User.GetRole() != "TEACHER")
+                return Forbid();
+
+            var tenantId = User.GetTenantId();
+            var userId   = User.GetUserId();
+
+            var teacher = _context.Teachers
+                .FirstOrDefault(t => t.TenantId == tenantId && t.UserId == userId);
+
+            if (teacher == null)
+                return NotFound(new { success = false, data = (object?)null, error = "Teacher record not found for this user." });
+
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+            // All batches this teacher is assigned to
+            var assignedBatchIds = _context.BatchSubjectTeachers
+                .Where(bst => bst.TenantId == tenantId && bst.TeacherId == teacher.Id)
+                .Select(bst => bst.BatchId)
+                .Distinct()
+                .ToHashSet();
+
+            // Batch details — only batches whose date range includes today
+            var batches = _context.Batches
+                .Where(b => b.TenantId == tenantId
+                         && b.Status == "ACTIVE"
+                         && assignedBatchIds.Contains(b.Id)
+                         && (!b.StartDate.HasValue || b.StartDate.Value <= today)
+                         && (!b.EndDate.HasValue   || b.EndDate.Value   >= today))
+                .Select(b => new
+                {
+                    b.Id,
+                    b.Name,
+                    ClassName        = b.Class != null ? b.Class.Name : null,
+                    AcademicYearName = b.AcademicYear.Name,
+                    b.StartTime,
+                    b.EndTime
+                })
+                .ToList();
+
+            // Student count per batch
+            var studentCounts = _context.StudentEnrollments
+                .Where(e => e.TenantId == tenantId && e.IsActive && assignedBatchIds.Contains(e.BatchId ?? Guid.Empty))
+                .GroupBy(e => e.BatchId)
+                .Select(g => new { BatchId = g.Key, Count = g.Count() })
+                .ToDictionary(x => x.BatchId, x => x.Count);
+
+            // Today's attendance: which batches already have records?
+            var markedBatchIds = _context.Attendances
+                .Where(a => a.TenantId == tenantId && a.Date == today && assignedBatchIds.Contains(a.BatchId))
+                .Select(a => a.BatchId)
+                .Distinct()
+                .ToHashSet();
+
+            // Subjects this teacher teaches
+            var subjects = _context.BatchSubjectTeachers
+                .Where(bst => bst.TenantId == tenantId && bst.TeacherId == teacher.Id)
+                .Select(bst => new
+                {
+                    SubjectId   = bst.SubjectId,
+                    SubjectName = bst.Subject.Name,
+                    BatchName   = bst.Batch.Name
+                })
+                .Distinct()
+                .ToList();
+
+            var todaysBatches = batches.Select(b => new
+            {
+                BatchId                = b.Id,
+                BatchName              = b.Name,
+                b.ClassName,
+                b.AcademicYearName,
+                StartTime              = b.StartTime?.ToString(@"hh\:mm"),
+                EndTime                = b.EndTime?.ToString(@"hh\:mm"),
+                StudentCount           = studentCounts.TryGetValue(b.Id, out var count) ? count : 0,
+                AttendanceMarkedToday  = markedBatchIds.Contains(b.Id)
+            }).OrderBy(b => b.StartTime).ToList();
+
+            return Ok(new
+            {
+                success = true,
+                data = new
+                {
+                    TeacherName  = teacher.FullName,
+                    EmployeeCode = teacher.EmployeeCode,
+                    SystemId     = teacher.SystemId,
+                    PhotoUrl     = teacher.PhotoUrl,
+                    TodaysBatches = todaysBatches,
+                    Stats = new
+                    {
+                        TotalBatches  = assignedBatchIds.Count,
+                        TotalStudents = studentCounts.Values.Sum(),
+                        TotalSubjects = subjects.Select(s => s.SubjectId).Distinct().Count()
+                    },
+                    Subjects = subjects
+                },
+                error = (string?)null
+            });
+        }
+
+        // GET /api/teachers/my-profile — TEACHER role only
+        [HttpGet("my-profile")]
+        public IActionResult GetMyProfile()
+        {
+            if (User.GetRole() != "TEACHER")
+                return Forbid();
+
+            var tenantId = User.GetTenantId();
+            var userId   = User.GetUserId();
+
+            var teacher = _context.Teachers
+                .Where(t => t.TenantId == tenantId && t.UserId == userId)
+                .Select(t => new
+                {
+                    t.Id,
+                    t.FullName,
+                    t.EmployeeCode,
+                    t.Email,
+                    t.Qualification,
+                    t.SalaryType,
+                    t.Status,
+                    t.PhotoUrl,
+                    t.SystemId,
+                    BranchName = t.Branch != null ? t.Branch.Name : null,
+                    t.CreatedAt
+                })
+                .FirstOrDefault();
+
+            if (teacher == null)
+                return NotFound(new { success = false, data = (object?)null, error = "Teacher profile not found." });
+
+            var assignments = _context.BatchSubjectTeachers
+                .Where(bst => bst.TenantId == tenantId && bst.TeacherId == teacher.Id)
+                .Select(bst => new
+                {
+                    BatchId          = bst.BatchId,
+                    BatchName        = bst.Batch.Name,
+                    ClassName        = bst.Batch.Class != null ? bst.Batch.Class.Name : null,
+                    AcademicYearName = bst.Batch.AcademicYear.Name,
+                    SubjectId        = bst.SubjectId,
+                    SubjectName      = bst.Subject.Name,
+                    bst.Batch.StartTime,
+                    bst.Batch.EndTime,
+                    bst.Batch.Status
+                })
+                .OrderBy(a => a.BatchName)
+                .ToList();
+
+            return Ok(new
+            {
+                success = true,
+                data    = new { teacher, assignments },
+                error   = (string?)null
+            });
+        }
     }
 }

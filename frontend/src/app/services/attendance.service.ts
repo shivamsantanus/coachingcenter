@@ -48,6 +48,17 @@ export class AttendanceService {
     );
   }
 
+  getMarkedDates(batchId: string, month: number, year: number): Observable<ApiResponse<string[]>> {
+    return this.http.get<ApiResponse<string[]>>(`${this.baseUrl}/marked-dates`, {
+      params: { batchId, month: month.toString(), year: year.toString() }
+    }).pipe(
+      catchError(err => {
+        const message = err?.error?.error ?? err?.message ?? 'Failed to load marked dates.';
+        return throwError(() => new Error(message));
+      })
+    );
+  }
+
   getSummary(params: {
     batchId?: string;
     studentId?: string;

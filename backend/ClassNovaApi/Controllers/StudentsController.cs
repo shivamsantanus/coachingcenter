@@ -274,6 +274,150 @@ namespace ClassNovaApi.Controllers
             return Ok(new { message = "Status updated.", status = student.Status });
         }
 
+        // GET /api/students/my-dashboard — STUDENT role only
+        [HttpGet("my-dashboard")]
+        public IActionResult GetMyDashboard()
+        {
+            if (User.GetRole() != "STUDENT")
+                return Forbid();
+
+            var tenantId = User.GetTenantId();
+            var userId   = User.GetUserId();
+
+            var student = _context.Students
+                .Where(s => s.TenantId == tenantId && s.UserId == userId)
+                .Select(s => new
+                {
+                    s.Id,
+                    s.FullName,
+                    s.AdmissionNo,
+                    s.SystemId,
+                    s.PhotoUrl,
+                    s.Email,
+                    s.DateOfBirth,
+                    BranchName = s.Branch != null ? s.Branch.Name : null
+                })
+                .FirstOrDefault();
+
+            if (student == null)
+                return NotFound(new { success = false, data = (object?)null, error = "Student record not found for this user." });
+
+            var enrollments = _context.StudentEnrollments
+                .Where(e => e.TenantId == tenantId && e.StudentId == student.Id && e.IsActive && e.BatchId != null)
+                .Select(e => new
+                {
+                    BatchId          = e.BatchId!.Value,
+                    BatchName        = e.Batch!.Name,
+                    ClassName        = e.Batch.Class != null ? e.Batch.Class.Name : null,
+                    AcademicYearId   = e.Batch.AcademicYearId,
+                    AcademicYearName = e.Batch.AcademicYear.Name,
+                    e.Batch.StartTime,
+                    e.Batch.EndTime,
+                    e.Batch.StartDate,
+                    e.Batch.EndDate,
+                    e.Batch.Status
+                })
+                .ToList();
+
+            var today      = DateOnly.FromDateTime(DateTime.UtcNow);
+            var monthStart = new DateOnly(today.Year, today.Month, 1);
+            var monthEnd   = monthStart.AddMonths(1).AddDays(-1);
+
+            var batchIds = enrollments.Select(e => e.BatchId).ToHashSet();
+
+            var monthlyAttendance = _context.Attendances
+                .Where(a => a.TenantId == tenantId
+                         && a.StudentId == student.Id
+                         && batchIds.Contains(a.BatchId)
+                         && a.Date >= monthStart
+                         && a.Date <= monthEnd)
+                .GroupBy(a => a.BatchId)
+                .Select(g => new
+                {
+                    BatchId     = g.Key,
+                    TotalDays   = g.Count(),
+                    PresentDays = g.Count(a => a.Status == "PRESENT" || a.Status == "LATE")
+                })
+                .ToList()
+                .ToDictionary(x => x.BatchId);
+
+            var batchCards = enrollments.Select(e => new
+            {
+                e.BatchId,
+                e.BatchName,
+                e.ClassName,
+                e.AcademicYearName,
+                StartTime          = e.StartTime?.ToString(@"hh\:mm"),
+                EndTime            = e.EndTime?.ToString(@"hh\:mm"),
+                AttendanceThisMonth = monthlyAttendance.TryGetValue(e.BatchId, out var att)
+                    ? new { att.TotalDays, att.PresentDays,
+                            Percentage = att.TotalDays > 0 ? Math.Round((double)att.PresentDays / att.TotalDays * 100, 1) : 0.0 }
+                    : new { TotalDays = 0, PresentDays = 0, Percentage = 0.0 }
+            }).ToList();
+
+            return Ok(new
+            {
+                success = true,
+                data    = new
+                {
+                    student.FullName,
+                    student.AdmissionNo,
+                    student.SystemId,
+                    student.PhotoUrl,
+                    student.Email,
+                    student.BranchName,
+                    EnrolledBatches = batchCards,
+                    Stats = new
+                    {
+                        TotalBatches   = enrollments.Count,
+                        OverallPercent = batchCards.Count > 0
+                            ? Math.Round(batchCards.Average(b => b.AttendanceThisMonth.Percentage), 1)
+                            : 0.0
+                    }
+                },
+                error = (string?)null
+            });
+        }
+
+        // GET /api/students/my-enrollments — STUDENT role only
+        // Returns the student's active batch enrollments — used by the attendance page batch selector.
+        [HttpGet("my-enrollments")]
+        public IActionResult GetMyEnrollments()
+        {
+            if (User.GetRole() != "STUDENT")
+                return Forbid();
+
+            var tenantId = User.GetTenantId();
+            var userId   = User.GetUserId();
+
+            var studentId = _context.Students
+                .Where(s => s.TenantId == tenantId && s.UserId == userId)
+                .Select(s => s.Id)
+                .FirstOrDefault();
+
+            if (studentId == Guid.Empty)
+                return NotFound(new { success = false, data = (object?)null, error = "Student record not found." });
+
+            var enrollments = _context.StudentEnrollments
+                .Where(e => e.TenantId == tenantId && e.StudentId == studentId && e.IsActive && e.BatchId != null)
+                .Select(e => new
+                {
+                    BatchId          = e.BatchId!.Value,
+                    BatchName        = e.Batch!.Name,
+                    ClassName        = e.Batch.Class != null ? e.Batch.Class.Name : null,
+                    AcademicYearId   = e.Batch.AcademicYearId,
+                    AcademicYearName = e.Batch.AcademicYear.Name,
+                    e.Batch.StartDate,
+                    e.Batch.EndDate,
+                    e.Batch.Status
+                })
+                .OrderBy(e => e.AcademicYearName)
+                .ThenBy(e => e.BatchName)
+                .ToList();
+
+            return Ok(new { success = true, data = enrollments, error = (string?)null });
+        }
+
         [HttpPost("{id:guid}/photo")]
         public async Task<IActionResult> UploadPhoto(Guid id, IFormFile file)
         {

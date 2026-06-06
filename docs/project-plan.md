@@ -4,7 +4,7 @@
 > Never start a feature without a row in the plan. Never finish one without marking it done
 > and linking the feature doc. This is the single source of truth for project state.
 
-**Last updated:** 2026-06-04 (User auto-creation for teachers/students, first-login password change, teacher batch scoping)
+**Last updated:** 2026-06-05 (Phase 4 complete — student dashboard, student attendance view, batch date-range enforcement, calendar marked-date highlights)
 
 ---
 
@@ -91,7 +91,7 @@
 | 4.2 | Attendance summary API | ✅ Done | [attendance.md](features/attendance.md) | `GET /api/attendance/summary` — aggregate per student/batch/date range |
 | 4.3 | Attendance UI — mark attendance | ✅ Done | [attendance.md](features/attendance.md) | AY → batch → date; P/A/L/E toggles; bulk mark-all; live counts (signals); save |
 | 4.5 | Monthly attendance report | ✅ Done | [attendance.md](features/attendance.md) | `GET /api/attendance/monthly-report`; 2-page matrix print; org logo in header; PDF filename from org+batch+month |
-| 4.4 | Attendance UI (student view) | ❌ Blocked | — | Blocked on student role-specific dashboard — no student portal yet; summary API ready |
+| 4.4 | Attendance UI (student view) | ✅ Done | — | Student dashboard + `GET /api/students/my-dashboard` + `my-enrollments`; attendance page shows only student's own report; monthly report scoped to student's row on backend |
 | 4.6 | Teacher batch-scoped attendance | ✅ Done | — | TEACHER sees only assigned batches (via BatchSubjectTeacher); backend guard on mark + read + report |
 
 **DB migrations applied (Phase 4):**
@@ -220,18 +220,17 @@
 
 ## What to Work on Next
 
-**Just completed (2026-06-04):**
-- Teacher + Student user auto-creation — email field, User account, one-time password credentials dialog
-- First-login forced password change — non-dismissible dialog in Shell, `POST /api/auth/change-password`
-- Teacher batch-scoped attendance — `GET /api/batches` and all attendance endpoints filtered by BatchSubjectTeacher for TEACHER role
-
-**Remaining in Phase 4:**
-- **4.4 Student attendance view** — still blocked on student role-specific dashboard
+**Just completed (2026-06-05) — Phase 4 complete:**
+- Student dashboard (`GET /api/students/my-dashboard`) — welcome bar, enrolled batches, attendance % per batch
+- Student attendance view — report-only mode, batches loaded from enrollments, monthly report scoped to own row
+- Batch date-range enforcement — dashboard hides out-of-range batches; mark attendance rejects out-of-range dates
+- Calendar marked-date highlights — green dates in the date picker where attendance is already recorded
+- STUDENT default nav now includes `attendance`
 
 **Next in priority order:**
-1. **Role-specific dashboards** — Teacher dashboard (my batches, today's attendance status, student counts) + Student dashboard (my attendance %, enrolled batch, fees) — unlocks 4.4 and gives teachers/students a meaningful home screen
-2. **Phase 5 — Fees** — fee plan management + payment recording (DB models exist, no controllers yet)
-3. **Phase 6 — Exams** — exam management, marks entry, report cards (DB models exist)
+1. **Phase 5 — Fees** — fee plan management + payment recording (DB models exist, no controllers yet)
+2. **Phase 6 — Exams** — exam management, marks entry, report cards (DB models exist)
+3. **9.1 Real dashboard stats** — wire ORG_ADMIN dashboard cards to actual DB counts
 
 ---
 

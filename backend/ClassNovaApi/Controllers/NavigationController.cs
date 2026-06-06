@@ -24,8 +24,8 @@ namespace ClassNovaApi.Controllers
         // Default nav keys per role — used when no DB entries exist yet for a tenant
         private static readonly Dictionary<string, HashSet<string>> DefaultPermissions = new()
         {
-            ["TEACHER"] = ["dashboard", "academic", "attendance"],
-            ["STUDENT"]  = ["dashboard"]
+            ["TEACHER"] = ["dashboard", "academic", "attendance", "teacher-profile"],
+            ["STUDENT"]  = ["dashboard", "attendance"]
         };
 
         public NavigationController(AppDbContext context)

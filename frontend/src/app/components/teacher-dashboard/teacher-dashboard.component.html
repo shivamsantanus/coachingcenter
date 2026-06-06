@@ -1,0 +1,121 @@
+<p-toast position="top-right" />
+
+@if (isLoading()) {
+  <div class="td-loading">
+    <i class="pi pi-spin pi-spinner"></i>
+    <span>Loading your dashboard…</span>
+  </div>
+} @else if (hasError() || !dashboard()) {
+  <div class="td-error">
+    <i class="pi pi-exclamation-circle"></i>
+    <p>Could not load dashboard. Your account may not be linked to a teacher profile yet — contact your administrator.</p>
+  </div>
+} @else {
+
+  <!-- Welcome bar -->
+  <div class="td-welcome">
+    <div class="td-avatar">
+      @if (resolvePhoto(dashboard()!.photoUrl)) {
+        <img [src]="resolvePhoto(dashboard()!.photoUrl)!" [alt]="dashboard()!.teacherName" />
+      } @else {
+        <span>{{ initials }}</span>
+      }
+    </div>
+    <div class="td-welcome-text">
+      <h1 class="td-name">{{ dashboard()!.teacherName }}</h1>
+      <p class="td-meta">{{ dashboard()!.employeeCode }} &nbsp;·&nbsp; {{ todayLabel }}</p>
+    </div>
+  </div>
+
+  <!-- Stats strip -->
+  <div class="td-stats">
+    <div class="td-stat">
+      <span class="td-stat__value">{{ dashboard()!.stats.totalBatches }}</span>
+      <span class="td-stat__label">Batches</span>
+    </div>
+    <div class="td-stat">
+      <span class="td-stat__value">{{ dashboard()!.stats.totalStudents }}</span>
+      <span class="td-stat__label">Students</span>
+    </div>
+    <div class="td-stat">
+      <span class="td-stat__value">{{ dashboard()!.stats.totalSubjects }}</span>
+      <span class="td-stat__label">Subjects</span>
+    </div>
+  </div>
+
+  <!-- Today's batches -->
+  <section class="td-section">
+    <h2 class="td-section-title">
+      <i class="pi pi-calendar"></i> Today's Batches
+    </h2>
+
+    @if (dashboard()!.todaysBatches.length === 0) {
+      <div class="td-empty">
+        <i class="pi pi-info-circle"></i>
+        <p>No active batches assigned yet. Contact your administrator to get assigned to batches.</p>
+      </div>
+    } @else {
+      <div class="td-batch-grid">
+        @for (batch of dashboard()!.todaysBatches; track trackByBatchId($index, batch)) {
+          <div class="td-batch-card" [class.td-batch-card--marked]="batch.attendanceMarkedToday">
+
+            <div class="td-batch-header">
+              <div class="td-batch-name">{{ batch.batchName }}</div>
+              <p-tag
+                [value]="batch.attendanceMarkedToday ? 'Marked' : 'Not Marked'"
+                [severity]="batch.attendanceMarkedToday ? 'success' : 'warn'"
+                styleClass="td-attendance-tag" />
+            </div>
+
+            @if (batch.className) {
+              <p class="td-batch-class">{{ batch.className }} &nbsp;·&nbsp; {{ batch.academicYearName }}</p>
+            }
+
+            <div class="td-batch-meta">
+              @if (batch.startTime) {
+                <span class="td-batch-time">
+                  <i class="pi pi-clock"></i>
+                  {{ batch.startTime }} – {{ batch.endTime }}
+                </span>
+              }
+              <span class="td-batch-students">
+                <i class="pi pi-users"></i>
+                {{ batch.studentCount }} students
+              </span>
+            </div>
+
+            <button
+              pButton
+              [label]="batch.attendanceMarkedToday ? 'View / Edit Attendance' : 'Mark Attendance'"
+              [icon]="batch.attendanceMarkedToday ? 'pi pi-eye' : 'pi pi-check-circle'"
+              [severity]="batch.attendanceMarkedToday ? 'secondary' : 'primary'"
+              [outlined]="batch.attendanceMarkedToday"
+              size="small"
+              class="td-mark-btn"
+              (click)="markAttendance(batch)">
+            </button>
+
+          </div>
+        }
+      </div>
+    }
+  </section>
+
+  <!-- Subjects taught -->
+  @if (dashboard()!.subjects.length > 0) {
+    <section class="td-section">
+      <h2 class="td-section-title">
+        <i class="pi pi-book"></i> My Subjects
+      </h2>
+      <div class="td-subjects">
+        @for (subject of dashboard()!.subjects; track subject.subjectId + subject.batchName) {
+          <div class="td-subject-chip">
+            <span class="td-subject-name">{{ subject.subjectName }}</span>
+            <span class="td-subject-batch">{{ subject.batchName }}</span>
+          </div>
+        }
+      </div>
+    </section>
+  }
+
+}
