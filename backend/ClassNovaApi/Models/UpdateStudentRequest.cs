@@ -8,6 +8,7 @@ namespace ClassNovaApi.Models
         public string? GuardianPhone { get; set; }
         public string? Address { get; set; }
         public DateOnly? DateOfBirth { get; set; }
+        public string? SchoolName { get; set; }
         public Guid? BranchId { get; set; }
     }
 }

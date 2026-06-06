@@ -65,8 +65,9 @@ export class StudentFormComponent implements OnInit, OnDestroy, OnChanges {
     admissionNo:  ['', [Validators.required, Validators.maxLength(50)]],
     guardianName: ['', [Validators.required, Validators.maxLength(200)]],
     guardianPhone:['', [Validators.required, Validators.maxLength(20)]],
-    address:      ['', Validators.maxLength(500)],
     dateOfBirth:  [''],
+    schoolName:   ['', Validators.maxLength(200)],
+    address:      ['', Validators.maxLength(500)],
   });
 
   get isEditMode(): boolean { return !!this.studentId; }
@@ -137,8 +138,9 @@ export class StudentFormComponent implements OnInit, OnDestroy, OnChanges {
             admissionNo:  student.admissionNo,
             guardianName: student.guardianName,
             guardianPhone:student.guardianPhone,
-            address:      student.address,
             dateOfBirth:  student.dateOfBirth ?? '',
+            schoolName:   student.schoolName ?? '',
+            address:      student.address,
           });
         },
         error: (err: Error) => {
@@ -167,13 +169,14 @@ export class StudentFormComponent implements OnInit, OnDestroy, OnChanges {
 
   private saveCreate(raw: typeof this.form.value): void {
     const request: CreateStudentRequest = {
-      fullName:      raw.fullName     ?? '',
-      email:         raw.email        ?? '',
-      admissionNo:   raw.admissionNo  ?? '',
-      guardianName:  raw.guardianName ?? '',
+      fullName:      raw.fullName      ?? '',
+      email:         raw.email         ?? '',
+      admissionNo:   raw.admissionNo   ?? '',
+      guardianName:  raw.guardianName  ?? '',
       guardianPhone: raw.guardianPhone ?? '',
-      address:       raw.address      ?? '',
-      dateOfBirth:   raw.dateOfBirth  || null,
+      address:       raw.address       ?? '',
+      dateOfBirth:   raw.dateOfBirth   || null,
+      schoolName:    raw.schoolName?.trim() || null,
       branchId:      null,
     };
 
@@ -219,12 +222,13 @@ export class StudentFormComponent implements OnInit, OnDestroy, OnChanges {
 
   private saveUpdate(studentId: string, raw: typeof this.form.value): void {
     const request: UpdateStudentRequest = {
-      fullName:      raw.fullName     ?? undefined,
-      admissionNo:   raw.admissionNo  ?? undefined,
-      guardianName:  raw.guardianName ?? undefined,
+      fullName:      raw.fullName      ?? undefined,
+      admissionNo:   raw.admissionNo   ?? undefined,
+      guardianName:  raw.guardianName  ?? undefined,
       guardianPhone: raw.guardianPhone ?? undefined,
-      address:       raw.address      ?? '',
-      dateOfBirth:   raw.dateOfBirth  || null,
+      address:       raw.address       ?? '',
+      dateOfBirth:   raw.dateOfBirth   || null,
+      schoolName:    raw.schoolName?.trim() ?? '',
     };
 
     this.studentService.updateStudent(studentId, request)

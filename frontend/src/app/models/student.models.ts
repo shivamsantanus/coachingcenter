@@ -13,6 +13,7 @@ export interface StudentSummary {
 
 export interface StudentDetail extends StudentSummary {
   address: string;
+  schoolName: string | null;
   userId: string | null;
   updatedAt: string;
 }
@@ -31,6 +32,7 @@ export interface CreateStudentRequest {
   guardianName: string;
   guardianPhone: string;
   address: string;
+  schoolName: string | null;
   dateOfBirth: string | null;
   branchId: string | null;
 }
@@ -41,6 +43,7 @@ export interface UpdateStudentRequest {
   guardianName?: string | null;
   guardianPhone?: string | null;
   address?: string | null;
+  schoolName?: string | null;
   dateOfBirth?: string | null;
   branchId?: string | null;
 }

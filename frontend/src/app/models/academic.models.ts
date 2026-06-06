@@ -57,14 +57,11 @@ export interface UpdateAcademicYearRequest {
 export interface ClassSummary {
   readonly id: string;
   readonly name: string;
-  readonly academicYearId: string;
-  readonly academicYearName: string;
   readonly sortOrder: number | null;
   readonly status: string;
 }
 
 export interface CreateClassRequest {
-  readonly academicYearId: string;
   readonly name: string;
   readonly sortOrder?: number | null;
   readonly branchId?: string | null;

@@ -5,7 +5,6 @@ namespace ClassNovaApi.Models
         public Guid Id { get; set; }
         public Guid TenantId { get; set; }
         public Guid? BranchId { get; set; }
-        public Guid AcademicYearId { get; set; }
         public string Name { get; set; } = string.Empty;
         public int? SortOrder { get; set; }
         public string Status { get; set; } = string.Empty;
@@ -15,7 +14,6 @@ namespace ClassNovaApi.Models
 
         public Tenant Tenant { get; set; } = null!;
         public Branch? Branch { get; set; }
-        public AcademicYear AcademicYear { get; set; } = null!;
         public ICollection<Batch> Batches { get; set; } = [];
     }
 }

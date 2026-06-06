@@ -148,6 +148,7 @@ export class BatchesTabComponent implements OnInit, OnDestroy {
 
     this.loadAcademicYears();
     this.loadBranches();
+    this.loadClasses();
     this.loadBatches();
   }
 
@@ -184,27 +185,14 @@ export class BatchesTabComponent implements OnInit, OnDestroy {
       });
   }
 
-  private loadClassesForFilter(academicYearId: string): void {
-    if (!academicYearId) { this.classOptions.set([]); return; }
-    this.classService.listClasses({ academicYearId })
+  private loadClasses(): void {
+    this.classService.listClasses()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: response => {
-          this.classOptions.set(response.data.map(cls => ({ label: cls.name, value: cls.id })));
-        },
-        error: (err: Error) => {
-          this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message });
-        }
-      });
-  }
-
-  private loadClassesForDialog(academicYearId: string): void {
-    if (!academicYearId) { this.dialogClassOptions.set([]); return; }
-    this.classService.listClasses({ academicYearId })
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: response => {
-          this.dialogClassOptions.set(response.data.map(cls => ({ label: cls.name, value: cls.id })));
+          const options = response.data.map(cls => ({ label: cls.name, value: cls.id }));
+          this.classOptions.set(options);
+          this.dialogClassOptions.set(options);
         },
         error: (err: Error) => {
           this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message });
@@ -236,9 +224,6 @@ export class BatchesTabComponent implements OnInit, OnDestroy {
 
   onFilterAcademicYearChange(academicYearId: string): void {
     this.filterAcademicYearId.set(academicYearId);
-    this.filterClassId.set('');
-    this.classOptions.set([]);
-    if (academicYearId) this.loadClassesForFilter(academicYearId);
     this.loadBatches();
   }
 
@@ -249,25 +234,19 @@ export class BatchesTabComponent implements OnInit, OnDestroy {
 
   onDialogAcademicYearChange(academicYearId: string): void {
     this.selectedDialogAy = this.allAcademicYears.find(ay => ay.id === academicYearId) ?? null;
-    this.batchForm.patchValue({ classId: null });
-    this.dialogClassOptions.set([]);
     this.batchForm.updateValueAndValidity();
-    if (academicYearId) this.loadClassesForDialog(academicYearId);
   }
 
   openAddDialog(): void {
     this.editBatchId.set(null);
     this.selectedDialogAy = null;
     this.batchForm.reset({ academicYearId: '', classId: null, branchId: null, name: '', startDate: null, endDate: null, startTime: null, endTime: null });
-    this.dialogClassOptions.set([]);
     this.showDialog.set(true);
   }
 
   openEditDialog(batch: BatchSummary): void {
     this.editBatchId.set(batch.id);
     this.selectedDialogAy = this.allAcademicYears.find(ay => ay.id === batch.academicYearId) ?? null;
-    this.dialogClassOptions.set([]);
-    if (batch.academicYearId) this.loadClassesForDialog(batch.academicYearId);
     this.batchForm.patchValue({
       academicYearId: batch.academicYearId,
       classId:        batch.classId  ?? null,
@@ -286,7 +265,6 @@ export class BatchesTabComponent implements OnInit, OnDestroy {
     this.editBatchId.set(null);
     this.selectedDialogAy = null;
     this.batchForm.reset();
-    this.dialogClassOptions.set([]);
   }
 
   saveBatch(): void {

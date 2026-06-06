@@ -114,6 +114,17 @@
           <input id="dateOfBirth" type="date" pInputText formControlName="dateOfBirth" />
         </div>
 
+        <!-- School Name -->
+        <div class="field">
+          <label for="schoolName">School Name</label>
+          <input id="schoolName" type="text" pInputText formControlName="schoolName"
+            placeholder="e.g. Delhi Public School" />
+          <span class="field-hint">The school the student attends (for coaching centres).</span>
+          @if (fieldError('schoolName')) {
+            <span class="field-error">{{ fieldError('schoolName') }}</span>
+          }
+        </div>
+
         <!-- Address (full width) -->
         <div class="field field--full">
           <label for="address">Address</label>

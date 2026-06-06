@@ -55,14 +55,13 @@ namespace ClassNovaApi.Controllers
             // ── 2. Classes (1 through 12) ─────────────────────────────────────
             var classes = Enumerable.Range(1, 12).Select(n => new Class
             {
-                Id             = Guid.NewGuid(),
-                TenantId       = tenantId,
-                AcademicYearId = academicYear.Id,
-                Name           = $"Class {n}",
-                SortOrder      = n,
-                Status         = "ACTIVE",
-                CreatedAt      = now,
-                UpdatedAt      = now
+                Id        = Guid.NewGuid(),
+                TenantId  = tenantId,
+                Name      = $"Class {n}",
+                SortOrder = n,
+                Status    = "ACTIVE",
+                CreatedAt = now,
+                UpdatedAt = now
             }).ToList();
             _context.Classes.AddRange(classes);
 

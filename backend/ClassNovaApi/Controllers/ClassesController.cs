@@ -20,17 +20,11 @@ namespace ClassNovaApi.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetAll(
-            [FromQuery] Guid? academicYearId = null,
-            [FromQuery] string? search = null)
+        public IActionResult GetAll([FromQuery] string? search = null)
         {
             var tenantId = User.GetTenantId();
 
-            var query = _context.Classes
-                .Where(c => c.TenantId == tenantId);
-
-            if (academicYearId.HasValue)
-                query = query.Where(c => c.AcademicYearId == academicYearId.Value);
+            var query = _context.Classes.Where(c => c.TenantId == tenantId);
 
             if (!string.IsNullOrWhiteSpace(search))
             {
@@ -45,8 +39,6 @@ namespace ClassNovaApi.Controllers
                 {
                     c.Id,
                     c.Name,
-                    c.AcademicYearId,
-                    AcademicYearName = c.AcademicYear.Name,
                     c.SortOrder,
                     c.Status
                 })
@@ -66,8 +58,6 @@ namespace ClassNovaApi.Controllers
                 {
                     c.Id,
                     c.Name,
-                    c.AcademicYearId,
-                    AcademicYearName = c.AcademicYear.Name,
                     c.SortOrder,
                     c.Status,
                     c.BranchId
@@ -88,12 +78,6 @@ namespace ClassNovaApi.Controllers
 
             var tenantId = User.GetTenantId();
 
-            var academicYearExists = _context.AcademicYears
-                .Any(a => a.TenantId == tenantId && a.Id == request.AcademicYearId);
-
-            if (!academicYearExists)
-                return BadRequest(new { success = false, data = (object?)null, error = "Academic year not found." });
-
             if (request.BranchId.HasValue)
             {
                 var branchExists = _context.Branches
@@ -112,16 +96,15 @@ namespace ClassNovaApi.Controllers
             var classId = Guid.NewGuid();
             var newClass = new Class
             {
-                Id             = classId,
-                TenantId       = tenantId,
-                AcademicYearId = request.AcademicYearId,
-                BranchId       = request.BranchId,
-                Name           = request.Name,
-                SortOrder      = request.SortOrder,
-                Status         = "ACTIVE",
-                SystemId       = SystemIdService.Generate(tenantCode, SystemIdService.Class, classId),
-                CreatedAt      = now,
-                UpdatedAt      = now
+                Id        = classId,
+                TenantId  = tenantId,
+                BranchId  = request.BranchId,
+                Name      = request.Name,
+                SortOrder = request.SortOrder,
+                Status    = "ACTIVE",
+                SystemId  = SystemIdService.Generate(tenantCode, SystemIdService.Class, classId),
+                CreatedAt = now,
+                UpdatedAt = now
             };
 
             _context.Classes.Add(newClass);
@@ -157,9 +140,9 @@ namespace ClassNovaApi.Controllers
                     return BadRequest(new { success = false, data = (object?)null, error = "Branch not found." });
             }
 
-            if (request.Name      != null)        classRecord.Name      = request.Name;
-            if (request.SortOrder.HasValue)       classRecord.SortOrder = request.SortOrder;
-            if (request.BranchId.HasValue)        classRecord.BranchId  = request.BranchId;
+            if (request.Name      != null)  classRecord.Name      = request.Name;
+            if (request.SortOrder.HasValue) classRecord.SortOrder = request.SortOrder;
+            if (request.BranchId.HasValue)  classRecord.BranchId  = request.BranchId;
 
             classRecord.UpdatedAt = DateTime.UtcNow;
             _context.SaveChanges();

@@ -98,6 +98,7 @@ namespace ClassNovaApi.Controllers
                     s.GuardianPhone,
                     s.Address,
                     s.DateOfBirth,
+                    s.SchoolName,
                     s.Status,
                     s.PhotoUrl,
                     s.BranchId,
@@ -177,6 +178,7 @@ namespace ClassNovaApi.Controllers
                 GuardianPhone = request.GuardianPhone,
                 Address       = request.Address,
                 DateOfBirth   = request.DateOfBirth,
+                SchoolName    = request.SchoolName,
                 Status        = "ACTIVE",
                 SystemId      = SystemIdService.Generate(tenantCode, SystemIdService.Student, studentId),
                 CreatedAt     = now,
@@ -243,6 +245,7 @@ namespace ClassNovaApi.Controllers
             if (request.GuardianPhone != null) student.GuardianPhone = request.GuardianPhone;
             if (request.Address != null)       student.Address       = request.Address;
             if (request.DateOfBirth.HasValue)  student.DateOfBirth   = request.DateOfBirth;
+            student.SchoolName = string.IsNullOrWhiteSpace(request.SchoolName) ? null : request.SchoolName.Trim();
             if (request.BranchId.HasValue)     student.BranchId      = request.BranchId;
 
             student.UpdatedAt = DateTime.UtcNow;

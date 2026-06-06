@@ -3,6 +3,7 @@ using System;
 using ClassNovaApi.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ClassNovaApi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260606015538_RemoveAcademicYearFromClasses")]
+    partial class RemoveAcademicYearFromClasses
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -390,6 +393,10 @@ namespace ClassNovaApi.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<Guid?>("AcademicYearId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("academic_year_id");
+
                     b.Property<Guid?>("BranchId")
                         .HasColumnType("uuid")
                         .HasColumnName("branch_id");
@@ -426,6 +433,9 @@ namespace ClassNovaApi.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_classes");
+
+                    b.HasIndex("AcademicYearId")
+                        .HasDatabaseName("ix_classes_academic_year_id");
 
                     b.HasIndex("BranchId")
                         .HasDatabaseName("ix_classes_branch_id");
@@ -1792,6 +1802,12 @@ namespace ClassNovaApi.Migrations
 
             modelBuilder.Entity("ClassNovaApi.Models.Class", b =>
                 {
+                    b.HasOne("ClassNovaApi.Models.AcademicYear", null)
+                        .WithMany("Classes")
+                        .HasForeignKey("AcademicYearId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_classes_academic_years_academic_year_id");
+
                     b.HasOne("ClassNovaApi.Models.Branch", "Branch")
                         .WithMany()
                         .HasForeignKey("BranchId")
@@ -2237,6 +2253,8 @@ namespace ClassNovaApi.Migrations
             modelBuilder.Entity("ClassNovaApi.Models.AcademicYear", b =>
                 {
                     b.Navigation("Batches");
+
+                    b.Navigation("Classes");
                 });
 
             modelBuilder.Entity("ClassNovaApi.Models.Class", b =>

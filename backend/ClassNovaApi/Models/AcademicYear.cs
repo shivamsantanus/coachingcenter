@@ -13,7 +13,6 @@ namespace ClassNovaApi.Models
         public DateTime UpdatedAt { get; set; }
 
         public Tenant Tenant { get; set; } = null!;
-        public ICollection<Class> Classes { get; set; } = [];
         public ICollection<Batch> Batches { get; set; } = [];
     }
 }

@@ -15,10 +15,9 @@ export class ClassService {
   private readonly http    = inject(HttpClient);
   private readonly baseUrl = environment.apiBaseUrl + '/classes';
 
-  listClasses(filters?: { academicYearId?: string; search?: string }): Observable<ApiResponse<ClassSummary[]>> {
+  listClasses(filters?: { search?: string }): Observable<ApiResponse<ClassSummary[]>> {
     let params = new HttpParams();
-    if (filters?.academicYearId) params = params.set('academicYearId', filters.academicYearId);
-    if (filters?.search)         params = params.set('search', filters.search);
+    if (filters?.search) params = params.set('search', filters.search);
 
     return this.http.get<ApiResponse<ClassSummary[]>>(this.baseUrl, { params }).pipe(
       catchError(err => {
