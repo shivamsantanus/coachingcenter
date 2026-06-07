@@ -16,6 +16,59 @@
   p   { max-width: 28rem; margin: 0; font-size: 0.875rem; }
 }
 
+// ── Auto-close banner ─────────────────────────────────────────────────────────
+.td-autoclosed-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  color: #92400e;
+
+  .pi { color: #d97706; font-size: 1rem; flex-shrink: 0; }
+}
+
+// ── Check-in / Check-out card ─────────────────────────────────────────────────
+.td-checkin-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: var(--p-surface-card);
+  border: 1px solid var(--p-surface-border);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.75rem;
+}
+
+.td-checkin-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.td-checkin-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--p-text-muted-color);
+}
+
+.td-checkin-status {
+  font-size: 0.9rem;
+  font-weight: 500;
+
+  &--none    { color: var(--p-text-muted-color); }
+  &--in      { color: #10b981; }
+  &--done    { color: var(--p-text-color); }
+  &--blocked { color: #ef4444; }
+}
+
 // ── Welcome bar ───────────────────────────────────────────────────────────────
 .td-welcome {
   display: flex;

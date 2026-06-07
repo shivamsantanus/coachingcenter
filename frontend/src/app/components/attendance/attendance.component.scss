@@ -124,23 +124,25 @@
 .bulk-label   { font-size: 0.8rem; color: var(--p-text-muted-color); white-space: nowrap; }
 
 // ── Mark-attendance table ─────────────────────────────────────────────────────
-.attendance-table-wrap { overflow-x: auto; }
+.attendance-table-wrap { overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 380px); min-height: 180px; }
 
 .attendance-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.875rem;
 
-  thead tr {
-    background: var(--p-surface-100);
-    border-bottom: 1px solid var(--p-content-border-color);
-  }
+  thead tr { border-bottom: 1px solid var(--p-content-border-color); }
   th {
     padding: 0.625rem 0.875rem;
     font-weight: 600;
     color: var(--p-text-muted-color);
     text-align: left;
     white-space: nowrap;
+    background: var(--p-surface-100);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    box-shadow: 0 1px 0 var(--p-content-border-color);
   }
   td {
     padding: 0.5rem 0.875rem;
@@ -257,19 +259,14 @@
   font-style: italic;
 }
 
-.report-table-wrap { overflow-x: auto; }
+.report-table-wrap { overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 380px); min-height: 180px; }
 
 .report-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.78rem;
 
-  thead {
-    background: var(--p-surface-100);
-    position: sticky;
-    top: 0;
-    z-index: 1;
-  }
+  thead { /* background intentionally on th for sticky */ }
 
   th {
     padding: 0.35rem 0.4rem;
@@ -278,6 +275,10 @@
     color: var(--p-text-muted-color);
     text-align: center;
     white-space: nowrap;
+    background: var(--p-surface-100);
+    position: sticky;
+    top: 0;
+    z-index: 2;
   }
 
   td {

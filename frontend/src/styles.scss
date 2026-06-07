@@ -268,6 +268,48 @@ html, body { height: 100%; }
   .p-dialog-footer  { padding: 0.75rem 1.5rem 1.25rem; }
 }
 
+// ── Thin scrollbars — all table scroll containers ─────────────────────────────
+// The native OS scrollbar on Windows takes ~17 px of layout space and can
+// crowd the rightmost column. These rules make every table wrapper use a slim
+// 5-px scrollbar that sits on top of the content without shifting column widths.
+.taa-table-wrapper,
+.ma-table-wrapper,
+.attendance-table-wrap,
+.report-table-wrap,
+.table-card,
+.matrix-card {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.taa-table-wrapper::-webkit-scrollbar,
+.ma-table-wrapper::-webkit-scrollbar,
+.attendance-table-wrap::-webkit-scrollbar,
+.report-table-wrap::-webkit-scrollbar,
+.table-card::-webkit-scrollbar,
+.matrix-card::-webkit-scrollbar            { width: 5px; height: 5px; }
+
+.taa-table-wrapper::-webkit-scrollbar-track,
+.ma-table-wrapper::-webkit-scrollbar-track,
+.attendance-table-wrap::-webkit-scrollbar-track,
+.report-table-wrap::-webkit-scrollbar-track,
+.table-card::-webkit-scrollbar-track,
+.matrix-card::-webkit-scrollbar-track     { background: transparent; }
+
+.taa-table-wrapper::-webkit-scrollbar-thumb,
+.ma-table-wrapper::-webkit-scrollbar-thumb,
+.attendance-table-wrap::-webkit-scrollbar-thumb,
+.report-table-wrap::-webkit-scrollbar-thumb,
+.table-card::-webkit-scrollbar-thumb,
+.matrix-card::-webkit-scrollbar-thumb     { background: #cbd5e1; border-radius: 3px; }
+
+.taa-table-wrapper::-webkit-scrollbar-thumb:hover,
+.ma-table-wrapper::-webkit-scrollbar-thumb:hover,
+.attendance-table-wrap::-webkit-scrollbar-thumb:hover,
+.report-table-wrap::-webkit-scrollbar-thumb:hover,
+.table-card::-webkit-scrollbar-thumb:hover,
+.matrix-card::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
 // â”€â”€ Print styles (attendance monthly report â€” 2-page layout) â”€
 @media print {
   // Portrait: each page is ~180mm usable width (A4 portrait)

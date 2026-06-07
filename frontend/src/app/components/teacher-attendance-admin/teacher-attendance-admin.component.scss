@@ -1,0 +1,133 @@
+:host { display: block; }
+
+.taa-page { padding: 1.5rem; }
+
+// ── Header ────────────────────────────────────────────────────────────────────
+.taa-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.taa-title  { font-size: 1.5rem; font-weight: 700; margin: 0; }
+
+.taa-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+// ── Loading / empty ───────────────────────────────────────────────────────────
+.taa-loading,
+.taa-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 3rem;
+  color: var(--p-text-muted-color);
+  text-align: center;
+  .pi { font-size: 2rem; }
+  p   { margin: 0; font-size: 0.875rem; }
+}
+
+// ── Table ─────────────────────────────────────────────────────────────────────
+.taa-table-wrapper {
+  background: var(--p-surface-card);
+  border: 1px solid var(--p-surface-border);
+  border-radius: 10px;
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: calc(100vh - 260px);
+  min-height: 200px;
+}
+
+.taa-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  min-width: 900px;
+
+  thead tr { border-bottom: 1px solid #e2e8f0; }
+
+  th {
+    background: #f8fafc;
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    box-shadow: 0 1px 0 #e2e8f0;
+  }
+
+  td {
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid var(--p-surface-border);
+    vertical-align: middle;
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+}
+
+.taa-row--flagged td     { background: #fff7ed; }
+.taa-row--autoclosed td  { background: #fffbeb; }
+.taa-row--dirty td       { background: #f0f9ff; }
+
+// ── Cell contents ─────────────────────────────────────────────────────────────
+.taa-teacher-name   { font-weight: 600; }
+.taa-employee-code  { font-size: 0.75rem; color: var(--p-text-muted-color); }
+
+.taa-badges {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-top: 0.25rem;
+}
+
+.taa-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+
+  &--auto    { background: #fef3c7; color: #92400e; }
+  &--attempt { background: #fee2e2; color: #991b1b; }
+  &--dirty   { background: #dbeafe; color: #1e40af; }
+}
+
+.taa-time-input {
+  border: 1px solid var(--p-surface-border);
+  border-radius: 6px;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.8rem;
+  color: var(--p-text-color);
+  background: var(--p-surface-ground);
+  width: 100px;
+
+  &--disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background: var(--p-surface-ground);
+  }
+}
+
+.taa-status-select { min-width: 130px; }
+.taa-note-input  { width: 100%; max-width: 160px; font-size: 0.85rem; }
+.taa-cell-hours  { white-space: nowrap; }
+.taa-pending     { font-size: 0.8rem; color: #92400e; font-style: italic; }
+
+.taa-original {
+  font-size: 0.7rem;
+  color: var(--p-text-muted-color);
+  margin-top: 0.2rem;
+}

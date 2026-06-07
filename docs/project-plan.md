@@ -4,7 +4,7 @@
 > Never start a feature without a row in the plan. Never finish one without marking it done
 > and linking the feature doc. This is the single source of truth for project state.
 
-**Last updated:** 2026-06-05 (Phase 4 complete — student dashboard, student attendance view, batch date-range enforcement, calendar marked-date highlights)
+**Last updated:** 2026-06-07 (Teacher attendance fully implemented — 4.7/4.8/4.9; migration applied; both builds clean. UX: all tables now scroll within their card container — page headers/action buttons stay fixed. Sticky thead in every table. Phase 12 added — Responsive Design & PWA — 13 tasks planned; mobile-first for teacher attendance.)
 
 ---
 
@@ -93,6 +93,9 @@
 | 4.5 | Monthly attendance report | ✅ Done | [attendance.md](features/attendance.md) | `GET /api/attendance/monthly-report`; 2-page matrix print; org logo in header; PDF filename from org+batch+month |
 | 4.4 | Attendance UI (student view) | ✅ Done | — | Student dashboard + `GET /api/students/my-dashboard` + `my-enrollments`; attendance page shows only student's own report; monthly report scoped to student's row on backend |
 | 4.6 | Teacher batch-scoped attendance | ✅ Done | — | TEACHER sees only assigned batches (via BatchSubjectTeacher); backend guard on mark + read + report |
+| 4.7 | Teacher self attendance — check-in/out | 🔄 In Progress | [teacher-attendance.md](features/teacher-attendance.md) | TEACHER checks in/out on dashboard; auto-sets PRESENT; lazy-close on login for forgotten checkouts |
+| 4.8 | Teacher attendance admin page | 🔄 In Progress | [teacher-attendance.md](features/teacher-attendance.md) | ORG_ADMIN page (`/teacher-attendance`); date picker → all active teachers; mark/override status + times; bulk mark-all present; audit trail for overrides |
+| 4.9 | Teacher attendance API | 🔄 In Progress | [teacher-attendance.md](features/teacher-attendance.md) | `teacher_attendances` table; check-in/out + my-today + my-history + my-report (TEACHER); admin/daily + admin/mark + admin/monthly-report (ORG_ADMIN); midnight background job closes open check-ins |
 
 **DB migrations applied (Phase 4):**
 - `20260531142407_AddAttendance` — creates `attendances` table with unique index on (tenant_id, batch_id, student_id, date)
@@ -218,6 +221,36 @@
 | A.1 | First-login forced password change | ✅ Done | `IsFirstLogin` on User; `POST /api/auth/change-password`; non-dismissible shell dialog; clears flag on success |
 | A.2 | Teacher/Student credential delivery | ✅ Done | One-time password shown in dialog after create; copy buttons; warning "cannot be retrieved again" |
 
+## Phase 12 — Responsive Design & PWA
+
+> Decision (2026-06-07): Make every page mobile-friendly so teachers (and others) can use the app on phone/tablet without a separate native app. Layer a PWA on top for home-screen install + offline basics.
+
+| # | Feature | Status | Feature Doc | Notes |
+|---|---|---|---|---|
+| 12.1 | Responsive audit — inventory all pages | 📋 Planned | — | List every route/component; score each on mobile usability (pass / needs work / broken) |
+| 12.2 | Global layout — shell & nav responsive | 📋 Planned | — | Sidebar collapses to hamburger menu on small screens; top bar adapts |
+| 12.3 | Dashboard responsive | 📋 Planned | — | Stat cards stack to single column on mobile |
+| 12.4 | Student management responsive | 📋 Planned | — | Table → card list on mobile; add/edit dialog full-screen on small viewport |
+| 12.5 | Teacher management responsive | 📋 Planned | — | Same pattern as student management |
+| 12.6 | Academic structure responsive | 📋 Planned | — | Tab strip scrollable on mobile; all 6 sub-tabs (AY, Classes, Batches, Subjects, Assignments, Enrollments) |
+| 12.7 | Attendance marking responsive | 📋 Planned | — | Priority — teachers mark attendance on phone; large touch targets for P/A/L/E toggles |
+| 12.8 | Teacher dashboard responsive | 📋 Planned | — | Check-in/out card prominently sized for mobile tap |
+| 12.9 | Teacher attendance admin page responsive | 📋 Planned | — | Date picker + table adapt to small screen |
+| 12.10 | Settings pages responsive | 📋 Planned | — | Branches, Role Permissions, Branding editor |
+| 12.11 | Login / auth pages responsive | 📋 Planned | — | Tenant-branded auth pages already partially responsive; verify & polish |
+| 12.12 | Landing page responsive | 📋 Planned | — | Public /t/:slug landing already marketed; verify all 7 sections on mobile |
+| 12.13 | PWA setup | 📋 Planned | — | `@angular/pwa` service worker; manifest (icon, name, theme_color); offline fallback page |
+
+**Responsive breakpoints to target:**
+
+| Label | Width |
+|---|---|
+| Mobile | < 768 px |
+| Tablet | 768 – 1024 px |
+| Desktop | > 1024 px |
+
+---
+
 ## What to Work on Next
 
 **Just completed (2026-06-05) — Phase 4 complete:**
@@ -228,9 +261,10 @@
 - STUDENT default nav now includes `attendance`
 
 **Next in priority order:**
-1. **Phase 5 — Fees** — fee plan management + payment recording (DB models exist, no controllers yet)
-2. **Phase 6 — Exams** — exam management, marks entry, report cards (DB models exist)
-3. **9.1 Real dashboard stats** — wire ORG_ADMIN dashboard cards to actual DB counts
+1. **Phase 12 — Responsive Design & PWA** — make every page mobile-friendly; teachers need mobile attendance marking
+2. **Phase 5 — Fees** — fee plan management + payment recording (DB models exist, no controllers yet)
+3. **Phase 6 — Exams** — exam management, marks entry, report cards (DB models exist)
+4. **9.1 Real dashboard stats** — wire ORG_ADMIN dashboard cards to actual DB counts
 
 ---
 

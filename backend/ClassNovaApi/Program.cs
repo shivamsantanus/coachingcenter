@@ -65,6 +65,8 @@ else
 builder.Services.AddTransient<OtpService>();
 builder.Services.AddTransient<PasswordResetService>();
 builder.Services.AddTransient<BrandingService>();
+builder.Services.AddTransient<TeacherAttendanceService>();
+builder.Services.AddHostedService<TeacherAttendanceAutoCloseJob>();
 
 if (builder.Environment.IsDevelopment())
     builder.Services.AddHostedService<AngularDevServerService>();
@@ -124,7 +126,9 @@ using (var scope = app.Services.CreateScope())
         new ClassNovaApi.Models.NavigationItem { Key = "timetable",  Label = "Timetable",  Icon = "pi-calendar",        RoutePath = "timetable",  SortOrder = 7, IsAdminOnly = false, IsLocked = false },
         new ClassNovaApi.Models.NavigationItem { Key = "teachers",        Label = "Teachers",    Icon = "pi-graduation-cap",  RoutePath = "teachers",        SortOrder = 8,  IsAdminOnly = true,  IsLocked = false },
         new ClassNovaApi.Models.NavigationItem { Key = "teacher-profile", Label = "My Profile",  Icon = "pi-user",            RoutePath = "teacher-profile", SortOrder = 9,  IsAdminOnly = false, IsLocked = false },
-        new ClassNovaApi.Models.NavigationItem { Key = "settings",        Label = "Settings",    Icon = "pi-cog",             RoutePath = "settings",        SortOrder = 10, IsAdminOnly = true,  IsLocked = true  },
+        new ClassNovaApi.Models.NavigationItem { Key = "my-attendance",       Label = "My Attendance",      Icon = "pi-calendar-plus",  RoutePath = "my-attendance",       SortOrder = 10, IsAdminOnly = false, IsLocked = false },
+        new ClassNovaApi.Models.NavigationItem { Key = "teacher-attendance",  Label = "Teacher Attendance", Icon = "pi-users",          RoutePath = "teacher-attendance",  SortOrder = 11, IsAdminOnly = true,  IsLocked = false },
+        new ClassNovaApi.Models.NavigationItem { Key = "settings",            Label = "Settings",           Icon = "pi-cog",            RoutePath = "settings",            SortOrder = 12, IsAdminOnly = true,  IsLocked = true  },
     };
     foreach (var item in seedNavItems)
     {

@@ -31,6 +31,8 @@ import { CreateTenantComponent } from './components/platform-admin/create-tenant
 import { AcademicComponent } from './components/academic/academic.component';
 import { AttendanceComponent } from './components/attendance/attendance.component';
 import { TeacherProfileComponent } from './components/teacher-profile/teacher-profile.component';
+import { MyAttendanceComponent } from './components/my-attendance/my-attendance.component';
+import { TeacherAttendanceAdminComponent } from './components/teacher-attendance-admin/teacher-attendance-admin.component';
 
 const onCustomDomain: CanMatchFn = () => inject(TenantContextService).isCustomDomain();
 
@@ -51,8 +53,10 @@ const shellChildren: Route[] = [
     ]
   },
   { path: 'academic',           component: AcademicComponent          },
-  { path: 'attendance',         component: AttendanceComponent        },
-  { path: 'teacher-profile',    component: TeacherProfileComponent    },
+  { path: 'attendance',            component: AttendanceComponent               },
+  { path: 'teacher-profile',      component: TeacherProfileComponent           },
+  { path: 'my-attendance',        component: MyAttendanceComponent              },
+  { path: 'teacher-attendance',   component: TeacherAttendanceAdminComponent   },
   { path: '',                  redirectTo: 'dashboard', pathMatch: 'full' },
   { path: '**',                redirectTo: 'dashboard'             },
 ];

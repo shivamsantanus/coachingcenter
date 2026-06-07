@@ -24,9 +24,12 @@ namespace ClassNovaApi.Controllers
         // Default nav keys per role — used when no DB entries exist yet for a tenant
         private static readonly Dictionary<string, HashSet<string>> DefaultPermissions = new()
         {
-            ["TEACHER"] = ["dashboard", "academic", "attendance", "teacher-profile"],
+            ["TEACHER"] = ["dashboard", "academic", "attendance", "teacher-profile", "my-attendance"],
             ["STUDENT"]  = ["dashboard", "attendance"]
         };
+
+        // Items that are personal to the TEACHER role — never shown to ORG_ADMIN or PLATFORM_ADMIN
+        private static readonly HashSet<string> TeacherPersonalKeys = ["my-attendance", "teacher-profile"];
 
         public NavigationController(AppDbContext context)
         {
@@ -49,7 +52,9 @@ namespace ClassNovaApi.Controllers
 
             if (role == "ORG_ADMIN" || role == "PLATFORM_ADMIN")
             {
-                visibleItems = allItems;
+                visibleItems = allItems
+                    .Where(item => !TeacherPersonalKeys.Contains(item.Key))
+                    .ToList();
             }
             else
             {

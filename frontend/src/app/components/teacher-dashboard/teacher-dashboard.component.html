@@ -27,6 +27,49 @@
     </div>
   </div>
 
+  <!-- Auto-close notification banner -->
+  @if (attendanceToday()?.hasUnclosedPrevious) {
+    <div class="td-autoclosed-banner">
+      <i class="pi pi-info-circle"></i>
+      <span>You didn't check out on <strong>{{ attendanceToday()!.unclosedDate | date:'mediumDate' }}</strong> — it has been automatically marked.</span>
+    </div>
+  }
+
+  <!-- Check-in / Check-out card -->
+  <div class="td-checkin-card">
+    <div class="td-checkin-info">
+      <span class="td-checkin-label">My Attendance Today</span>
+      @if (attendanceToday()?.status === 'ABSENT' || attendanceToday()?.status === 'LEAVE') {
+        <span class="td-checkin-status td-checkin-status--blocked">
+          Marked as {{ attendanceToday()!.status }} by admin
+        </span>
+      } @else if (attendanceToday()?.checkInTime && attendanceToday()?.checkOutTime) {
+        <span class="td-checkin-status td-checkin-status--done">
+          {{ attendanceToday()!.checkInTime | date:'shortTime' }} – {{ attendanceToday()!.checkOutTime | date:'shortTime' }}
+          @if (attendanceToday()!.workingMinutes !== null) {
+            &nbsp;({{ attendanceToday()!.workingMinutes! | number:'1.0-0' }} min)
+          }
+        </span>
+      } @else if (attendanceToday()?.checkInTime) {
+        <span class="td-checkin-status td-checkin-status--in">
+          Checked in at {{ attendanceToday()!.checkInTime | date:'shortTime' }}
+        </span>
+      } @else {
+        <span class="td-checkin-status td-checkin-status--none">Not checked in yet</span>
+      }
+    </div>
+
+    @if (!attendanceToday()?.status || attendanceToday()?.status === 'PRESENT') {
+      @if (!attendanceToday()?.checkInTime) {
+        <button pButton label="Check In" icon="pi pi-sign-in" severity="success"
+          [loading]="checkInOutLoading()" (click)="checkIn()"></button>
+      } @else if (!attendanceToday()?.checkOutTime) {
+        <button pButton label="Check Out" icon="pi pi-sign-out" severity="warn"
+          [loading]="checkInOutLoading()" (click)="checkOut()"></button>
+      }
+    }
+  </div>
+
   <!-- Stats strip -->
   <div class="td-stats">
     <div class="td-stat">

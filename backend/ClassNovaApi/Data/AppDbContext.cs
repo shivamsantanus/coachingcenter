@@ -28,6 +28,7 @@ namespace ClassNovaApi.Data
         public DbSet<ExamSubject> ExamSubjects { get; set; }
         public DbSet<Mark> Marks { get; set; }
         public DbSet<Attendance> Attendances { get; set; }
+        public DbSet<TeacherAttendance> TeacherAttendances { get; set; }
         public DbSet<ClassSchedule> ClassSchedules { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<PendingRegistration> PendingRegistrations { get; set; }
@@ -228,6 +229,14 @@ namespace ClassNovaApi.Data
             modelBuilder.Entity<RoleNavPermission>()
                 .HasIndex(r => new { r.TenantId, r.RoleCode, r.NavItemKey })
                 .IsUnique();
+
+            // TeacherAttendance — one record per teacher per day
+            modelBuilder.Entity<TeacherAttendance>()
+                .HasIndex(ta => new { ta.TenantId, ta.TeacherId, ta.Date })
+                .IsUnique();
+
+            modelBuilder.Entity<TeacherAttendance>()
+                .HasIndex(ta => new { ta.TenantId, ta.Date });
 
             // Restrict cascade deletes on all FKs to avoid accidental data loss
             foreach (var fk in modelBuilder.Model.GetEntityTypes()
