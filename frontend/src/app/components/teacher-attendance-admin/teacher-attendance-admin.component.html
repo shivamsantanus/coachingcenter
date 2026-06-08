@@ -3,129 +3,231 @@
 <div class="taa-page">
 
   <!-- Header -->
-  <div class="taa-header">
+  <div class="taa-header no-print">
     <h1 class="taa-title">Teacher Attendance</h1>
-    <div class="taa-controls">
-      <p-datepicker [(ngModel)]="selectedDate" (onSelect)="loadDaily()"
-        dateFormat="dd/mm/yy" [showIcon]="true" styleClass="taa-datepicker" />
-      <button pButton label="Mark All Present" icon="pi pi-check-circle"
-        severity="secondary" [outlined]="true" (click)="markAllPresent()"></button>
-      <button pButton icon="pi pi-save"
-        [label]="hasDirtyRows() ? 'Save Changes' : 'No Changes'"
-        [severity]="hasDirtyRows() ? 'primary' : 'secondary'"
-        [outlined]="!hasDirtyRows()"
-        [disabled]="!hasDirtyRows()"
-        [loading]="isSaving()"
-        (click)="saveAll()">
-      </button>
-    </div>
+
+    @if (activeTab() === 'daily') {
+      <div class="taa-controls">
+        <p-datepicker [(ngModel)]="selectedDate" (onSelect)="loadDaily()"
+          dateFormat="dd/mm/yy" [showIcon]="true" styleClass="taa-datepicker" />
+        <button pButton label="Mark All Present" icon="pi pi-check-circle"
+          severity="secondary" [outlined]="true" (click)="markAllPresent()"></button>
+        <button pButton icon="pi pi-save"
+          [label]="hasDirtyRows() ? 'Save Changes' : 'No Changes'"
+          [severity]="hasDirtyRows() ? 'primary' : 'secondary'"
+          [outlined]="!hasDirtyRows()"
+          [disabled]="!hasDirtyRows()"
+          [loading]="isSaving()"
+          (click)="saveAll()">
+        </button>
+      </div>
+    } @else {
+      <div class="taa-controls">
+        <p-select [options]="monthOptions" optionLabel="label" optionValue="value"
+          [(ngModel)]="selectedReportMonth" styleClass="taa-report-select" />
+        <p-select [options]="yearOptions" optionLabel="label" optionValue="value"
+          [(ngModel)]="selectedReportYear" styleClass="taa-report-select" />
+        <button pButton label="Generate" icon="pi pi-refresh"
+          [loading]="isLoadingReport()" (click)="loadMonthlyReport()"></button>
+        @if (monthlyReport()) {
+          <button pButton label="Print" icon="pi pi-print"
+            severity="secondary" [outlined]="true" (click)="printReport()"></button>
+        }
+      </div>
+    }
   </div>
 
-  @if (isLoading()) {
-    <div class="taa-loading">
-      <i class="pi pi-spin pi-spinner"></i>
-      <span>Loading…</span>
-    </div>
-  } @else if (rows().length === 0) {
-    <div class="taa-empty">
-      <i class="pi pi-users"></i>
-      <p>No active teachers found.</p>
-    </div>
-  } @else {
+  <!-- Tab bar -->
+  <div class="taa-tab-bar no-print">
+    <button class="taa-tab-btn" [class.active]="activeTab() === 'daily'"
+      (click)="activeTab.set('daily')">
+      <i class="pi pi-calendar-clock"></i> Daily Attendance
+    </button>
+    <button class="taa-tab-btn" [class.active]="activeTab() === 'report'"
+      (click)="activeTab.set('report')">
+      <i class="pi pi-chart-bar"></i> Monthly Report
+    </button>
+  </div>
 
-    <div class="taa-table-wrapper">
-      <table class="taa-table">
-        <thead>
-          <tr>
-            <th>Teacher</th>
-            <th>Status</th>
-            <th>Check In (Time)</th>
-            <th>Check Out (Time)</th>
-            <th>Working Hours</th>
-            <th>Note</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of rows(); track trackByTeacherId($index, row)) {
-            <tr [class.taa-row--flagged]="row.item.hasCheckInAttempt"
-                [class.taa-row--autoclosed]="row.item.isAutoClosed"
-                [class.taa-row--dirty]="row.dirty">
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- TAB 1: DAILY ATTENDANCE                                                -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  @if (activeTab() === 'daily') {
 
-              <!-- Teacher name + badges -->
-              <td class="taa-cell-name">
-                <div class="taa-teacher-name">{{ row.item.teacherName }}</div>
-                <div class="taa-employee-code">{{ row.item.employeeCode }}</div>
-                <div class="taa-badges">
-                  @if (row.item.isAutoClosed) {
-                    <span class="taa-badge taa-badge--auto"
-                      pTooltip="Checkout was auto-filled — verify with teacher">Auto-closed</span>
-                  }
-                  @if (row.item.hasCheckInAttempt) {
-                    <span class="taa-badge taa-badge--attempt"
-                      pTooltip="Teacher attempted check-in at {{ row.item.checkInAttemptedAt | date:'shortTime' }} but was blocked by current status">
-                      Check-in attempted
-                    </span>
-                  }
-                  @if (row.dirty) {
-                    <span class="taa-badge taa-badge--dirty">Unsaved</span>
-                  }
-                </div>
-              </td>
+    @if (isLoading()) {
+      <div class="taa-loading">
+        <i class="pi pi-spin pi-spinner"></i>
+        <span>Loading…</span>
+      </div>
+    } @else if (rows().length === 0) {
+      <div class="taa-empty">
+        <i class="pi pi-users"></i>
+        <p>No active teachers found.</p>
+      </div>
+    } @else {
 
-              <!-- Status -->
-              <td>
-                <p-select [options]="statusOptions" optionLabel="label" optionValue="value"
-                  [(ngModel)]="row.selectedStatus" placeholder="Select…"
-                  styleClass="taa-status-select" (onChange)="onStatusChange(row)" />
-              </td>
-
-              <!-- Check in time -->
-              <td>
-                <input type="time" class="taa-time-input"
-                  [(ngModel)]="row.checkInTimeInput" (ngModelChange)="markDirty(row)"
-                  [disabled]="isTimeDisabled(row)"
-                  [class.taa-time-input--disabled]="isTimeDisabled(row)" />
-                @if (row.item.originalCheckInTime && !isTimeDisabled(row)) {
-                  <div class="taa-original">
-                    Was: {{ row.item.originalCheckInTime | date:'shortTime' }}
-                  </div>
-                }
-              </td>
-
-              <!-- Check out time -->
-              <td>
-                <input type="time" class="taa-time-input"
-                  [(ngModel)]="row.checkOutTimeInput" (ngModelChange)="markDirty(row)"
-                  [disabled]="isTimeDisabled(row)"
-                  [class.taa-time-input--disabled]="isTimeDisabled(row)" />
-                @if (row.item.originalCheckOutTime && !isTimeDisabled(row)) {
-                  <div class="taa-original">
-                    Was: {{ row.item.originalCheckOutTime | date:'shortTime' }}
-                  </div>
-                }
-              </td>
-
-              <!-- Working hours -->
-              <td class="taa-cell-hours">
-                @if (row.item.isAutoClosed) {
-                  <span class="taa-pending">Pending</span>
-                } @else if (row.item.workingMinutes !== null) {
-                  {{ row.item.workingMinutes | number:'1.0-0' }} min
-                } @else {
-                  —
-                }
-              </td>
-
-              <!-- Note -->
-              <td>
-                <input pInputText type="text" [(ngModel)]="row.noteInput"
-                  (ngModelChange)="markDirty(row)" placeholder="Note…" class="taa-note-input" />
-              </td>
-
+      <div class="taa-table-wrapper">
+        <table class="taa-table">
+          <thead>
+            <tr>
+              <th>Teacher</th>
+              <th>Status</th>
+              <th>Check In (Time)</th>
+              <th>Check Out (Time)</th>
+              <th>Working Hours</th>
+              <th>Note</th>
             </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            @for (row of rows(); track trackByTeacherId($index, row)) {
+              <tr [class.taa-row--flagged]="row.item.hasCheckInAttempt"
+                  [class.taa-row--autoclosed]="row.item.isAutoClosed"
+                  [class.taa-row--dirty]="row.dirty">
+
+                <!-- Teacher name + badges -->
+                <td class="taa-cell-name">
+                  <div class="taa-teacher-name">{{ row.item.teacherName }}</div>
+                  <div class="taa-employee-code">{{ row.item.employeeCode }}</div>
+                  <div class="taa-badges">
+                    @if (row.item.isAutoClosed) {
+                      <span class="taa-badge taa-badge--auto"
+                        pTooltip="Checkout was auto-filled — verify with teacher">Auto-closed</span>
+                    }
+                    @if (row.item.hasCheckInAttempt) {
+                      <span class="taa-badge taa-badge--attempt"
+                        pTooltip="Teacher attempted check-in at {{ row.item.checkInAttemptedAt | date:'shortTime' }} but was blocked by current status">
+                        Check-in attempted
+                      </span>
+                    }
+                    @if (row.dirty) {
+                      <span class="taa-badge taa-badge--dirty">Unsaved</span>
+                    }
+                  </div>
+                </td>
+
+                <!-- Status -->
+                <td>
+                  <p-select [options]="statusOptions" optionLabel="label" optionValue="value"
+                    [(ngModel)]="row.selectedStatus" placeholder="Select…"
+                    styleClass="taa-status-select" (onChange)="onStatusChange(row)" />
+                </td>
+
+                <!-- Check in time -->
+                <td>
+                  <input type="time" class="taa-time-input"
+                    [(ngModel)]="row.checkInTimeInput" (ngModelChange)="markDirty(row)"
+                    [disabled]="isTimeDisabled(row)"
+                    [class.taa-time-input--disabled]="isTimeDisabled(row)" />
+                  @if (row.item.originalCheckInTime && !isTimeDisabled(row)) {
+                    <div class="taa-original">
+                      Was: {{ row.item.originalCheckInTime | date:'shortTime' }}
+                    </div>
+                  }
+                </td>
+
+                <!-- Check out time -->
+                <td>
+                  <input type="time" class="taa-time-input"
+                    [(ngModel)]="row.checkOutTimeInput" (ngModelChange)="markDirty(row)"
+                    [disabled]="isTimeDisabled(row)"
+                    [class.taa-time-input--disabled]="isTimeDisabled(row)" />
+                  @if (row.item.originalCheckOutTime && !isTimeDisabled(row)) {
+                    <div class="taa-original">
+                      Was: {{ row.item.originalCheckOutTime | date:'shortTime' }}
+                    </div>
+                  }
+                </td>
+
+                <!-- Working hours -->
+                <td class="taa-cell-hours">
+                  @if (row.item.isAutoClosed) {
+                    <span class="taa-pending">Pending</span>
+                  } @else if (row.item.workingMinutes !== null) {
+                    {{ formatMinutes(row.item.workingMinutes) }}
+                  } @else {
+                    —
+                  }
+                </td>
+
+                <!-- Note -->
+                <td>
+                  <input pInputText type="text" [(ngModel)]="row.noteInput"
+                    (ngModelChange)="markDirty(row)" placeholder="Note…" class="taa-note-input" />
+                </td>
+
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+    }
+
+  }
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- TAB 2: MONTHLY REPORT                                                  -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  @else {
+
+    <div class="print-region">
+
+      <!-- Print header: hidden on screen, revealed by @media print -->
+      <div class="taa-print-header print-report-header">
+        <div class="print-title">Teacher Attendance Report — {{ reportMonthLabel }}</div>
+      </div>
+
+      @if (isLoadingReport()) {
+        <div class="taa-loading">
+          <i class="pi pi-spin pi-spinner"></i>
+          <span>Loading report…</span>
+        </div>
+      } @else if (!monthlyReport()) {
+        <div class="taa-empty">
+          <i class="pi pi-calendar"></i>
+          <p>Select a month and year, then click Generate.</p>
+        </div>
+      } @else if (monthlyReport()!.teachers.length === 0) {
+        <div class="taa-empty">
+          <i class="pi pi-users"></i>
+          <p>No active teachers found for this period.</p>
+        </div>
+      } @else {
+
+        <div class="taa-report-wrapper">
+          <table class="taa-report-table">
+            <thead>
+              <tr>
+                <th class="taa-col-sno">#</th>
+                <th>Teacher</th>
+                <th>Emp. Code</th>
+                <th class="taa-col-center">Present</th>
+                <th class="taa-col-center">Absent</th>
+                <th class="taa-col-center">Half Day</th>
+                <th class="taa-col-center">Leave</th>
+                <th class="taa-col-center">Total Days</th>
+                <th>Working Hours</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (teacher of monthlyReport()!.teachers; track teacher.employeeCode; let i = $index) {
+                <tr>
+                  <td class="taa-col-sno">{{ i + 1 }}</td>
+                  <td class="taa-report-name">{{ teacher.teacherName }}</td>
+                  <td class="taa-report-code">{{ teacher.employeeCode }}</td>
+                  <td class="taa-col-center taa-col-p">{{ teacher.present }}</td>
+                  <td class="taa-col-center taa-col-a">{{ teacher.absent }}</td>
+                  <td class="taa-col-center taa-col-h">{{ teacher.halfDay }}</td>
+                  <td class="taa-col-center taa-col-l">{{ teacher.leave }}</td>
+                  <td class="taa-col-center">{{ teacher.totalDays }}</td>
+                  <td>{{ formatMinutes(teacher.confirmedWorkingMinutes) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+      }
     </div>
 
   }

@@ -14,6 +14,7 @@ import { TeacherAttendanceService } from '../../services/teacher-attendance.serv
 import {
   AdminDailyTeacherAttendanceItem,
   AdminMarkAttendanceRequest,
+  AdminMonthlyReportResponse,
 } from '../../models/teacher-attendance.models';
 
 type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'HALF_DAY' | 'LEAVE';
@@ -44,12 +45,33 @@ export class TeacherAttendanceAdminComponent implements OnInit, OnDestroy {
   private readonly messageService    = inject(MessageService);
   private readonly destroy$          = new Subject<void>();
 
+  activeTab    = signal<'daily' | 'report'>('daily');
   isLoading    = signal(false);
   isSaving     = signal(false);
   rows         = signal<RowState[]>([]);
   selectedDate = new Date();
 
+  isLoadingReport  = signal(false);
+  monthlyReport    = signal<AdminMonthlyReportResponse | null>(null);
+  selectedReportMonth = new Date().getMonth() + 1;
+  selectedReportYear  = new Date().getFullYear();
+
   hasDirtyRows = computed(() => this.rows().some(row => row.dirty));
+
+  readonly monthOptions = [
+    { label: 'January', value: 1 },  { label: 'February', value: 2 },
+    { label: 'March', value: 3 },    { label: 'April', value: 4 },
+    { label: 'May', value: 5 },      { label: 'June', value: 6 },
+    { label: 'July', value: 7 },     { label: 'August', value: 8 },
+    { label: 'September', value: 9 }, { label: 'October', value: 10 },
+    { label: 'November', value: 11 }, { label: 'December', value: 12 },
+  ];
+
+  readonly yearOptions: { label: string; value: number }[] = (() => {
+    const current = new Date().getFullYear();
+    return [current + 1, current, current - 1, current - 2]
+      .map(y => ({ label: String(y), value: y }));
+  })();
 
   readonly statusOptions: { label: string; value: AttendanceStatus }[] = [
     { label: 'Present',  value: 'PRESENT'  },
@@ -162,6 +184,41 @@ export class TeacherAttendanceAdminComponent implements OnInit, OnDestroy {
 
   trackByTeacherId(_index: number, row: RowState): string {
     return row.item.teacherId;
+  }
+
+  get reportMonthLabel(): string {
+    const month = this.monthOptions.find(m => m.value === this.selectedReportMonth);
+    return month ? `${month.label} ${this.selectedReportYear}` : '';
+  }
+
+  loadMonthlyReport(): void {
+    this.isLoadingReport.set(true);
+    this.attendanceService
+      .adminGetMonthlyReport(this.selectedReportMonth, this.selectedReportYear)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: response => {
+          this.monthlyReport.set(response.data);
+          this.isLoadingReport.set(false);
+        },
+        error: (err: Error) => {
+          this.isLoadingReport.set(false);
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message });
+        }
+      });
+  }
+
+  printReport(): void {
+    window.print();
+  }
+
+  formatMinutes(minutes: number | null | undefined): string {
+    if (!minutes) return '—';
+    const hours = Math.floor(minutes / 60);
+    const mins  = minutes % 60;
+    if (hours === 0) return `${mins}m`;
+    if (mins  === 0) return `${hours}h`;
+    return `${hours}h ${mins}m`;
   }
 
   private buildRequest(row: RowState): AdminMarkAttendanceRequest {

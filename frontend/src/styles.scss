@@ -438,6 +438,28 @@ html, body { height: 100%; }
   .col-a { color: #cc0000 !important; }
   .col-l { color: #c05c00 !important; }
   .col-e { color: #0055bb !important; }
+
+  // ── Teacher attendance monthly report ─────────────────────────────────────
+  .taa-print-header { display: block !important; margin-bottom: 8pt; }
+
+  .taa-report-wrapper { overflow: visible !important; }
+
+  .taa-report-table {
+    font-size: 9pt;
+    width: 100%;
+    border-collapse: collapse;
+
+    th, td {
+      border: 0.5pt solid #bbb !important;
+      padding: 3pt 6pt !important;
+      white-space: nowrap;
+    }
+  }
+
+  .taa-col-p { color: #1a7a1a !important; }
+  .taa-col-a { color: #cc0000 !important; }
+  .taa-col-h { color: #c05c00 !important; }
+  .taa-col-l { color: #0055bb !important; }
 }
 
 // ── Credentials dialog (teacher / student account creation) ──────────────
@@ -521,3 +543,28 @@ html, body { height: 100%; }
 
 // -- Change password dialog ---------------------------------------
 .p-dialog.change-password-dialog { width: 420px; max-width: 95vw; }
+
+// ── Global mobile responsive ──────────────────────────────────────────────────
+// Breakpoints:  mobile < 768px  |  tablet 768–1024px  |  desktop > 1024px
+
+@media (max-width: 767px) {
+  // PrimeNG p-tablist: allow horizontal scroll on mobile so all tabs are reachable
+  .p-tablist {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
+  }
+
+  // Dialogs go edge-to-edge on phones
+  .p-dialog.student-dialog,
+  .p-dialog.teacher-dialog {
+    width: 100vw;
+    max-width: 100vw;
+    margin: 0;
+    border-radius: 0;
+  }
+
+  // Status select min-width shrinks so it doesn't overflow on mobile
+  .p-select.status-select { min-width: 120px; }
+}

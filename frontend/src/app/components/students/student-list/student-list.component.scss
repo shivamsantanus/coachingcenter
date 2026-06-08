@@ -59,6 +59,7 @@
   border-radius: 12px;
   border: 1px solid #e2e8f0;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  overflow-x: auto;
   overflow-y: auto;
   max-height: calc(100vh - 280px);
   min-height: 200px;
@@ -241,5 +242,18 @@ td .guardian-phone {
     color: #64748b;
     min-width: 120px;
     text-align: center;
+  }
+}
+
+// ── Mobile responsive ─────────────────────────────────────────────────────────
+@media (max-width: 767px) {
+  .page-header {
+    flex-direction: column;
+    gap: 0.875rem;
+    align-items: flex-start;
+  }
+
+  .student-table {
+    min-width: 640px; // Force horizontal scroll rather than column squishing
   }
 }

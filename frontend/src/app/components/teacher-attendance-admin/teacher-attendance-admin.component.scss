@@ -21,6 +21,37 @@
   flex-wrap: wrap;
 }
 
+// ── Tab bar ───────────────────────────────────────────────────────────────────
+.taa-tab-bar {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--p-surface-border);
+  margin-bottom: 1.5rem;
+}
+
+.taa-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.625rem 1.25rem;
+  border: none;
+  background: transparent;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.15s, border-color 0.15s;
+
+  &:hover { color: #1e293b; }
+
+  &.active {
+    color: var(--p-primary-color);
+    border-bottom-color: var(--p-primary-color);
+  }
+}
+
 // ── Loading / empty ───────────────────────────────────────────────────────────
 .taa-loading,
 .taa-empty {
@@ -42,7 +73,7 @@
   border-radius: 10px;
   overflow-x: auto;
   overflow-y: auto;
-  max-height: calc(100vh - 260px);
+  max-height: calc(100vh - 330px);
   min-height: 200px;
 }
 
@@ -130,4 +161,102 @@
   font-size: 0.7rem;
   color: var(--p-text-muted-color);
   margin-top: 0.2rem;
+}
+
+// ── Report select controls ────────────────────────────────────────────────────
+.taa-report-select { min-width: 130px; }
+
+// ── Print header (hidden on screen, shown by @media print in styles.scss) ────
+.taa-print-header { display: none; }
+
+// ── Monthly report table ──────────────────────────────────────────────────────
+.taa-report-wrapper {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: calc(100vh - 330px);
+  min-height: 200px;
+}
+
+.taa-report-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+
+  thead tr { border-bottom: 1px solid #e2e8f0; }
+
+  th {
+    background: #f8fafc;
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    box-shadow: 0 1px 0 #e2e8f0;
+  }
+
+  td {
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+    color: #334155;
+    font-size: 0.875rem;
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: #f8fafc; }
+}
+
+.taa-col-sno    { color: #94a3b8; width: 3rem; text-align: center; }
+.taa-col-center { text-align: center; }
+.taa-report-name { font-weight: 500; }
+.taa-report-code { font-family: 'Courier New', monospace; font-size: 0.8rem; color: #475569; }
+.taa-col-p { color: #16a34a; font-weight: 600; }
+.taa-col-a { color: #ef4444; font-weight: 600; }
+.taa-col-h { color: #d97706; font-weight: 600; }
+.taa-col-l { color: #6366f1; font-weight: 600; }
+
+// ── Mobile responsive ─────────────────────────────────────────────────────────
+@media (max-width: 767px) {
+  .taa-page { padding: 1rem; }
+
+  // Header stacks the title and controls vertically
+  .taa-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  // Controls go full-width and stack
+  .taa-controls {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  // Tab bar scrolls horizontally
+  .taa-tab-bar {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
+  }
+
+  .taa-tab-btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  // Time inputs fill available space on mobile
+  .taa-time-input { width: 100%; }
+
+  // Note input full-width on mobile
+  .taa-note-input { max-width: 100%; }
 }

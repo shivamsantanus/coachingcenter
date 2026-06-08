@@ -3,10 +3,18 @@
   <app-change-password (passwordChanged)="isFirstLogin.set(false)" />
 }
 
+<!-- Mobile sidebar backdrop -->
+<div
+  class="sidebar-overlay"
+  [class.sidebar-overlay--visible]="sidebarOpen()"
+  (click)="closeSidebar()"
+  aria-hidden="true">
+</div>
+
 <div class="shell">
 
   <!-- Sidebar -->
-  <aside class="sidebar">
+  <aside class="sidebar" [class.sidebar--open]="sidebarOpen()">
     <div class="sidebar-brand">
       <span class="brand-name">ClassNova</span>
       <span class="tenant-name">{{ context?.tenantName }}</span>
@@ -24,7 +32,8 @@
           <a
             [routerLink]="navRoute(item)"
             routerLinkActive="active"
-            class="nav-item">
+            class="nav-item"
+            (click)="closeSidebar()">
             <i class="pi {{ item.icon }}"></i>
             <span>{{ item.label }}</span>
           </a>
@@ -46,6 +55,9 @@
     <!-- Header -->
     <header class="header">
       <div class="header-left">
+        <button class="hamburger-btn" (click)="toggleSidebar()" aria-label="Toggle navigation">
+          <i class="pi pi-bars"></i>
+        </button>
         <a [routerLink]="tenantContext.landingUrl" class="home-link" title="Back to home page">
           <i class="pi pi-home"></i>
         </a>

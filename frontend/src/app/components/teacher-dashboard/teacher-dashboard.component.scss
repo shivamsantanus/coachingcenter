@@ -239,3 +239,28 @@
 
 .td-subject-name  { font-size: 0.875rem; font-weight: 600; color: var(--p-primary-color); }
 .td-subject-batch { font-size: 0.75rem; color: var(--p-text-muted-color); margin-top: 0.1rem; }
+
+// ── Mobile responsive ─────────────────────────────────────────────────────────
+@media (max-width: 767px) {
+  // Stats strip: 2-column grid instead of a tight horizontal row
+  .td-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  // Check-in card stacks vertically on very small screens
+  .td-checkin-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  // Welcome bar shrinks avatar slightly
+  .td-avatar {
+    width: 2.75rem;
+    height: 2.75rem;
+    font-size: 1rem;
+  }
+
+  .td-name { font-size: 1.25rem; }
+}

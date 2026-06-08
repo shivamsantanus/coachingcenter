@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
@@ -29,6 +29,7 @@ export class ShellComponent implements OnInit, OnDestroy {
   navItems     = signal<NavItem[]>([]);
   navLoaded    = signal(false);
   isFirstLogin = signal(this.authService.getContext()?.isFirstLogin === true);
+  sidebarOpen  = signal(false);
 
   ngOnInit(): void {
     const slug = this.context?.tenantSlug;
@@ -71,6 +72,21 @@ export class ShellComponent implements OnInit, OnDestroy {
 
   trackNavItem(_index: number, item: NavItem): string {
     return item.key;
+  }
+
+  toggleSidebar(): void {
+    this.sidebarOpen.update(open => !open);
+  }
+
+  closeSidebar(): void {
+    this.sidebarOpen.set(false);
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    if (window.innerWidth >= 768) {
+      this.sidebarOpen.set(false);
+    }
   }
 
   logout(): void {
