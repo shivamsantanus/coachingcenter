@@ -11,7 +11,7 @@
   background: var(--p-content-background);
   border: 1px solid var(--p-content-border-color);
   border-radius: var(--p-border-radius-lg, 0.5rem);
-  overflow-y: auto;
+  overflow: auto;
   max-height: calc(100vh - 220px);
   min-height: 200px;
   margin-bottom: 1rem;
@@ -29,6 +29,7 @@
 // ── Matrix table ──────────────────────────────────────────────────────────────
 .matrix-table {
   width: 100%;
+  min-width: 360px;
   border-collapse: collapse;
   font-size: 0.875rem;
 
@@ -121,7 +122,8 @@
 // ── Legend ────────────────────────────────────────────────────────────────────
 .legend {
   display: flex;
-  gap: 1.5rem;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
   align-items: center;
   padding: 0.75rem 1rem;
   border-top: 1px solid var(--p-content-border-color);
@@ -137,6 +139,13 @@
 }
 
 .legend-lock { color: var(--p-text-muted-color); font-size: 0.75rem; }
+
+@media (max-width: 767px) {
+  .toggle-btn {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+}
 
 // ── Info box ──────────────────────────────────────────────────────────────────
 .info-box {

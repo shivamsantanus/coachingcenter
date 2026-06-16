@@ -23,8 +23,15 @@ $mobile-breakpoint: 768px;
 }
 
 .sidebar-brand {
+  display: block;
   padding: 1.25rem 1.25rem 1rem;
   border-bottom: 1px solid #334155;
+  text-decoration: none;
+  transition: background 0.15s;
+
+  &:hover {
+    background: #334155;
+  }
 
   .brand-name {
     display: block;
@@ -144,25 +151,6 @@ $mobile-breakpoint: 768px;
   align-items: center;
   justify-content: space-between;
   padding: 0 1.5rem;
-}
-
-.home-link {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 6px;
-  color: #64748b;
-  text-decoration: none;
-  transition: background 0.15s, color 0.15s;
-
-  i { font-size: 1rem; }
-
-  &:hover {
-    background: #f1f5f9;
-    color: #1e293b;
-  }
 }
 
 .header-right {

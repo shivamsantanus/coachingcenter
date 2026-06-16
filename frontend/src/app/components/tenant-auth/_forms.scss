@@ -9,6 +9,12 @@
     padding: 2.5rem 2rem;
     min-height: 100%;
     width: 100%;
+
+    @media (max-width: 480px) {
+      padding: 1.5rem 1.25rem;
+      align-items: flex-start;
+      padding-top: 2rem;
+    }
   }
 
   .form-inner {
@@ -20,7 +26,7 @@
     margin-bottom: 2rem;
 
     h2 {
-      font-size: 1.625rem;
+      font-size: clamp(1.375rem, 4vw, 1.625rem);
       font-weight: 700;
       color: #111827;
       margin: 0 0 0.35rem;

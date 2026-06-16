@@ -15,10 +15,10 @@
 
   <!-- Sidebar -->
   <aside class="sidebar" [class.sidebar--open]="sidebarOpen()">
-    <div class="sidebar-brand">
+    <a [routerLink]="tenantContext.landingUrl" class="sidebar-brand" title="Go to home page" (click)="closeSidebar()">
       <span class="brand-name">ClassNova</span>
       <span class="tenant-name">{{ context?.tenantName }}</span>
-    </div>
+    </a>
 
     <nav class="sidebar-nav">
       @if (!navLoaded()) {
@@ -58,9 +58,6 @@
         <button class="hamburger-btn" (click)="toggleSidebar()" aria-label="Toggle navigation">
           <i class="pi pi-bars"></i>
         </button>
-        <a [routerLink]="tenantContext.landingUrl" class="home-link" title="Back to home page">
-          <i class="pi pi-home"></i>
-        </a>
       </div>
       <div class="header-right">
         <div class="user-info">

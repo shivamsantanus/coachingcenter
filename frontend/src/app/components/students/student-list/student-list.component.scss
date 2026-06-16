@@ -248,9 +248,7 @@ td .guardian-phone {
 // ── Mobile responsive ─────────────────────────────────────────────────────────
 @media (max-width: 767px) {
   .page-header {
-    flex-direction: column;
-    gap: 0.875rem;
-    align-items: flex-start;
+    align-items: center;
   }
 
   .student-table {

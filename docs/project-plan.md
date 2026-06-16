@@ -4,7 +4,7 @@
 > Never start a feature without a row in the plan. Never finish one without marking it done
 > and linking the feature doc. This is the single source of truth for project state.
 
-**Last updated:** 2026-06-07 (Phase 12 responsive design underway — shell hamburger/off-canvas sidebar done; student/teacher lists, attendance marking, teacher dashboard, teacher attendance admin all responsive; global mobile styles in styles.scss.)
+**Last updated:** 2026-06-16 (Phase 12 responsive design — 12.10 settings pages done (branches, role-permissions, branding editor); 12.11 auth pages done (padding + font scaling via _forms.scss clamp); 12.12 landing page done (section padding, clamp on titles, contact grid breakpoint, hero min-height, floating button safe-area).)
 
 ---
 
@@ -237,9 +237,9 @@
 | 12.7 | Attendance marking responsive | ✅ Done | — | Tab bar scrollable; filters stack vertically; P/A/L/E buttons grow to 2.75rem (44px) for touch; sheet toolbar stacks |
 | 12.8 | Teacher dashboard responsive | ✅ Done | — | Stats strip → 2-column grid; check-in card stacks vertically; avatar + name scale down |
 | 12.9 | Teacher attendance admin page responsive | ✅ Done | — | Header + controls stack; tab bar scrollable; time/note inputs go full width on mobile |
-| 12.10 | Settings pages responsive | 📋 Planned | — | Branches, Role Permissions, Branding editor |
-| 12.11 | Login / auth pages responsive | 📋 Planned | — | Tenant-branded auth pages already partially responsive; verify & polish |
-| 12.12 | Landing page responsive | 📋 Planned | — | Public /t/:slug landing already marketed; verify all 7 sections on mobile |
+| 12.10 | Settings pages responsive | ✅ Done | — | Branches: table scroll + min-width + header stack + dialog edge-to-edge on mobile; Role Permissions: matrix scroll + legend wrap + 44px touch toggles; Branding Editor: mobile padding + field-sm full-width + actions wrap |
+| 12.11 | Login / auth pages responsive | ✅ Done | — | _forms.scss: host padding reduced on ≤480px; h2 uses clamp(1.375rem, 4vw, 1.625rem); left brand panel already hides at 860px |
+| 12.12 | Landing page responsive | ✅ Done | — | Section padding 5rem→3rem on mobile; section-title uses clamp(); contact grid breakpoint 680→768px; hero min-height reduced; floating buttons respect safe-area-inset-bottom; carousel responsiveOptions already set in TS |
 | 12.13 | PWA setup | 📋 Planned | — | `@angular/pwa` service worker; manifest (icon, name, theme_color); offline fallback page |
 
 **Responsive breakpoints to target:**
@@ -262,7 +262,7 @@
 - STUDENT default nav now includes `attendance`
 
 **Next in priority order:**
-1. **Phase 12 — Responsive (remaining)** — 12.10 Settings pages (branches, role-permissions, branding editor); 12.11 auth pages polish; 12.12 landing page verify; 12.13 PWA setup
+1. **Phase 12 — PWA (12.13)** — `@angular/pwa` service worker, manifest, offline fallback — last remaining Phase 12 item
 2. **Phase 5 — Fees** — fee plan management + payment recording (DB models exist, no controllers yet)
 3. **Phase 6 — Exams** — exam management, marks entry, report cards (DB models exist)
 4. **9.1 Real dashboard stats** — wire ORG_ADMIN dashboard cards to actual DB counts
