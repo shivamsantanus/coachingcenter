@@ -1,0 +1,267 @@
+<p-toast position="top-right" />
+
+<div class="tab-content">
+
+  <div class="tab-header">
+    <div>
+      <h2 class="tab-title">Fee Collection</h2>
+      <p class="tab-subtitle">Select a batch to view all enrolled students and record payments</p>
+    </div>
+  </div>
+
+  <!-- Cascading filters -->
+  <div class="filters-bar">
+    <div class="filter-group">
+      <label class="filter-label">Academic Year</label>
+      <p-select
+        [options]="ayOptions()"
+        [ngModel]="selectedAyId()"
+        (ngModelChange)="onAyChange($event)"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Select year"
+        [loading]="isLoadingYears()"
+        appendTo="body"
+        styleClass="filter-select" />
+    </div>
+
+    <i class="pi pi-chevron-right filter-arrow"></i>
+
+    <div class="filter-group">
+      <label class="filter-label">Class</label>
+      <p-select
+        [options]="classOptions()"
+        [ngModel]="selectedClassId()"
+        (ngModelChange)="onClassChange($event)"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Select class"
+        [disabled]="!selectedAyId()"
+        [loading]="isLoadingClasses()"
+        appendTo="body"
+        styleClass="filter-select" />
+    </div>
+
+    <i class="pi pi-chevron-right filter-arrow"></i>
+
+    <div class="filter-group">
+      <label class="filter-label">Batch</label>
+      <p-select
+        [options]="batchOptions()"
+        [ngModel]="selectedBatchId()"
+        (ngModelChange)="onBatchChange($event)"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Select batch"
+        [disabled]="!selectedClassId()"
+        [loading]="isLoadingBatches()"
+        appendTo="body"
+        styleClass="filter-select" />
+    </div>
+
+    <div class="filter-group load-btn-group">
+      <label class="filter-label">&nbsp;</label>
+      <button
+        pButton
+        label="Load Students"
+        icon="pi pi-users"
+        [loading]="isLoading()"
+        [disabled]="!canLoad()"
+        (click)="loadStudents()">
+      </button>
+    </div>
+  </div>
+
+  <!-- Summary strip (shown once batch is loaded) -->
+  @if (collectionData(); as data) {
+    <div class="summary-strip">
+      <div class="summary-item">
+        <span class="summary-value">{{ data.students.length }}</span>
+        <span class="summary-label">Enrolled</span>
+      </div>
+      <div class="summary-divider"></div>
+      <div class="summary-item">
+        <span class="summary-value">{{ paidCount() }}</span>
+        <span class="summary-label">Paid</span>
+      </div>
+      <div class="summary-divider"></div>
+      <div class="summary-item">
+        <span class="summary-value">{{ data.students.length - paidCount() }}</span>
+        <span class="summary-label">Pending</span>
+      </div>
+      <div class="summary-divider"></div>
+      <div class="summary-item">
+        <span class="summary-value collected">₹{{ totalCollected() | number:'1.0-0' }}</span>
+        <span class="summary-label">Collected</span>
+      </div>
+      @if (data.linkedFeePlan) {
+        <div class="summary-divider"></div>
+        <div class="fee-plan-chip">
+          <i class="pi pi-tag"></i>
+          {{ data.linkedFeePlan.name }} — ₹{{ data.linkedFeePlan.amount | number:'1.0-0' }} / {{ data.linkedFeePlan.frequency | lowercase }}
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Main table -->
+  <div class="table-card">
+    @if (isLoading()) {
+      <div class="loading-state">
+        <i class="pi pi-spin pi-spinner"></i>
+        <p>Loading students…</p>
+      </div>
+    } @else if (!collectionData()) {
+      <div class="empty-state">
+        <i class="pi pi-users"></i>
+        <p>Select a batch and click Load Students</p>
+        <span>Choose an academic year, class, and batch — then click the Load Students button.</span>
+      </div>
+    } @else if ((collectionData()?.students?.length ?? 0) === 0) {
+      <div class="empty-state">
+        <i class="pi pi-users"></i>
+        <p>No students enrolled</p>
+        <span>Enroll students in this batch from the Academic → Enrollments tab.</span>
+      </div>
+    } @else {
+      <div class="table-scroll">
+        <table class="collection-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Student</th>
+              <th>Admission No</th>
+              <th class="text-right">Total Paid (₹)</th>
+              <th>Last Payment</th>
+              <th>Status</th>
+              <th class="actions-col">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (student of collectionData()!.students; track student.studentId; let i = $index) {
+              <tr [class.paid-row]="student.paymentCount > 0">
+                <td class="row-num">{{ i + 1 }}</td>
+                <td class="student-name">{{ student.studentName }}</td>
+                <td class="mono">{{ student.admissionNo }}</td>
+                <td class="text-right amount-cell">
+                  @if (student.totalPaid > 0) {
+                    {{ student.totalPaid | number:'1.2-2' }}
+                  } @else {
+                    <span class="no-value">—</span>
+                  }
+                </td>
+                <td class="mono">
+                  @if (student.lastPaymentDate) {
+                    {{ student.lastPaymentDate }}
+                  } @else {
+                    <span class="no-value">—</span>
+                  }
+                </td>
+                <td>
+                  @if (student.paymentCount > 0) {
+                    <p-tag value="Paid" severity="success" />
+                  } @else {
+                    <p-tag value="Pending" severity="warn" />
+                  }
+                </td>
+                <td>
+                  <button
+                    pButton
+                    label="Record"
+                    icon="pi pi-plus"
+                    class="p-button-sm p-button-outlined"
+                    (click)="openRecordDialog(student)">
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
+</div>
+
+<!-- Record Payment Dialog -->
+<p-dialog
+  header="Record Payment"
+  [visible]="showDialog()"
+  (visibleChange)="showDialog.set($event)"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="collection-payment-dialog"
+  [style]="{ width: '480px' }">
+
+  @if (dialogStudent(); as student) {
+    <div class="dialog-student-header">
+      <span class="dialog-student-name">{{ student.studentName }}</span>
+      <span class="dialog-student-meta">{{ student.admissionNo }}</span>
+    </div>
+  }
+
+  <form [formGroup]="paymentForm" (ngSubmit)="savePayment()" class="dialog-form">
+
+    <div class="field">
+      <label for="colFeePlanId" class="field-label">Fee Plan <span class="required-mark">*</span></label>
+      <p-select
+        id="colFeePlanId"
+        formControlName="feePlanId"
+        [options]="dialogFeePlanOptions()"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Select fee plan"
+        appendTo="body"
+        styleClass="field-select" />
+      @if (feePlanControl?.invalid && feePlanControl?.touched) {
+        <span class="field-error">Fee plan is required.</span>
+      }
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="colAmount" class="field-label">Amount (₹) <span class="required-mark">*</span></label>
+        <p-inputnumber id="colAmount" formControlName="amountPaid" [min]="0.01" [maxFractionDigits]="2" mode="decimal" placeholder="0.00" styleClass="field-input" />
+        @if (amountControl?.invalid && amountControl?.touched) {
+          <span class="field-error">Valid amount required.</span>
+        }
+      </div>
+      <div class="field">
+        <label for="colDate" class="field-label">Date <span class="required-mark">*</span></label>
+        <p-datepicker id="colDate" formControlName="paymentDate" [maxDate]="today" dateFormat="dd/mm/yy" appendTo="body" styleClass="field-input" />
+        @if (paymentDateControl?.invalid && paymentDateControl?.touched) {
+          <span class="field-error">Date is required.</span>
+        }
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="colMethod" class="field-label">Payment Method <span class="required-mark">*</span></label>
+      <p-select id="colMethod" formControlName="paymentMethod" [options]="paymentMethodOptions" optionLabel="label" optionValue="value" appendTo="body" styleClass="field-select" />
+    </div>
+
+    <div class="field">
+      <label for="colRef" class="field-label">Reference No <span class="optional-mark">(optional)</span></label>
+      <input pInputText id="colRef" formControlName="referenceNo" placeholder="UPI ref / cheque no…" class="field-input" />
+    </div>
+
+    <div class="field">
+      <label for="colNotes" class="field-label">Notes <span class="optional-mark">(optional)</span></label>
+      <input pInputText id="colNotes" formControlName="notes" placeholder="Additional notes…" class="field-input" />
+    </div>
+
+  </form>
+
+  <ng-template pTemplate="footer">
+    <button pButton label="Cancel" class="p-button-text" [disabled]="isSaving()" (click)="closeDialog()"></button>
+    <button
+      pButton
+      [label]="isSaving() ? 'Saving…' : 'Record'"
+      [icon]="isSaving() ? 'pi pi-spin pi-spinner' : 'pi pi-check'"
+      [disabled]="isSaving()"
+      (click)="savePayment()">
+    </button>
+  </ng-template>
+
+</p-dialog>

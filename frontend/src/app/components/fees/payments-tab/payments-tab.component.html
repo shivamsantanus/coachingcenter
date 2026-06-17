@@ -1,0 +1,195 @@
+<p-toast position="top-right" />
+
+<div class="tab-content">
+
+  <div class="tab-header">
+    <div>
+      <h2 class="tab-title">Payment History</h2>
+      <p class="tab-subtitle">Filter by academic year, class, or batch — then click Search</p>
+    </div>
+  </div>
+
+  <!-- Cascading filters -->
+  <div class="filters-bar">
+    <div class="filter-group">
+      <label class="filter-label">Academic Year <span class="required-mark">*</span></label>
+      <p-select
+        [options]="ayOptions()"
+        [ngModel]="selectedAyId()"
+        (ngModelChange)="onAyChange($event)"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Select year"
+        [loading]="isLoadingYears()"
+        appendTo="body"
+        styleClass="filter-select" />
+    </div>
+
+    <i class="pi pi-chevron-right filter-arrow"></i>
+
+    <div class="filter-group">
+      <label class="filter-label">Class <span class="optional-mark">(optional)</span></label>
+      <p-select
+        [options]="classOptions()"
+        [ngModel]="selectedClassId()"
+        (ngModelChange)="onClassChange($event)"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Select class"
+        [disabled]="!selectedAyId()"
+        [loading]="isLoadingClasses()"
+        appendTo="body"
+        styleClass="filter-select" />
+    </div>
+
+    <i class="pi pi-chevron-right filter-arrow"></i>
+
+    <div class="filter-group">
+      <label class="filter-label">Batch <span class="optional-mark">(optional)</span></label>
+      <p-select
+        [options]="batchOptions()"
+        [ngModel]="selectedBatchId()"
+        (ngModelChange)="onBatchChange($event)"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Select batch"
+        [disabled]="!selectedClassId()"
+        [loading]="isLoadingBatches()"
+        appendTo="body"
+        styleClass="filter-select" />
+    </div>
+
+    <div class="filter-separator"></div>
+
+    <div class="filter-group">
+      <label class="filter-label">From <span class="optional-mark">(optional)</span></label>
+      <p-datepicker
+        [ngModel]="fromDate()"
+        (ngModelChange)="fromDate.set($event)"
+        [maxDate]="today"
+        dateFormat="dd/mm/yy"
+        [showClear]="true"
+        placeholder="Start date"
+        appendTo="body"
+        styleClass="filter-date" />
+    </div>
+
+    <div class="filter-group">
+      <label class="filter-label">To <span class="optional-mark">(optional)</span></label>
+      <p-datepicker
+        [ngModel]="toDate()"
+        (ngModelChange)="toDate.set($event)"
+        [maxDate]="today"
+        dateFormat="dd/mm/yy"
+        [showClear]="true"
+        placeholder="End date"
+        appendTo="body"
+        styleClass="filter-date" />
+    </div>
+
+    <div class="filter-group search-btn-group">
+      <label class="filter-label">&nbsp;</label>
+      <button
+        pButton
+        label="Search"
+        icon="pi pi-search"
+        [loading]="isLoading()"
+        [disabled]="!canSearch()"
+        (click)="search()">
+      </button>
+    </div>
+  </div>
+
+  <!-- Summary -->
+  @if (hasSearched() && payments().length > 0) {
+    <div class="summary-strip">
+      <div class="summary-item">
+        <span class="summary-value">{{ payments().length }}</span>
+        <span class="summary-label">Transactions</span>
+      </div>
+      <div class="summary-divider"></div>
+      <div class="summary-item">
+        <span class="summary-value collected">₹{{ totalAmount() | number:'1.2-2' }}</span>
+        <span class="summary-label">Total Collected</span>
+      </div>
+    </div>
+  }
+
+  <!-- Table -->
+  <div class="table-card">
+    @if (isLoading()) {
+      <div class="loading-state">
+        <i class="pi pi-spin pi-spinner"></i>
+        <p>Loading payments…</p>
+      </div>
+    } @else if (!hasSearched()) {
+      <div class="empty-state">
+        <i class="pi pi-filter"></i>
+        <p>Select filters and click Search</p>
+        <span>Academic Year is required. Class and Batch are optional — narrow down as needed.</span>
+      </div>
+    } @else if (payments().length === 0) {
+      <div class="empty-state">
+        <i class="pi pi-wallet"></i>
+        <p>No payments found</p>
+        <span>No payments recorded for the selected filters{{ fromDate() || toDate() ? ' in the selected date range' : '' }}.</span>
+      </div>
+    } @else {
+      <div class="table-scroll">
+        <table class="payments-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Student</th>
+              <th>Fee Plan</th>
+              <th class="text-right">Amount (₹)</th>
+              <th>Method</th>
+              <th>Reference</th>
+              <th>Receipt ID</th>
+              <th class="actions-col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (payment of payments(); track payment.id) {
+              <tr>
+                <td class="mono date-cell">{{ payment.paymentDate }}</td>
+                <td>
+                  <span class="student-name">{{ payment.studentName }}</span>
+                  <span class="student-meta">{{ payment.admissionNo }}</span>
+                </td>
+                <td>
+                  <span class="plan-name">{{ payment.feePlanName }}</span>
+                  <span class="plan-category">{{ payment.feePlanCategory }}</span>
+                </td>
+                <td class="text-right amount-cell">{{ payment.amountPaid | number:'1.2-2' }}</td>
+                <td>
+                  <span class="method-chip">{{ methodLabel(payment.paymentMethod) }}</span>
+                </td>
+                <td>
+                  @if (payment.referenceNo) {
+                    <span class="mono">{{ payment.referenceNo }}</span>
+                  } @else {
+                    <span class="no-value">—</span>
+                  }
+                </td>
+                <td class="mono receipt-id">{{ payment.systemId }}</td>
+                <td>
+                  <button
+                    pButton
+                    [icon]="deletingId() === payment.id ? 'pi pi-spin pi-spinner' : 'pi pi-trash'"
+                    pTooltip="Delete"
+                    tooltipPosition="top"
+                    class="p-button-text p-button-sm action-btn--delete"
+                    [disabled]="!!deletingId()"
+                    (click)="deletePayment(payment)">
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
+</div>

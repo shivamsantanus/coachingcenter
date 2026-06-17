@@ -4,7 +4,7 @@
 > Never start a feature without a row in the plan. Never finish one without marking it done
 > and linking the feature doc. This is the single source of truth for project state.
 
-**Last updated:** 2026-06-16 (Phase 12 responsive design — 12.10 settings pages done (branches, role-permissions, branding editor); 12.11 auth pages done (padding + font scaling via _forms.scss clamp); 12.12 landing page done (section padding, clamp on titles, contact grid breakpoint, hero min-height, floating button safe-area).)
+**Last updated:** 2026-06-16 (Phase 5 fees — fee plan CRUD API + payments API + /fees UI (two tabs: Fee Plans + Payments); dashboard stats wired to real DB counts including fees this month.)
 
 ---
 
@@ -107,11 +107,10 @@
 
 | # | Feature | Status | Feature Doc | Notes |
 |---|---|---|---|---|
-| 5.1 | Fee plan management API | 💡 Backlog | — | Create/manage fee structures per tenant |
-| 5.2 | Payment recording API | 💡 Backlog | — | Record payments, outstanding calculations |
-| 5.3 | Fee dashboard UI | 💡 Backlog | — | Outstanding fees, payment history |
-
-> DB models (`FeePlan`, `Payment`) exist. No controllers yet.
+| 5.1 | Fee plan management API | ✅ Done | [fees.md](features/fees.md) | CRUD + status toggle + delete guard (409 if payments exist); ORG_ADMIN only |
+| 5.2 | Payment recording API | ✅ Done | [fees.md](features/fees.md) | Record + list (filter by student/plan/date) + delete; system_id RCT prefix; future-date guard |
+| 5.3 | Fee dashboard UI | ✅ Done | [fees.md](features/fees.md) | /fees route; Fee Plans tab (CRUD, scope by batch/branch); Payments tab (student search, history, record dialog) |
+| 5.4 | Dashboard stats — real counts | ✅ Done | — | Students, Teachers, Active Batches, Fees This Month wired to `GET /api/dashboard/stats` |
 
 ---
 
@@ -153,7 +152,7 @@
 
 | # | Feature | Status | Feature Doc | Notes |
 |---|---|---|---|---|
-| 9.1 | Real dashboard stats | 💡 Backlog | — | Wire dashboard cards to actual DB counts |
+| 9.1 | Real dashboard stats | ✅ Done | — | Dashboard cards wired to `GET /api/dashboard/stats` — students, teachers, batches, fees this month |
 | 9.2 | Audit log viewer | 💡 Backlog | — | View audit trail per tenant |
 | 9.3 | Tenant settings UI | 💡 Backlog | — | Logo, timezone, currency, label customisation |
 | 9.4 | Error monitoring (frontend) | 💡 Backlog | — | Replace console.log with proper error surfaces |
@@ -262,10 +261,9 @@
 - STUDENT default nav now includes `attendance`
 
 **Next in priority order:**
-1. **Phase 12 — PWA (12.13)** — `@angular/pwa` service worker, manifest, offline fallback — last remaining Phase 12 item
-2. **Phase 5 — Fees** — fee plan management + payment recording (DB models exist, no controllers yet)
-3. **Phase 6 — Exams** — exam management, marks entry, report cards (DB models exist)
-4. **9.1 Real dashboard stats** — wire ORG_ADMIN dashboard cards to actual DB counts
+1. **Phase 6 — Exams** — exam management, marks entry, report cards (DB models exist)
+2. **Phase 12 — PWA (12.13)** — `@angular/pwa` service worker, manifest, offline fallback — last remaining Phase 12 item (skipped for now)
+3. **Phase 9.2** — Audit log viewer
 
 ---
 

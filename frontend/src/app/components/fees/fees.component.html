@@ -1,0 +1,21 @@
+<div class="fees-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Fees</h1>
+      <p class="page-subtitle">Manage fee plans and record student payments</p>
+    </div>
+  </div>
+
+  <p-tabs value="collection">
+    <p-tablist>
+      <p-tab value="collection">Fee Collection</p-tab>
+      <p-tab value="payments">Payment History</p-tab>
+      <p-tab value="fee-plans">Fee Plans</p-tab>
+    </p-tablist>
+    <p-tabpanels>
+      <p-tabpanel value="collection"><app-fee-collection-tab /></p-tabpanel>
+      <p-tabpanel value="payments"><app-payments-tab /></p-tabpanel>
+      <p-tabpanel value="fee-plans"><app-fee-plans-tab /></p-tabpanel>
+    </p-tabpanels>
+  </p-tabs>
+</div>

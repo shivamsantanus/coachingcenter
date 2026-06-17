@@ -1,0 +1,177 @@
+<p-toast position="top-right" />
+
+<div class="tab-content">
+
+  <div class="tab-header">
+    <div>
+      <h2 class="tab-title">Fee Plans</h2>
+      <p class="tab-subtitle">Define fee structures for your batches and branches</p>
+    </div>
+    <button pButton label="Add Fee Plan" icon="pi pi-plus" class="tab-add-btn" (click)="openAddDialog()"></button>
+  </div>
+
+  <div class="table-card">
+    @if (isLoading()) {
+      <div class="loading-state">
+        <i class="pi pi-spin pi-spinner"></i>
+        <p>Loading fee plans…</p>
+      </div>
+    } @else if (feePlans().length === 0) {
+      <div class="empty-state">
+        <i class="pi pi-wallet"></i>
+        <p>No fee plans yet</p>
+        <span>Add your first fee plan to get started.</span>
+      </div>
+    } @else {
+      <div class="table-scroll">
+        <table class="fee-plans-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Category</th>
+              <th>Frequency</th>
+              <th class="text-right">Amount (₹)</th>
+              <th>Due Day</th>
+              <th>Scope</th>
+              <th>Status</th>
+              <th class="actions-col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (plan of feePlans(); track plan.id) {
+              <tr [class.inactive-row]="!plan.isActive">
+                <td class="plan-name">{{ plan.name }}</td>
+                <td>
+                  <p-tag [value]="categoryLabel(plan.category)" [severity]="plan.category === 'TUITION' ? 'info' : plan.category === 'ADMISSION' ? 'success' : 'secondary'" />
+                </td>
+                <td class="mono">{{ frequencyLabel(plan.frequency) }}</td>
+                <td class="text-right amount-cell">{{ plan.amount | number:'1.2-2' }}</td>
+                <td class="text-center">
+                  @if (plan.dueDay) { {{ plan.dueDay }} } @else { <span class="no-value">—</span> }
+                </td>
+                <td>
+                  @if (plan.batchName) {
+                    <span class="scope-chip scope-batch">{{ plan.batchName }}</span>
+                  } @else if (plan.branchName) {
+                    <span class="scope-chip scope-branch">{{ plan.branchName }}</span>
+                  } @else {
+                    <span class="no-value">All</span>
+                  }
+                </td>
+                <td>
+                  <p-tag [value]="plan.isActive ? 'Active' : 'Inactive'" [severity]="plan.isActive ? 'success' : 'secondary'" />
+                </td>
+                <td>
+                  <div class="action-buttons">
+                    <button
+                      pButton
+                      icon="pi pi-pencil"
+                      pTooltip="Edit"
+                      tooltipPosition="top"
+                      class="p-button-text p-button-sm"
+                      [disabled]="!!togglingId() || !!deletingId()"
+                      (click)="openEditDialog(plan)">
+                    </button>
+                    <button
+                      pButton
+                      [icon]="togglingId() === plan.id ? 'pi pi-spin pi-spinner' : (plan.isActive ? 'pi pi-ban' : 'pi pi-check-circle')"
+                      [pTooltip]="plan.isActive ? 'Deactivate' : 'Activate'"
+                      tooltipPosition="top"
+                      class="p-button-text p-button-sm"
+                      [disabled]="!!togglingId() || !!deletingId()"
+                      (click)="toggleStatus(plan)">
+                    </button>
+                    <button
+                      pButton
+                      [icon]="deletingId() === plan.id ? 'pi pi-spin pi-spinner' : 'pi pi-trash'"
+                      pTooltip="Delete"
+                      tooltipPosition="top"
+                      class="p-button-text p-button-sm action-btn--delete"
+                      [disabled]="!!togglingId() || !!deletingId()"
+                      (click)="deletePlan(plan)">
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
+</div>
+
+<!-- Add / Edit Dialog -->
+<p-dialog
+  [header]="dialogTitle"
+  [visible]="showDialog()"
+  (visibleChange)="showDialog.set($event)"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="fee-plan-dialog"
+  [style]="{ width: '520px' }">
+
+  <form [formGroup]="planForm" (ngSubmit)="savePlan()" class="dialog-form">
+
+    <div class="field">
+      <label for="planName" class="field-label">Name <span class="required-mark">*</span></label>
+      <input pInputText id="planName" formControlName="name" placeholder="e.g. Monthly Tuition Fee" class="field-input" />
+      @if (nameControl?.invalid && nameControl?.touched) {
+        <span class="field-error">
+          @if (nameControl?.errors?.['required']) { Name is required. }
+          @else if (nameControl?.errors?.['maxlength']) { Name cannot exceed 200 characters. }
+        </span>
+      }
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="planCategory" class="field-label">Category <span class="required-mark">*</span></label>
+        <p-select id="planCategory" formControlName="category" [options]="categoryOptions" optionLabel="label" optionValue="value" appendTo="body" styleClass="field-select" />
+      </div>
+      <div class="field">
+        <label for="planFrequency" class="field-label">Frequency <span class="required-mark">*</span></label>
+        <p-select id="planFrequency" formControlName="frequency" [options]="frequencyOptions" optionLabel="label" optionValue="value" appendTo="body" styleClass="field-select" />
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="planAmount" class="field-label">Amount (₹) <span class="required-mark">*</span></label>
+        <p-inputnumber id="planAmount" formControlName="amount" [min]="0.01" [maxFractionDigits]="2" mode="decimal" placeholder="0.00" styleClass="field-input" />
+        @if (amountControl?.invalid && amountControl?.touched) {
+          <span class="field-error">Valid amount is required.</span>
+        }
+      </div>
+      @if (!isOneTime) {
+        <div class="field">
+          <label for="planDueDay" class="field-label">Due Day <span class="required-mark">*</span></label>
+          <p-inputnumber id="planDueDay" formControlName="dueDay" [min]="1" [max]="28" [useGrouping]="false" placeholder="1–28" styleClass="field-input" />
+          @if (dueDayControl?.invalid && dueDayControl?.touched) {
+            <span class="field-error">Due day must be between 1 and 28.</span>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="planBranch" class="field-label">Branch <span class="optional-mark">(optional)</span></label>
+        <p-select id="planBranch" formControlName="branchId" [options]="branchOptions()" optionLabel="label" optionValue="value" [showClear]="true" placeholder="All branches" appendTo="body" styleClass="field-select" />
+      </div>
+      <div class="field">
+        <label for="planBatch" class="field-label">Batch <span class="optional-mark">(optional)</span></label>
+        <p-select id="planBatch" formControlName="batchId" [options]="batchOptions()" optionLabel="label" optionValue="value" [showClear]="true" placeholder="All batches" appendTo="body" styleClass="field-select" />
+      </div>
+    </div>
+
+  </form>
+
+  <ng-template pTemplate="footer">
+    <button pButton label="Cancel" class="p-button-text" [disabled]="isSaving()" (click)="closeDialog()"></button>
+    <button pButton [label]="isSaving() ? 'Saving…' : 'Save'" [icon]="isSaving() ? 'pi pi-spin pi-spinner' : ''" [disabled]="isSaving()" (click)="savePlan()"></button>
+  </ng-template>
+
+</p-dialog>

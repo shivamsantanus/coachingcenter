@@ -29,6 +29,7 @@ import { PlatformAdminShellComponent } from './components/platform-admin/platfor
 import { TenantListComponent } from './components/platform-admin/tenant-list/tenant-list.component';
 import { CreateTenantComponent } from './components/platform-admin/create-tenant/create-tenant.component';
 import { AcademicComponent } from './components/academic/academic.component';
+import { FeesComponent } from './components/fees/fees.component';
 import { AttendanceComponent } from './components/attendance/attendance.component';
 import { TeacherProfileComponent } from './components/teacher-profile/teacher-profile.component';
 import { MyAttendanceComponent } from './components/my-attendance/my-attendance.component';
@@ -53,6 +54,7 @@ const shellChildren: Route[] = [
     ]
   },
   { path: 'academic',           component: AcademicComponent          },
+  { path: 'fees',               component: FeesComponent              },
   { path: 'attendance',            component: AttendanceComponent               },
   { path: 'teacher-profile',      component: TeacherProfileComponent           },
   { path: 'my-attendance',        component: MyAttendanceComponent              },
