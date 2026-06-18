@@ -119,8 +119,10 @@ export class FeeService {
     );
   }
 
-  getBatchCollection(batchId: string): Observable<BatchCollectionData> {
-    const params = new HttpParams().set('batchId', batchId);
+  getBatchCollection(batchId: string, month?: number, year?: number): Observable<BatchCollectionData> {
+    let params = new HttpParams().set('batchId', batchId);
+    if (month != null) params = params.set('month', String(month));
+    if (year  != null) params = params.set('year',  String(year));
     return this.http.get<ApiResponse<BatchCollectionData>>(`${this.payUrl}/batch-collection`, { params }).pipe(
       map(r => {
         if (!r.success || !r.data) throw new Error(r.error ?? 'Failed to load batch collection');

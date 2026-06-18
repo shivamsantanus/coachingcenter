@@ -10,6 +10,7 @@ import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { MessageService } from 'primeng/api';
 import { FeeService } from '../../../services/fee.service';
+import { ExportService, CsvColumn } from '../../../services/export.service';
 import { AcademicYearService } from '../../../services/academic-year.service';
 import { ClassService } from '../../../services/class.service';
 import { BatchService } from '../../../services/batch.service';
@@ -37,6 +38,7 @@ interface SelectOption { label: string; value: string; }
 })
 export class PaymentsTabComponent implements OnInit, OnDestroy {
   private feeService          = inject(FeeService);
+  private exportService       = inject(ExportService);
   private academicYearService = inject(AcademicYearService);
   private classService        = inject(ClassService);
   private batchService        = inject(BatchService);
@@ -183,6 +185,26 @@ export class PaymentsTabComponent implements OnInit, OnDestroy {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message });
       },
     });
+  }
+
+  private readonly exportColumns: CsvColumn<PaymentRecord>[] = [
+    { header: 'Date',         value: p => p.paymentDate },
+    { header: 'Student',      value: p => p.studentName },
+    { header: 'Admission No', value: p => p.admissionNo },
+    { header: 'Fee Plan',     value: p => p.feePlanName },
+    { header: 'Category',     value: p => p.feePlanCategory },
+    { header: 'Amount (₹)',   value: p => p.amountPaid },
+    { header: 'Method',       value: p => this.methodLabel(p.paymentMethod) },
+    { header: 'Reference',    value: p => p.referenceNo ?? '' },
+    { header: 'Receipt ID',   value: p => p.systemId },
+  ];
+
+  exportCsv(): void {
+    this.exportService.exportCsv(
+      `PaymentHistory_${new Date().toISOString().slice(0, 10)}`,
+      this.exportColumns,
+      this.payments(),
+    );
   }
 
   methodLabel(method: string): string {

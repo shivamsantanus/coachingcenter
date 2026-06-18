@@ -4,12 +4,14 @@ namespace ClassNovaApi.Models
 {
     public class BatchCollectionStudentRow
     {
-        public Guid     StudentId       { get; set; }
-        public string   StudentName     { get; set; } = string.Empty;
-        public string   AdmissionNo     { get; set; } = string.Empty;
-        public decimal  TotalPaid       { get; set; }
+        public Guid      StudentId       { get; set; }
+        public string    StudentName     { get; set; } = string.Empty;
+        public string    AdmissionNo     { get; set; } = string.Empty;
+        public decimal   TotalPaid       { get; set; }
         public DateOnly? LastPaymentDate { get; set; }
-        public int      PaymentCount    { get; set; }
+        public int       PaymentCount    { get; set; }
+        /// <summary>Monthly due from the linked fee plan. Null when no fee plan is attached to the batch.</summary>
+        public decimal?  DueAmount       { get; set; }
     }
 
     public class BatchCollectionDto

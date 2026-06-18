@@ -23,6 +23,13 @@
   }
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
 // ── Filters ───────────────────────────────────────────────────────────────────
 .filters-bar {
   display: flex;

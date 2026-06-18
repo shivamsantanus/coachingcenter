@@ -53,6 +53,42 @@
 
 .load-btn-group { margin-left: 0.25rem; }
 
+// ── Month navigator ───────────────────────────────────────────────────────────
+.month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 0.875rem;
+  padding: 0.5rem 0;
+}
+
+.month-label {
+  font-size: 1rem;
+  font-weight: 600;
+  min-width: 160px;
+  text-align: center;
+  color: var(--p-text-color);
+}
+
+.month-arrow { color: var(--p-text-muted-color); }
+
+// ── No fee plan banner ────────────────────────────────────────────────────────
+.no-plan-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 1rem;
+  background: #fef9c3;
+  border: 1px solid #fde047;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  color: #713f12;
+  margin-bottom: 0.875rem;
+
+  i { font-size: 1rem; color: #ca8a04; flex-shrink: 0; }
+}
+
 // ── Summary strip ────────────────────────────────────────────────────────────
 .summary-strip {
   display: flex;
@@ -73,13 +109,19 @@
   gap: 0.125rem;
 }
 
+.summary-spacer { flex: 1; }
+
 .summary-value {
   font-size: 1.25rem;
   font-weight: 700;
   color: var(--p-text-color);
 
-  &.collected { color: #16a34a; }
+  &.collected    { color: #16a34a; }
 }
+
+.paid-color    { color: #16a34a; }
+.partial-color { color: #d97706; }
+.pending-color { color: #dc2626; }
 
 .summary-label {
   font-size: 0.75rem;
@@ -148,7 +190,8 @@
 
   tr:last-child td { border-bottom: none; }
 
-  tr.paid-row td { background: #f0fdf4; }
+  tr.paid-row     td { background: #f0fdf4; }
+  tr.partial-row  td { background: #fffbeb; }
 }
 
 .row-num      { color: var(--p-text-muted-color); width: 2.5rem; }
@@ -156,6 +199,7 @@
 .mono         { font-family: monospace; font-size: 0.8125rem; }
 .text-right   { text-align: right; }
 .amount-cell  { font-variant-numeric: tabular-nums; font-weight: 600; color: #16a34a; }
+.balance-due  { color: #dc2626; font-weight: 600; font-variant-numeric: tabular-nums; }
 .no-value     { color: var(--p-text-muted-color); }
 
 .loading-state,
@@ -209,3 +253,33 @@
 .field-input   { width: 100%; }
 .field-select  { width: 100%; }
 .field-error   { font-size: 0.8rem; color: var(--p-red-500); }
+
+// ── Mobile ────────────────────────────────────────────────────────────────────
+@media (max-width: 640px) {
+  .filters-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-group .filter-select { width: 100%; }
+
+  .load-btn-group button { width: 100%; }
+
+  .summary-strip {
+    gap: 0.5rem 1rem;
+    padding: 0.75rem 1rem;
+
+    .summary-divider { display: none; }
+    .summary-spacer  { display: none; }
+
+    > button { width: 100%; margin-top: 0.25rem; }
+  }
+
+  .summary-item {
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .summary-value { font-size: 1rem; }
+}

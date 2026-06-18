@@ -10,11 +10,23 @@
         {{ totalRecords() }} student{{ totalRecords() !== 1 ? 's' : '' }} total
       </p>
     </div>
-    @if (isOrgAdmin) {
-      <button pButton type="button" label="Add Student" icon="pi pi-plus"
-        class="p-button-primary add-student-btn" (click)="openAddForm()">
+    <div class="header-actions">
+      <button
+        pButton
+        type="button"
+        label="Export CSV"
+        icon="pi pi-download"
+        class="p-button-outlined"
+        [loading]="isExporting()"
+        [disabled]="totalRecords() === 0"
+        (click)="exportCsv()">
       </button>
-    }
+      @if (isOrgAdmin) {
+        <button pButton type="button" label="Add Student" icon="pi pi-plus"
+          class="p-button-primary add-student-btn" (click)="openAddForm()">
+        </button>
+      }
+    </div>
   </div>
 
   <!-- Filters -->
@@ -68,9 +80,7 @@
             <th>Guardian</th>
             <th>Date of Birth</th>
             <th>Status</th>
-            @if (isOrgAdmin) {
-              <th class="actions-col">Actions</th>
-            }
+            <th class="actions-col">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -111,10 +121,15 @@
                 </span>
               </td>
 
-              <!-- Actions -->
-              @if (isOrgAdmin) {
-                <td class="actions-col">
-                  <div class="action-buttons">
+              <!-- Actions (always visible: View; ORG_ADMIN also gets Edit + Toggle) -->
+              <td class="actions-col">
+                <div class="action-buttons">
+                  <a pButton type="button" icon="pi pi-eye"
+                    class="p-button-text p-button-sm action-btn"
+                    title="View student"
+                    [routerLink]="[student.id]">
+                  </a>
+                  @if (isOrgAdmin) {
                     <button pButton type="button" icon="pi pi-pencil"
                       class="p-button-text p-button-sm action-btn"
                       title="Edit student"
@@ -129,9 +144,9 @@
                       [disabled]="togglingId() === student.id"
                       (click)="toggleStatus(student)">
                     </button>
-                  </div>
-                </td>
-              }
+                  }
+                </div>
+              </td>
             </tr>
           }
         </tbody>

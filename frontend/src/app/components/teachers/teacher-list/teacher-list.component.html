@@ -8,9 +8,21 @@
       <h1 class="page-title">Teachers</h1>
       <p class="page-subtitle">Manage your teaching staff</p>
     </div>
-    @if (isOrgAdmin) {
-      <button pButton label="Add Teacher" icon="pi pi-plus" class="add-teacher-btn" (click)="openAddForm()"></button>
-    }
+    <div class="header-actions">
+      <button
+        pButton
+        type="button"
+        label="Export CSV"
+        icon="pi pi-download"
+        class="p-button-outlined"
+        [loading]="isExporting()"
+        [disabled]="totalRecords() === 0"
+        (click)="exportCsv()">
+      </button>
+      @if (isOrgAdmin) {
+        <button pButton label="Add Teacher" icon="pi pi-plus" class="add-teacher-btn" (click)="openAddForm()"></button>
+      }
+    </div>
   </div>
 
   <!-- Filters -->

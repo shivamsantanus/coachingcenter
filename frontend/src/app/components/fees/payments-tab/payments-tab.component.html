@@ -100,7 +100,7 @@
     </div>
   </div>
 
-  <!-- Summary -->
+  <!-- Summary + export -->
   @if (hasSearched() && payments().length > 0) {
     <div class="summary-strip">
       <div class="summary-item">
@@ -112,6 +112,14 @@
         <span class="summary-value collected">₹{{ totalAmount() | number:'1.2-2' }}</span>
         <span class="summary-label">Total Collected</span>
       </div>
+      <div class="summary-spacer"></div>
+      <button
+        pButton
+        label="Export CSV"
+        icon="pi pi-download"
+        class="p-button-outlined p-button-sm"
+        (click)="exportCsv()">
+      </button>
     </div>
   }
 

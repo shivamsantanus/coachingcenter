@@ -13,6 +13,7 @@ import { RolePermissionsComponent } from './components/settings/role-permissions
 import { ShellComponent } from './components/shell/shell.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { StudentListComponent } from './components/students/student-list/student-list.component';
+import { StudentDetailComponent } from './components/students/student-detail/student-detail.component';
 import { TeacherListComponent } from './components/teachers/teacher-list/teacher-list.component';
 import { TenantAuthComponent } from './components/tenant-auth/tenant-auth.component';
 import { TenantLoginComponent } from './components/tenant-auth/tenant-login/tenant-login.component';
@@ -42,6 +43,7 @@ const onCustomDomain: CanMatchFn = () => inject(TenantContextService).isCustomDo
 const shellChildren: Route[] = [
   { path: 'dashboard',         component: DashboardComponent      },
   { path: 'students',          component: StudentListComponent     },
+  { path: 'students/:id',      component: StudentDetailComponent   },
   { path: 'teachers',          component: TeacherListComponent     },
   {
     path: 'settings',

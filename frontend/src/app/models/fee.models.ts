@@ -79,7 +79,11 @@ export interface BatchCollectionStudentRow {
   totalPaid: number;
   lastPaymentDate: string | null;
   paymentCount: number;
+  /** Monthly due from the linked fee plan. null when no fee plan is attached. */
+  dueAmount: number | null;
 }
+
+export type PaymentStatus = 'paid' | 'partial' | 'pending';
 
 export interface BatchCollectionData {
   batchId: string;

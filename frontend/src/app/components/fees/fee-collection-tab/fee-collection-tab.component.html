@@ -5,11 +5,11 @@
   <div class="tab-header">
     <div>
       <h2 class="tab-title">Fee Collection</h2>
-      <p class="tab-subtitle">Select a batch to view all enrolled students and record payments</p>
+      <p class="tab-subtitle">Monthly batch register — see who has paid, partially paid, or is pending</p>
     </div>
   </div>
 
-  <!-- Cascading filters -->
+  <!-- Cascading batch filters -->
   <div class="filters-bar">
     <div class="filter-group">
       <label class="filter-label">Academic Year</label>
@@ -72,7 +72,22 @@
     </div>
   </div>
 
-  <!-- Summary strip (shown once batch is loaded) -->
+  <!-- Month navigator -->
+  <div class="month-nav">
+    <button pButton icon="pi pi-chevron-left" class="p-button-text p-button-sm month-arrow" (click)="prevMonth()"></button>
+    <span class="month-label">{{ monthLabel() }}</span>
+    <button pButton icon="pi pi-chevron-right" class="p-button-text p-button-sm month-arrow" [disabled]="isCurrentMonth()" (click)="nextMonth()"></button>
+  </div>
+
+  <!-- No fee plan warning -->
+  @if (collectionData() && !collectionData()!.linkedFeePlan) {
+    <div class="no-plan-banner">
+      <i class="pi pi-exclamation-triangle"></i>
+      <span>No fee plan linked to this batch — due amounts cannot be calculated. Attach a fee plan in the <strong>Fee Plans</strong> tab.</span>
+    </div>
+  }
+
+  <!-- Summary strip -->
   @if (collectionData(); as data) {
     <div class="summary-strip">
       <div class="summary-item">
@@ -81,12 +96,19 @@
       </div>
       <div class="summary-divider"></div>
       <div class="summary-item">
-        <span class="summary-value">{{ paidCount() }}</span>
+        <span class="summary-value paid-color">{{ paidCount() }}</span>
         <span class="summary-label">Paid</span>
       </div>
+      @if (data.linkedFeePlan) {
+        <div class="summary-divider"></div>
+        <div class="summary-item">
+          <span class="summary-value partial-color">{{ partialCount() }}</span>
+          <span class="summary-label">Partial</span>
+        </div>
+      }
       <div class="summary-divider"></div>
       <div class="summary-item">
-        <span class="summary-value">{{ data.students.length - paidCount() }}</span>
+        <span class="summary-value pending-color">{{ pendingCount() }}</span>
         <span class="summary-label">Pending</span>
       </div>
       <div class="summary-divider"></div>
@@ -101,6 +123,17 @@
           {{ data.linkedFeePlan.name }} — ₹{{ data.linkedFeePlan.amount | number:'1.0-0' }} / {{ data.linkedFeePlan.frequency | lowercase }}
         </div>
       }
+
+      <div class="summary-spacer"></div>
+
+      <button
+        pButton
+        label="Export CSV"
+        icon="pi pi-download"
+        class="p-button-outlined p-button-sm"
+        [disabled]="data.students.length === 0"
+        (click)="exportCsv()">
+      </button>
     </div>
   }
 
@@ -131,7 +164,13 @@
               <th>#</th>
               <th>Student</th>
               <th>Admission No</th>
-              <th class="text-right">Total Paid (₹)</th>
+              @if (collectionData()!.linkedFeePlan) {
+                <th class="text-right">Due (₹)</th>
+              }
+              <th class="text-right">Paid (₹)</th>
+              @if (collectionData()!.linkedFeePlan) {
+                <th class="text-right">Balance (₹)</th>
+              }
               <th>Last Payment</th>
               <th>Status</th>
               <th class="actions-col">Action</th>
@@ -139,10 +178,16 @@
           </thead>
           <tbody>
             @for (student of collectionData()!.students; track student.studentId; let i = $index) {
-              <tr [class.paid-row]="student.paymentCount > 0">
+              @let status = studentStatus(student);
+              <tr [class.paid-row]="status === 'paid'" [class.partial-row]="status === 'partial'">
                 <td class="row-num">{{ i + 1 }}</td>
                 <td class="student-name">{{ student.studentName }}</td>
                 <td class="mono">{{ student.admissionNo }}</td>
+                @if (collectionData()!.linkedFeePlan) {
+                  <td class="text-right">
+                    {{ student.dueAmount | number:'1.2-2' }}
+                  </td>
+                }
                 <td class="text-right amount-cell">
                   @if (student.totalPaid > 0) {
                     {{ student.totalPaid | number:'1.2-2' }}
@@ -150,6 +195,15 @@
                     <span class="no-value">—</span>
                   }
                 </td>
+                @if (collectionData()!.linkedFeePlan) {
+                  <td class="text-right" [class.balance-due]="(student.dueAmount! - student.totalPaid) > 0">
+                    @if ((student.dueAmount! - student.totalPaid) > 0) {
+                      {{ (student.dueAmount! - student.totalPaid) | number:'1.2-2' }}
+                    } @else {
+                      <span class="no-value">—</span>
+                    }
+                  </td>
+                }
                 <td class="mono">
                   @if (student.lastPaymentDate) {
                     {{ student.lastPaymentDate }}
@@ -158,10 +212,16 @@
                   }
                 </td>
                 <td>
-                  @if (student.paymentCount > 0) {
-                    <p-tag value="Paid" severity="success" />
-                  } @else {
-                    <p-tag value="Pending" severity="warn" />
+                  @switch (status) {
+                    @case ('paid') {
+                      <p-tag value="Paid" severity="success" />
+                    }
+                    @case ('partial') {
+                      <p-tag value="Partial" severity="warn" />
+                    }
+                    @default {
+                      <p-tag value="Pending" severity="danger" />
+                    }
                   }
                 </td>
                 <td>
@@ -192,7 +252,7 @@
   [draggable]="false"
   [resizable]="false"
   styleClass="collection-payment-dialog"
-  [style]="{ width: '480px' }">
+  [style]="{ width: '480px', maxWidth: 'calc(100vw - 2rem)' }">
 
   @if (dialogStudent(); as student) {
     <div class="dialog-student-header">

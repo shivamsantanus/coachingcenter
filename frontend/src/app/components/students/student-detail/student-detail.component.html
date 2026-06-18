@@ -1,0 +1,250 @@
+<p-toast position="top-right" />
+
+<div class="detail-page">
+
+  <!-- Back button -->
+  <div class="back-bar">
+    <a routerLink="../" class="back-link">
+      <i class="pi pi-arrow-left"></i> Back to Students
+    </a>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <i class="pi pi-spin pi-spinner"></i>
+      <p>Loading student…</p>
+    </div>
+  } @else if (student(); as s) {
+
+    <!-- Student header card -->
+    <div class="student-header">
+      <div class="student-avatar-wrap">
+        @if (photoUrl(s.photoUrl); as url) {
+          <img [src]="url" [alt]="s.fullName" class="student-avatar" />
+        } @else {
+          <div class="student-avatar avatar-initials">{{ initials(s.fullName) }}</div>
+        }
+      </div>
+
+      <div class="student-meta">
+        <div class="student-name-row">
+          <h1 class="student-name">{{ s.fullName }}</h1>
+          <p-tag [value]="s.status" [severity]="s.status === 'ACTIVE' ? 'success' : 'danger'" />
+        </div>
+        <div class="student-details-row">
+          <span class="detail-chip"><i class="pi pi-id-card"></i> {{ s.admissionNo }}</span>
+          @if (s.guardianPhone) {
+            <span class="detail-chip"><i class="pi pi-phone"></i> {{ s.guardianPhone }}</span>
+          }
+          @if (s.schoolName) {
+            <span class="detail-chip"><i class="pi pi-building"></i> {{ s.schoolName }}</span>
+          }
+          @if (s.dateOfBirth) {
+            <span class="detail-chip"><i class="pi pi-calendar"></i> {{ s.dateOfBirth }}</span>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <p-tabs value="profile">
+      <p-tablist>
+        <p-tab value="profile">Profile</p-tab>
+        <p-tab value="payments">Payment History</p-tab>
+      </p-tablist>
+
+      <!-- Profile tab -->
+      <p-tabpanels>
+        <p-tabpanel value="profile">
+          <div class="profile-grid">
+            <div class="profile-section">
+              <h3 class="section-title">Personal Info</h3>
+              <dl class="info-list">
+                <dt>Full Name</dt>     <dd>{{ s.fullName }}</dd>
+                <dt>Date of Birth</dt> <dd>{{ s.dateOfBirth ?? '—' }}</dd>
+                <dt>Address</dt>       <dd>{{ s.address || '—' }}</dd>
+                <dt>School</dt>        <dd>{{ s.schoolName ?? '—' }}</dd>
+              </dl>
+            </div>
+            <div class="profile-section">
+              <h3 class="section-title">Guardian</h3>
+              <dl class="info-list">
+                <dt>Guardian Name</dt>  <dd>{{ s.guardianName }}</dd>
+                <dt>Guardian Phone</dt> <dd>{{ s.guardianPhone }}</dd>
+              </dl>
+            </div>
+            <div class="profile-section">
+              <h3 class="section-title">System Info</h3>
+              <dl class="info-list">
+                <dt>Admission No</dt> <dd class="mono">{{ s.admissionNo }}</dd>
+                <dt>Status</dt>       <dd>{{ s.status }}</dd>
+                <dt>Enrolled Since</dt> <dd>{{ s.createdAt | date:'dd MMM yyyy' }}</dd>
+              </dl>
+            </div>
+          </div>
+        </p-tabpanel>
+
+        <!-- Payment History tab -->
+        <p-tabpanel value="payments">
+          <div class="payments-tab-content">
+
+            <!-- Filters -->
+            <div class="filters-bar">
+              <div class="filter-group">
+                <label class="filter-label">Fee Plan <span class="optional-mark">(optional)</span></label>
+                <p-select
+                  [options]="feePlanOptions()"
+                  [ngModel]="selectedFeePlanId()"
+                  (ngModelChange)="selectedFeePlanId.set($event)"
+                  optionLabel="label"
+                  optionValue="value"
+                  appendTo="body"
+                  styleClass="filter-select" />
+              </div>
+
+              <div class="filter-separator"></div>
+
+              <div class="filter-group">
+                <label class="filter-label">From <span class="optional-mark">(optional)</span></label>
+                <p-datepicker
+                  [ngModel]="fromDate()"
+                  (ngModelChange)="fromDate.set($event)"
+                  [maxDate]="today"
+                  dateFormat="dd/mm/yy"
+                  [showClear]="true"
+                  placeholder="Start date"
+                  appendTo="body"
+                  styleClass="filter-date" />
+              </div>
+
+              <div class="filter-group">
+                <label class="filter-label">To <span class="optional-mark">(optional)</span></label>
+                <p-datepicker
+                  [ngModel]="toDate()"
+                  (ngModelChange)="toDate.set($event)"
+                  [maxDate]="today"
+                  dateFormat="dd/mm/yy"
+                  [showClear]="true"
+                  placeholder="End date"
+                  appendTo="body"
+                  styleClass="filter-date" />
+              </div>
+
+              <div class="filter-group search-btn-group">
+                <label class="filter-label">&nbsp;</label>
+                <button
+                  pButton
+                  label="Search"
+                  icon="pi pi-search"
+                  [loading]="isSearching()"
+                  (click)="searchPayments()">
+                </button>
+              </div>
+            </div>
+
+            <!-- Summary + export -->
+            @if (hasSearched() && payments().length > 0) {
+              <div class="summary-strip">
+                <div class="summary-item">
+                  <span class="summary-value">{{ payments().length }}</span>
+                  <span class="summary-label">Transactions</span>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-item">
+                  <span class="summary-value collected">₹{{ totalPaid() | number:'1.2-2' }}</span>
+                  <span class="summary-label">Total Paid</span>
+                </div>
+                <div class="summary-spacer"></div>
+                <button
+                  pButton
+                  label="Export CSV"
+                  icon="pi pi-download"
+                  class="p-button-outlined p-button-sm"
+                  (click)="exportCsv()">
+                </button>
+              </div>
+            }
+
+            <!-- Payments table -->
+            <div class="table-card">
+              @if (isSearching()) {
+                <div class="empty-state">
+                  <i class="pi pi-spin pi-spinner"></i>
+                  <p>Loading…</p>
+                </div>
+              } @else if (!hasSearched()) {
+                <div class="empty-state">
+                  <i class="pi pi-wallet"></i>
+                  <p>Click Search to load payment history</p>
+                  <span>Filter by fee plan or date range — all are optional.</span>
+                </div>
+              } @else if (payments().length === 0) {
+                <div class="empty-state">
+                  <i class="pi pi-wallet"></i>
+                  <p>No payments found</p>
+                  <span>No payments recorded for the selected filters.</span>
+                </div>
+              } @else {
+                <div class="table-scroll">
+                  <table class="payments-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Fee Plan</th>
+                        <th class="text-right">Amount (₹)</th>
+                        <th>Method</th>
+                        <th>Reference</th>
+                        <th>Receipt ID</th>
+                        <th class="actions-col"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (payment of payments(); track payment.id) {
+                        <tr>
+                          <td class="mono date-cell">{{ payment.paymentDate }}</td>
+                          <td>
+                            <span class="plan-name">{{ payment.feePlanName }}</span>
+                            <span class="plan-category">{{ payment.feePlanCategory }}</span>
+                          </td>
+                          <td class="text-right amount-cell">{{ payment.amountPaid | number:'1.2-2' }}</td>
+                          <td><span class="method-chip">{{ methodLabel(payment.paymentMethod) }}</span></td>
+                          <td>
+                            @if (payment.referenceNo) {
+                              <span class="mono">{{ payment.referenceNo }}</span>
+                            } @else {
+                              <span class="no-value">—</span>
+                            }
+                          </td>
+                          <td class="mono receipt-id">{{ payment.systemId }}</td>
+                          <td>
+                            <button
+                              pButton
+                              [icon]="deletingId() === payment.id ? 'pi pi-spin pi-spinner' : 'pi pi-trash'"
+                              pTooltip="Delete"
+                              tooltipPosition="top"
+                              class="p-button-text p-button-sm action-btn--delete"
+                              [disabled]="!!deletingId()"
+                              (click)="deletePayment(payment)">
+                            </button>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+            </div>
+
+          </div>
+        </p-tabpanel>
+      </p-tabpanels>
+    </p-tabs>
+
+  } @else {
+    <div class="empty-state">
+      <i class="pi pi-user-minus"></i>
+      <p>Student not found</p>
+    </div>
+  }
+
+</div>

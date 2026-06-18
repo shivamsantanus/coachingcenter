@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
@@ -10,20 +11,18 @@ import { SelectModule } from 'primeng/select';
 import { MessageService } from 'primeng/api';
 import { AuthService } from '../../../services/auth.service';
 import { StudentService } from '../../../services/student.service';
+import { ExportService, CsvColumn } from '../../../services/export.service';
 import { StudentSummary } from '../../../models/student.models';
 import { StudentFormComponent } from '../student-form/student-form.component';
 import { environment } from '../../../../environments/environment';
 
-interface StatusOption {
-  label: string;
-  value: string;
-}
+interface StatusOption { label: string; value: string; }
 
 @Component({
   selector: 'app-student-list',
   standalone: true,
   imports: [
-    CommonModule, FormsModule,
+    CommonModule, RouterModule, FormsModule,
     ButtonModule, InputTextModule, TagModule, ToastModule, SelectModule,
     StudentFormComponent
   ],
@@ -34,6 +33,7 @@ interface StatusOption {
 export class StudentListComponent implements OnInit, OnDestroy {
   private readonly studentService = inject(StudentService);
   private readonly authService    = inject(AuthService);
+  private readonly exportService  = inject(ExportService);
   private readonly messageService = inject(MessageService);
   private readonly destroy$       = new Subject<void>();
   private readonly searchInput$   = new Subject<string>();
@@ -42,6 +42,7 @@ export class StudentListComponent implements OnInit, OnDestroy {
 
   readonly students      = signal<StudentSummary[]>([]);
   readonly isLoading     = signal(false);
+  readonly isExporting   = signal(false);
   readonly totalRecords  = signal(0);
   readonly currentPage   = signal(1);
   readonly pageSize      = signal(20);
@@ -57,6 +58,15 @@ export class StudentListComponent implements OnInit, OnDestroy {
     { label: 'All statuses', value: '' },
     { label: 'Active',       value: 'ACTIVE' },
     { label: 'Inactive',     value: 'INACTIVE' },
+  ];
+
+  private readonly exportColumns: CsvColumn<StudentSummary>[] = [
+    { header: 'Name',           value: s => s.fullName },
+    { header: 'Admission No',   value: s => s.admissionNo },
+    { header: 'Guardian Name',  value: s => s.guardianName },
+    { header: 'Guardian Phone', value: s => s.guardianPhone },
+    { header: 'Date of Birth',  value: s => s.dateOfBirth ?? '' },
+    { header: 'Status',         value: s => s.status },
   ];
 
   ngOnInit(): void {
@@ -99,9 +109,34 @@ export class StudentListComponent implements OnInit, OnDestroy {
       });
   }
 
-  onSearchChange(term: string): void {
-    this.searchInput$.next(term);
+  exportCsv(): void {
+    this.isExporting.set(true);
+    // Fetch all matching students (ignoring pagination) so the export is complete
+    this.studentService
+      .listStudents({
+        page:     1,
+        pageSize: 5000,
+        search:   this.searchTerm() || undefined,
+        status:   this.statusFilter() || undefined,
+      })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: response => {
+          this.isExporting.set(false);
+          this.exportService.exportCsv(
+            `Students_${new Date().toISOString().slice(0, 10)}`,
+            this.exportColumns,
+            response.data,
+          );
+        },
+        error: (err: Error) => {
+          this.isExporting.set(false);
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message });
+        }
+      });
   }
+
+  onSearchChange(term: string): void { this.searchInput$.next(term); }
 
   onStatusFilterChange(): void {
     this.currentPage.set(1);
@@ -118,18 +153,11 @@ export class StudentListComponent implements OnInit, OnDestroy {
     this.showForm.set(true);
   }
 
-  onFormSaved(): void {
-    this.showForm.set(false);
-    this.loadStudents();
-  }
-
-  onFormClosed(): void {
-    this.showForm.set(false);
-  }
+  onFormSaved(): void  { this.showForm.set(false); this.loadStudents(); }
+  onFormClosed(): void { this.showForm.set(false); }
 
   toggleStatus(student: StudentSummary): void {
     if (this.togglingId()) return;
-
     const newStatus = student.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
     this.togglingId.set(student.id);
 
@@ -144,8 +172,8 @@ export class StudentListComponent implements OnInit, OnDestroy {
           );
           this.messageService.add({
             severity: 'success',
-            summary: 'Status updated',
-            detail: `${student.fullName} is now ${newStatus.toLowerCase()}.`
+            summary:  'Status updated',
+            detail:   `${student.fullName} is now ${newStatus.toLowerCase()}.`
           });
         },
         error: (err: Error) => {
@@ -155,9 +183,7 @@ export class StudentListComponent implements OnInit, OnDestroy {
       });
   }
 
-  get totalPages(): number {
-    return Math.ceil(this.totalRecords() / this.pageSize());
-  }
+  get totalPages(): number { return Math.ceil(this.totalRecords() / this.pageSize()); }
 
   goToPage(page: number): void {
     if (page < 1 || page > this.totalPages) return;
@@ -171,10 +197,6 @@ export class StudentListComponent implements OnInit, OnDestroy {
   }
 
   initials(fullName: string): string {
-    return fullName
-      .split(' ')
-      .slice(0, 2)
-      .map(part => part.charAt(0).toUpperCase())
-      .join('');
+    return fullName.split(' ').slice(0, 2).map(p => p.charAt(0).toUpperCase()).join('');
   }
 }

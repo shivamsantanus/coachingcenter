@@ -11,6 +11,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { MessageService } from 'primeng/api';
 import { AuthService } from '../../../services/auth.service';
 import { TeacherService } from '../../../services/teacher.service';
+import { ExportService, CsvColumn } from '../../../services/export.service';
 import { TeacherSummary } from '../../../models/teacher.models';
 import { TeacherFormComponent } from '../teacher-form/teacher-form.component';
 import { environment } from '../../../../environments/environment';
@@ -32,6 +33,7 @@ interface StatusOption { label: string; value: string; }
 export class TeacherListComponent implements OnInit, OnDestroy {
   private readonly teacherService = inject(TeacherService);
   private readonly authService    = inject(AuthService);
+  private readonly exportService  = inject(ExportService);
   private readonly messageService = inject(MessageService);
   private readonly destroy$       = new Subject<void>();
   private readonly searchInput$   = new Subject<string>();
@@ -49,12 +51,21 @@ export class TeacherListComponent implements OnInit, OnDestroy {
   readonly showForm      = signal(false);
   readonly editTeacherId = signal<string | null>(null);
 
-  readonly isOrgAdmin = this.authService.getRole() === 'ORG_ADMIN';
+  readonly isOrgAdmin  = this.authService.getRole() === 'ORG_ADMIN';
+  readonly isExporting = signal(false);
 
   readonly statusOptions: StatusOption[] = [
     { label: 'All statuses', value: '' },
     { label: 'Active',       value: 'ACTIVE'   },
     { label: 'Inactive',     value: 'INACTIVE' },
+  ];
+
+  private readonly exportColumns: CsvColumn<TeacherSummary>[] = [
+    { header: 'Name',          value: t => t.fullName },
+    { header: 'Employee Code', value: t => t.employeeCode },
+    { header: 'Qualification', value: t => t.qualification ?? '' },
+    { header: 'Salary Type',   value: t => this.formatSalaryType(t.salaryType) },
+    { header: 'Status',        value: t => t.status },
   ];
 
   ngOnInit(): void {
@@ -150,6 +161,32 @@ export class TeacherListComponent implements OnInit, OnDestroy {
           this.togglingId.set(null);
           this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message });
         }
+      });
+  }
+
+  exportCsv(): void {
+    this.isExporting.set(true);
+    this.teacherService
+      .listTeachers({
+        page:     1,
+        pageSize: 5000,
+        search:   this.searchTerm() || undefined,
+        status:   this.statusFilter() || undefined,
+      })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: response => {
+          this.isExporting.set(false);
+          this.exportService.exportCsv(
+            `Teachers_${new Date().toISOString().slice(0, 10)}`,
+            this.exportColumns,
+            response.data,
+          );
+        },
+        error: (err: Error) => {
+          this.isExporting.set(false);
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message });
+        },
       });
   }
 

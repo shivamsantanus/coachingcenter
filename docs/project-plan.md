@@ -4,7 +4,7 @@
 > Never start a feature without a row in the plan. Never finish one without marking it done
 > and linking the feature doc. This is the single source of truth for project state.
 
-**Last updated:** 2026-06-16 (Phase 5 fees — fee plan CRUD API + payments API + /fees UI (two tabs: Fee Plans + Payments); dashboard stats wired to real DB counts including fees this month.)
+**Last updated:** 2026-06-18 (Phase 5 complete — Export CSV to Teachers list via shared ExportService; responsive design on fee-collection-tab, payments-tab, student-detail (filter stacks, full-width buttons, summary strip dividers hidden on mobile); fees.md updated.)
 
 ---
 
@@ -111,6 +111,11 @@
 | 5.2 | Payment recording API | ✅ Done | [fees.md](features/fees.md) | Record + list (filter by student/plan/date) + delete; system_id RCT prefix; future-date guard |
 | 5.3 | Fee dashboard UI | ✅ Done | [fees.md](features/fees.md) | /fees route; Fee Plans tab (CRUD, scope by batch/branch); Payments tab (student search, history, record dialog) |
 | 5.4 | Dashboard stats — real counts | ✅ Done | — | Students, Teachers, Active Batches, Fees This Month wired to `GET /api/dashboard/stats` |
+| 5.5 | Fee Collection — monthly register | ✅ Done | — | Month navigator (< Month Year >); Due/Paid/Balance columns; Paid/Partial/Pending status; no-fee-plan warning chip; button-triggered load; Export CSV |
+| 5.6 | Payment History — cascading filters + export | ✅ Done | — | AY → Class → Batch (all optional except AY); date range; button-triggered Search; Export CSV |
+| 5.7 | Student detail page + payment history | ✅ Done | — | `/students/:id`; Profile tab (personal/guardian/system info); Payments tab (fee plan + date filter, Search, Export CSV); View button on student list |
+| 5.8 | Shared ExportService + CSV exports | ✅ Done | [fees.md](features/fees.md) | `ExportService` with `exportCsv<T>()` + `downloadCsv()`; CSV on Fee Collection, Payment History, Student Detail, Students list, Teachers list |
+| 5.9 | Phase 5 responsive design | ✅ Done | — | Filters stack full-width on mobile (≤640px); load/search buttons full-width; summary strip hides dividers + export button stretches; fee collection dialog `maxWidth: calc(100vw - 2rem)`; student info-list single-column at 480px |
 
 ---
 
@@ -262,8 +267,9 @@
 
 **Next in priority order:**
 1. **Phase 6 — Exams** — exam management, marks entry, report cards (DB models exist)
-2. **Phase 12 — PWA (12.13)** — `@angular/pwa` service worker, manifest, offline fallback — last remaining Phase 12 item (skipped for now)
+2. **Phase 12 — PWA (12.13)** — `@angular/pwa` service worker, manifest, offline fallback — last remaining Phase 12 item
 3. **Phase 9.2** — Audit log viewer
+4. **Fee concessions** (deferred from Phase 5) — `student_fee_concessions` table; UI in fee collection + student detail
 
 ---
 
