@@ -109,9 +109,8 @@ export class StudentListComponent implements OnInit, OnDestroy {
       });
   }
 
-  exportCsv(): void {
+  exportExcel(): void {
     this.isExporting.set(true);
-    // Fetch all matching students (ignoring pagination) so the export is complete
     this.studentService
       .listStudents({
         page:     1,
@@ -121,13 +120,14 @@ export class StudentListComponent implements OnInit, OnDestroy {
       })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: response => {
-          this.isExporting.set(false);
-          this.exportService.exportCsv(
+        next: async response => {
+          await this.exportService.exportXlsx(
             `Students_${new Date().toISOString().slice(0, 10)}`,
+            'Student List',
             this.exportColumns,
             response.data,
           );
+          this.isExporting.set(false);
         },
         error: (err: Error) => {
           this.isExporting.set(false);

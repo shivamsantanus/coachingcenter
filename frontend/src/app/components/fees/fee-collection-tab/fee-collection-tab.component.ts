@@ -244,13 +244,17 @@ export class FeeCollectionTabComponent implements OnInit, OnDestroy {
   }
 
   // ── Export ────────────────────────────────────────────────────────────────
-  exportCsv(): void {
+  async exportExcel(): Promise<void> {
     const data = this.collectionData();
     if (!data) return;
     const hasFeePlan = !!data.linkedFeePlan;
-    const headers = ['Student Name', 'Admission No', ...(hasFeePlan ? ['Due (₹)', 'Paid (₹)', 'Balance (₹)'] : ['Paid (₹)']), 'Last Payment', 'Status'];
+    const headers = [
+      'Student Name', 'Admission No',
+      ...(hasFeePlan ? ['Due (₹)', 'Paid (₹)', 'Balance (₹)'] : ['Paid (₹)']),
+      'Last Payment', 'Status',
+    ];
     const rows = data.students.map(s => {
-      const status = this.studentStatus(s);
+      const status  = this.studentStatus(s);
       const balance = s.dueAmount != null ? (s.dueAmount - s.totalPaid) : null;
       const base: (string | number | null)[] = [s.studentName, s.admissionNo];
       if (hasFeePlan) base.push(s.dueAmount ?? 0, s.totalPaid, balance ?? 0);
@@ -260,7 +264,12 @@ export class FeeCollectionTabComponent implements OnInit, OnDestroy {
     });
     const batchName  = data.batchName.replace(/\s+/g, '_');
     const monthLabel = `${this.selectedYear()}-${String(this.selectedMonth()).padStart(2, '0')}`;
-    this.exportService.downloadCsv(`FeeCollection_${batchName}_${monthLabel}`, headers, rows);
+    await this.exportService.downloadXlsx(
+      `FeeCollection_${batchName}_${monthLabel}`,
+      `Fee Collection Register – ${this.monthLabel()}`,
+      headers,
+      rows,
+    );
   }
 
   // ── Payment dialog ────────────────────────────────────────────────────────

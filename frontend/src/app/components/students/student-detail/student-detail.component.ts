@@ -157,10 +157,11 @@ export class StudentDetailComponent implements OnInit, OnDestroy {
     { header: 'Receipt ID',  value: p => p.systemId },
   ];
 
-  exportCsv(): void {
+  async exportExcel(): Promise<void> {
     const s = this.student();
-    this.exportService.exportCsv(
+    await this.exportService.exportXlsx(
       `Payments_${s?.admissionNo ?? this.studentId()}_${new Date().toISOString().slice(0, 10)}`,
+      `Payment History – ${s?.fullName ?? 'Student'}`,
       this.exportColumns,
       this.payments(),
     );

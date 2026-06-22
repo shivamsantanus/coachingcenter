@@ -199,9 +199,10 @@ export class PaymentsTabComponent implements OnInit, OnDestroy {
     { header: 'Receipt ID',   value: p => p.systemId },
   ];
 
-  exportCsv(): void {
-    this.exportService.exportCsv(
+  async exportExcel(): Promise<void> {
+    await this.exportService.exportXlsx(
       `PaymentHistory_${new Date().toISOString().slice(0, 10)}`,
+      'Payment History',
       this.exportColumns,
       this.payments(),
     );

@@ -164,7 +164,7 @@ export class TeacherListComponent implements OnInit, OnDestroy {
       });
   }
 
-  exportCsv(): void {
+  exportExcel(): void {
     this.isExporting.set(true);
     this.teacherService
       .listTeachers({
@@ -175,13 +175,14 @@ export class TeacherListComponent implements OnInit, OnDestroy {
       })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: response => {
-          this.isExporting.set(false);
-          this.exportService.exportCsv(
+        next: async response => {
+          await this.exportService.exportXlsx(
             `Teachers_${new Date().toISOString().slice(0, 10)}`,
+            'Teacher List',
             this.exportColumns,
             response.data,
           );
+          this.isExporting.set(false);
         },
         error: (err: Error) => {
           this.isExporting.set(false);

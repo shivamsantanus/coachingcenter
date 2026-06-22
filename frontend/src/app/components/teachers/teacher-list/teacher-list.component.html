@@ -12,12 +12,12 @@
       <button
         pButton
         type="button"
-        label="Export CSV"
+        label="Export Excel"
         icon="pi pi-download"
         class="p-button-outlined"
         [loading]="isExporting()"
         [disabled]="totalRecords() === 0"
-        (click)="exportCsv()">
+        (click)="exportExcel()">
       </button>
       @if (isOrgAdmin) {
         <button pButton label="Add Teacher" icon="pi pi-plus" class="add-teacher-btn" (click)="openAddForm()"></button>
