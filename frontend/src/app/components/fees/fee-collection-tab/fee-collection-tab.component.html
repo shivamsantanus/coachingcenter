@@ -80,7 +80,7 @@
   </div>
 
   <!-- No fee plan warning -->
-  @if (collectionData() && !collectionData()!.linkedFeePlan) {
+  @if (collectionData() && collectionData()!.linkedFeePlans.length === 0) {
     <div class="no-plan-banner">
       <i class="pi pi-exclamation-triangle"></i>
       <span>No fee plan linked to this batch — due amounts cannot be calculated. Attach a fee plan in the <strong>Fee Plans</strong> tab.</span>
@@ -99,7 +99,7 @@
         <span class="summary-value paid-color">{{ paidCount() }}</span>
         <span class="summary-label">Paid</span>
       </div>
-      @if (data.linkedFeePlan) {
+      @if (data.linkedFeePlans.length > 0) {
         <div class="summary-divider"></div>
         <div class="summary-item">
           <span class="summary-value partial-color">{{ partialCount() }}</span>
@@ -116,11 +116,11 @@
         <span class="summary-value collected">₹{{ totalCollected() | number:'1.0-0' }}</span>
         <span class="summary-label">Collected</span>
       </div>
-      @if (data.linkedFeePlan) {
+      @for (plan of data.linkedFeePlans; track plan.id) {
         <div class="summary-divider"></div>
         <div class="fee-plan-chip">
           <i class="pi pi-tag"></i>
-          {{ data.linkedFeePlan.name }} — ₹{{ data.linkedFeePlan.amount | number:'1.0-0' }} / {{ data.linkedFeePlan.frequency | lowercase }}
+          {{ plan.name }} — ₹{{ plan.amount | number:'1.0-0' }} / {{ plan.frequency | lowercase }}
         </div>
       }
 
@@ -164,11 +164,11 @@
               <th>#</th>
               <th>Student</th>
               <th>Admission No</th>
-              @if (collectionData()!.linkedFeePlan) {
+              @if (collectionData()!.linkedFeePlans.length > 0) {
                 <th class="text-right">Due (₹)</th>
               }
               <th class="text-right">Paid (₹)</th>
-              @if (collectionData()!.linkedFeePlan) {
+              @if (collectionData()!.linkedFeePlans.length > 0) {
                 <th class="text-right">Balance (₹)</th>
               }
               <th>Last Payment</th>
@@ -183,7 +183,7 @@
                 <td class="row-num">{{ i + 1 }}</td>
                 <td class="student-name">{{ student.studentName }}</td>
                 <td class="mono">{{ student.admissionNo }}</td>
-                @if (collectionData()!.linkedFeePlan) {
+                @if (collectionData()!.linkedFeePlans.length > 0) {
                   <td class="text-right">
                     {{ student.dueAmount | number:'1.2-2' }}
                   </td>
@@ -195,7 +195,7 @@
                     <span class="no-value">—</span>
                   }
                 </td>
-                @if (collectionData()!.linkedFeePlan) {
+                @if (collectionData()!.linkedFeePlans.length > 0) {
                   <td class="text-right" [class.balance-due]="(student.dueAmount! - student.totalPaid) > 0">
                     @if ((student.dueAmount! - student.totalPaid) > 0) {
                       {{ (student.dueAmount! - student.totalPaid) | number:'1.2-2' }}
@@ -263,37 +263,54 @@
 
   <form [formGroup]="paymentForm" (ngSubmit)="savePayment()" class="dialog-form">
 
+    <!-- Fee plan multi-select -->
     <div class="field">
-      <label for="colFeePlanId" class="field-label">Fee Plan <span class="required-mark">*</span></label>
-      <p-select
-        id="colFeePlanId"
-        formControlName="feePlanId"
+      <label class="field-label">Fee Plans <span class="required-mark">*</span></label>
+      <p-multiselect
         [options]="dialogFeePlanOptions()"
+        [ngModel]="selectedPlanIds()"
+        (ngModelChange)="onPlanSelectionChange($event)"
+        [ngModelOptions]="{ standalone: true }"
         optionLabel="label"
         optionValue="value"
-        placeholder="Select fee plan"
+        placeholder="Select fee plans"
         appendTo="body"
-        styleClass="field-select" />
-      @if (feePlanControl?.invalid && feePlanControl?.touched) {
-        <span class="field-error">Fee plan is required.</span>
-      }
+        styleClass="field-select plan-multiselect"
+        display="chip" />
     </div>
 
-    <div class="field-row">
-      <div class="field">
-        <label for="colAmount" class="field-label">Amount (₹) <span class="required-mark">*</span></label>
-        <p-inputnumber id="colAmount" formControlName="amountPaid" [min]="0.01" [maxFractionDigits]="2" mode="decimal" placeholder="0.00" styleClass="field-input" />
-        @if (amountControl?.invalid && amountControl?.touched) {
-          <span class="field-error">Valid amount required.</span>
+    <!-- Per-plan amount rows -->
+    @if (selectedPlanIds().length > 0) {
+      <div class="plan-amount-list">
+        @for (planId of selectedPlanIds(); track planId) {
+          <div class="plan-amount-row">
+            <span class="plan-amount-label">{{ dialogPlanName(planId) }}</span>
+            <p-inputnumber
+              [ngModel]="planAmounts()[planId]"
+              (ngModelChange)="updatePlanAmount(planId, $event)"
+              [ngModelOptions]="{ standalone: true }"
+              [min]="0.01"
+              [maxFractionDigits]="2"
+              mode="decimal"
+              placeholder="0.00"
+              styleClass="plan-amount-input" />
+          </div>
+        }
+        @if (selectedPlanIds().length > 1) {
+          <div class="plan-total-row">
+            <span class="plan-total-label">Total</span>
+            <span class="plan-total-value">₹{{ totalAmount() | number:'1.2-2' }}</span>
+          </div>
         }
       </div>
-      <div class="field">
-        <label for="colDate" class="field-label">Date <span class="required-mark">*</span></label>
-        <p-datepicker id="colDate" formControlName="paymentDate" [maxDate]="today" dateFormat="dd/mm/yy" appendTo="body" styleClass="field-input" />
-        @if (paymentDateControl?.invalid && paymentDateControl?.touched) {
-          <span class="field-error">Date is required.</span>
-        }
-      </div>
+    }
+
+    <div class="field">
+      <label for="colDate" class="field-label">Date <span class="required-mark">*</span></label>
+      <p-datepicker id="colDate" formControlName="paymentDate" [maxDate]="today" dateFormat="dd/mm/yy" appendTo="body" styleClass="field-input" />
+      @if (paymentDateControl?.invalid && paymentDateControl?.touched) {
+        <span class="field-error">Date is required.</span>
+      }
     </div>
 
     <div class="field">

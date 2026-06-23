@@ -16,9 +16,10 @@ namespace ClassNovaApi.Models
 
     public class BatchCollectionDto
     {
-        public Guid    BatchId      { get; set; }
-        public string  BatchName    { get; set; } = string.Empty;
-        public FeePlanDto? LinkedFeePlan { get; set; }
+        public Guid    BatchId           { get; set; }
+        public string  BatchName         { get; set; } = string.Empty;
+        /// <summary>All active fee plans linked to this batch. Empty when none are linked.</summary>
+        public List<FeePlanDto> LinkedFeePlans { get; set; } = new();
         public List<BatchCollectionStudentRow> Students { get; set; } = new();
     }
 

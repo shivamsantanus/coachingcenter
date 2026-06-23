@@ -1,9 +1,10 @@
 import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Subject, takeUntil } from 'rxjs';
+import { Observable, Subject, forkJoin, takeUntil } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
+import { MultiSelectModule } from 'primeng/multiselect';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { DatePickerModule } from 'primeng/datepicker';
 import { InputTextModule } from 'primeng/inputtext';
@@ -22,7 +23,9 @@ import {
   BatchCollectionData,
   BatchCollectionStudentRow,
   CreatePaymentRequest,
+  FeePlan,
   PaymentMethod,
+  PaymentRecord,
   PaymentStatus,
 } from '../../../models/fee.models';
 
@@ -37,6 +40,7 @@ interface SelectOption { label: string; value: string; }
     ReactiveFormsModule,
     ButtonModule,
     SelectModule,
+    MultiSelectModule,
     InputNumberModule,
     DatePickerModule,
     InputTextModule,
@@ -90,10 +94,10 @@ export class FeeCollectionTabComponent implements OnInit, OnDestroy {
   readonly isLoading      = signal(false);
 
   // ── Dialog state ──────────────────────────────────────────────────────────
-  readonly showDialog        = signal(false);
-  readonly dialogStudent     = signal<BatchCollectionStudentRow | null>(null);
-  readonly isSaving          = signal(false);
-  readonly today             = new Date();
+  readonly showDialog    = signal(false);
+  readonly dialogStudent = signal<BatchCollectionStudentRow | null>(null);
+  readonly isSaving      = signal(false);
+  readonly today         = new Date();
 
   readonly paymentMethodOptions: SelectOption[] = [
     { label: 'Cash',          value: 'CASH' },
@@ -101,6 +105,17 @@ export class FeeCollectionTabComponent implements OnInit, OnDestroy {
     { label: 'Card',          value: 'CARD' },
     { label: 'Bank Transfer', value: 'BANK' },
   ];
+
+  // ── Dialog: multi-plan selection + per-plan amounts ───────────────────────
+  readonly dialogFeePlanOptions = signal<SelectOption[]>([]);
+  readonly dialogLinkedPlans    = signal<FeePlan[]>([]);
+  readonly selectedPlanIds      = signal<string[]>([]);
+  readonly planAmounts          = signal<Record<string, number>>({});
+
+  readonly totalAmount = computed(() => {
+    const amounts = this.planAmounts();
+    return this.selectedPlanIds().reduce((sum, id) => sum + (amounts[id] ?? 0), 0);
+  });
 
   // ── Computed options ──────────────────────────────────────────────────────
   readonly ayOptions = computed<SelectOption[]>(() =>
@@ -129,19 +144,14 @@ export class FeeCollectionTabComponent implements OnInit, OnDestroy {
     this.collectionData()?.students.filter(s => this.studentStatus(s) === 'pending').length ?? 0
   );
 
-  readonly dialogFeePlanOptions = signal<SelectOption[]>([]);
-
+  // Shared payment fields only — plan + amount handled via multi-select signals
   readonly paymentForm: FormGroup = this.formBuilder.group({
-    feePlanId:     ['', Validators.required],
-    amountPaid:    [null, [Validators.required, Validators.min(0.01)]],
     paymentDate:   [null, Validators.required],
     paymentMethod: ['CASH', Validators.required],
     referenceNo:   [''],
     notes:         [''],
   });
 
-  get feePlanControl()     { return this.paymentForm.get('feePlanId'); }
-  get amountControl()      { return this.paymentForm.get('amountPaid'); }
   get paymentDateControl() { return this.paymentForm.get('paymentDate'); }
 
   ngOnInit(): void {
@@ -247,7 +257,7 @@ export class FeeCollectionTabComponent implements OnInit, OnDestroy {
   async exportExcel(): Promise<void> {
     const data = this.collectionData();
     if (!data) return;
-    const hasFeePlan = !!data.linkedFeePlan;
+    const hasFeePlan = data.linkedFeePlans.length > 0;
     const headers = [
       'Student Name', 'Admission No',
       ...(hasFeePlan ? ['Due (₹)', 'Paid (₹)', 'Balance (₹)'] : ['Paid (₹)']),
@@ -275,75 +285,121 @@ export class FeeCollectionTabComponent implements OnInit, OnDestroy {
   // ── Payment dialog ────────────────────────────────────────────────────────
   openRecordDialog(student: BatchCollectionStudentRow): void {
     this.dialogStudent.set(student);
-    const data       = this.collectionData();
-    const linkedPlan = data?.linkedFeePlan;
+    const data        = this.collectionData();
+    const linkedPlans = data?.linkedFeePlans ?? [];
 
-    this.paymentForm.reset();
+    this.paymentForm.reset({ paymentDate: new Date(), paymentMethod: 'CASH' });
+    this.dialogLinkedPlans.set(linkedPlans);
+    this.selectedPlanIds.set([]);
+    this.planAmounts.set({});
 
-    if (linkedPlan) {
-      this.dialogFeePlanOptions.set([{ label: `${linkedPlan.name} (${linkedPlan.frequency})`, value: linkedPlan.id }]);
-      this.paymentForm.patchValue({
-        feePlanId:     linkedPlan.id,
-        amountPaid:    linkedPlan.amount,
-        paymentDate:   new Date(),
-        paymentMethod: 'CASH',
-      });
+    if (linkedPlans.length > 0) {
+      this.dialogFeePlanOptions.set(
+        linkedPlans.map(p => ({ label: p.name, value: p.id }))
+      );
+      // Pre-select all linked plans with their standard amounts
+      const initialAmounts: Record<string, number> = {};
+      linkedPlans.forEach(p => { initialAmounts[p.id] = p.amount; });
+      this.selectedPlanIds.set(linkedPlans.map(p => p.id));
+      this.planAmounts.set(initialAmounts);
     } else {
+      // No linked plans — load all active plans for manual selection
       this.feeService.getFeePlans(true).pipe(takeUntil(this.destroy$)).subscribe({
         next: plans => {
-          this.dialogFeePlanOptions.set(plans.map(p => ({ label: `${p.name} (${p.frequency})`, value: p.id })));
+          this.dialogLinkedPlans.set(plans);
+          this.dialogFeePlanOptions.set(
+            plans.map(p => ({ label: `${p.name} (${p.frequency})`, value: p.id }))
+          );
         },
         error: () => {},
       });
-      this.paymentForm.patchValue({ paymentDate: new Date(), paymentMethod: 'CASH' });
     }
 
     this.showDialog.set(true);
   }
 
+  onPlanSelectionChange(selectedIds: string[]): void {
+    this.selectedPlanIds.set(selectedIds);
+    // Fill in default amount for any newly added plan; preserve existing edits
+    const planLookup = new Map(this.dialogLinkedPlans().map(p => [p.id, p.amount]));
+    this.planAmounts.update(current => {
+      const updated = { ...current };
+      selectedIds.forEach(id => {
+        if (updated[id] == null) updated[id] = planLookup.get(id) ?? 0;
+      });
+      return updated;
+    });
+  }
+
+  updatePlanAmount(planId: string, amount: number | null): void {
+    this.planAmounts.update(current => ({ ...current, [planId]: amount ?? 0 }));
+  }
+
+  dialogPlanName(planId: string): string {
+    return this.dialogLinkedPlans().find(p => p.id === planId)?.name ?? '—';
+  }
+
   closeDialog(): void { this.showDialog.set(false); }
 
   savePayment(): void {
-    if (this.paymentForm.invalid || !this.dialogStudent()) {
+    if (this.paymentForm.invalid) {
       this.paymentForm.markAllAsTouched();
+      return;
+    }
+
+    const selectedIds = this.selectedPlanIds();
+    if (selectedIds.length === 0) {
+      this.messageService.add({ severity: 'warn', summary: 'No plan selected', detail: 'Select at least one fee plan.' });
+      return;
+    }
+
+    const amounts = this.planAmounts();
+    if (selectedIds.some(id => !amounts[id] || amounts[id] <= 0)) {
+      this.messageService.add({ severity: 'warn', summary: 'Invalid amount', detail: 'Each selected fee plan must have an amount greater than zero.' });
       return;
     }
 
     const formValue      = this.paymentForm.value;
     const paymentDateObj = formValue.paymentDate as Date;
     const isoDate        = `${paymentDateObj.getFullYear()}-${String(paymentDateObj.getMonth() + 1).padStart(2, '0')}-${String(paymentDateObj.getDate()).padStart(2, '0')}`;
+    const student        = this.dialogStudent()!;
 
-    const request: CreatePaymentRequest = {
-      studentId:     this.dialogStudent()!.studentId,
-      feePlanId:     formValue.feePlanId     as string,
-      amountPaid:    formValue.amountPaid    as number,
-      paymentDate:   isoDate,
-      paymentMethod: formValue.paymentMethod as PaymentMethod,
-      referenceNo:   (formValue.referenceNo as string)?.trim() || null,
-      notes:         (formValue.notes        as string)?.trim() || null,
-    };
+    const requests: Observable<PaymentRecord>[] = selectedIds.map(planId =>
+      this.feeService.recordPayment({
+        studentId:     student.studentId,
+        feePlanId:     planId,
+        amountPaid:    amounts[planId],
+        paymentDate:   isoDate,
+        paymentMethod: formValue.paymentMethod as PaymentMethod,
+        referenceNo:   (formValue.referenceNo as string)?.trim() || null,
+        notes:         (formValue.notes        as string)?.trim() || null,
+      } satisfies CreatePaymentRequest)
+    );
 
     this.isSaving.set(true);
 
-    this.feeService.recordPayment(request).pipe(takeUntil(this.destroy$)).subscribe({
-      next: recorded => {
+    forkJoin(requests).pipe(takeUntil(this.destroy$)).subscribe({
+      next: recordedPayments => {
         this.isSaving.set(false);
-        this.showDialog.set(false);
+        this.closeDialog();
 
-        // Update the student row in-place
+        const totalAdded = recordedPayments.reduce((sum, p) => sum + p.amountPaid, 0);
+        const lastDate   = recordedPayments[recordedPayments.length - 1].paymentDate;
+
         this.collectionData.update(data => {
           if (!data) return data;
           return {
             ...data,
             students: data.students.map(s =>
-              s.studentId === recorded.studentId
-                ? { ...s, totalPaid: s.totalPaid + recorded.amountPaid, lastPaymentDate: recorded.paymentDate, paymentCount: s.paymentCount + 1 }
+              s.studentId === student.studentId
+                ? { ...s, totalPaid: s.totalPaid + totalAdded, lastPaymentDate: lastDate, paymentCount: s.paymentCount + recordedPayments.length }
                 : s
             ),
           };
         });
 
-        this.messageService.add({ severity: 'success', summary: 'Recorded', detail: `Payment recorded for ${this.dialogStudent()?.studentName}.` });
+        const label = recordedPayments.length === 1 ? 'Payment' : `${recordedPayments.length} payments`;
+        this.messageService.add({ severity: 'success', summary: 'Recorded', detail: `${label} recorded for ${student.studentName}.` });
       },
       error: (err: Error) => {
         this.isSaving.set(false);

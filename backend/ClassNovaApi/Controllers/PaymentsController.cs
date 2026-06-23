@@ -192,8 +192,10 @@ namespace ClassNovaApi.Controllers
             if (batch == null)
                 return NotFound(new ApiResponse<object>(null, "Batch not found."));
 
-            var linkedFeePlan = _context.FeePlans
+            var linkedFeePlans = _context.FeePlans
                 .Where(fp => fp.TenantId == tenantId && fp.BatchId == batchId && fp.IsActive)
+                .OrderBy(fp => fp.Category)
+                .ThenBy(fp => fp.Name)
                 .Select(fp => new FeePlanDto
                 {
                     Id        = fp.Id,
@@ -205,30 +207,32 @@ namespace ClassNovaApi.Controllers
                     DueDay    = fp.DueDay,
                     IsActive  = fp.IsActive,
                 })
-                .FirstOrDefault();
+                .ToList();
 
             var enrolledStudentIds = _context.StudentEnrollments
                 .Where(e => e.TenantId == tenantId && e.BatchId == batchId && e.IsActive)
                 .Select(e => e.StudentId)
                 .ToList();
 
+            var linkedFeePlanIds = linkedFeePlans.Select(fp => fp.Id).ToList();
+
             if (enrolledStudentIds.Count == 0)
             {
                 return Ok(new ApiResponse<BatchCollectionDto>(new BatchCollectionDto
                 {
-                    BatchId       = batch.Id,
-                    BatchName     = batch.Name,
-                    LinkedFeePlan = linkedFeePlan,
-                    Students      = new List<BatchCollectionStudentRow>()
+                    BatchId        = batch.Id,
+                    BatchName      = batch.Name,
+                    LinkedFeePlans = linkedFeePlans,
+                    Students       = new List<BatchCollectionStudentRow>()
                 }));
             }
 
-            // Payment sums per student — scope to linked fee plan + optional month filter
+            // Payment sums per student — scope to all linked fee plans + optional month filter
             var paymentsQuery = _context.Payments
                 .Where(p => p.TenantId == tenantId && enrolledStudentIds.Contains(p.StudentId));
 
-            if (linkedFeePlan != null)
-                paymentsQuery = paymentsQuery.Where(p => p.FeePlanId == linkedFeePlan.Id);
+            if (linkedFeePlanIds.Count > 0)
+                paymentsQuery = paymentsQuery.Where(p => linkedFeePlanIds.Contains(p.FeePlanId));
 
             if (month.HasValue && year.HasValue)
                 paymentsQuery = paymentsQuery.Where(p =>
@@ -251,8 +255,10 @@ namespace ClassNovaApi.Controllers
                 .Select(s => new { s.Id, s.FullName, s.AdmissionNo })
                 .ToList();
 
-            // DueAmount is the plan's monthly amount, or null if no plan is linked
-            var dueAmount = linkedFeePlan?.Amount;
+            // DueAmount is the sum of all linked plans' amounts, or null when no plans are linked
+            var dueAmount = linkedFeePlans.Count > 0
+                ? linkedFeePlans.Sum(fp => fp.Amount)
+                : (decimal?)null;
 
             var rows = students.Select(s =>
             {
@@ -271,10 +277,10 @@ namespace ClassNovaApi.Controllers
 
             return Ok(new ApiResponse<BatchCollectionDto>(new BatchCollectionDto
             {
-                BatchId       = batch.Id,
-                BatchName     = batch.Name,
-                LinkedFeePlan = linkedFeePlan,
-                Students      = rows,
+                BatchId        = batch.Id,
+                BatchName      = batch.Name,
+                LinkedFeePlans = linkedFeePlans,
+                Students       = rows,
             }));
         }
 

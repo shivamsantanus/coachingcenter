@@ -88,6 +88,7 @@ export type PaymentStatus = 'paid' | 'partial' | 'pending';
 export interface BatchCollectionData {
   batchId: string;
   batchName: string;
-  linkedFeePlan: FeePlan | null;
+  /** All active fee plans linked to this batch. Empty array when none are linked. */
+  linkedFeePlans: FeePlan[];
   students: BatchCollectionStudentRow[];
 }

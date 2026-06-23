@@ -116,6 +116,9 @@
 | 5.7 | Student detail page + payment history | ✅ Done | — | `/students/:id`; Profile tab (personal/guardian/system info); Payments tab (fee plan + date filter, Search, Export CSV); View button on student list |
 | 5.8 | Shared ExportService + CSV exports | ✅ Done | [fees.md](features/fees.md) | `ExportService` with `exportCsv<T>()` + `downloadCsv()`; CSV on Fee Collection, Payment History, Student Detail, Students list, Teachers list |
 | 5.9 | Phase 5 responsive design | ✅ Done | — | Filters stack full-width on mobile (≤640px); load/search buttons full-width; summary strip hides dividers + export button stretches; fee collection dialog `maxWidth: calc(100vw - 2rem)`; student info-list single-column at 480px |
+| 5.10 | Multiple fee plans per batch | 💡 Backlog | — | Backend sums ALL active fee plans linked to a batch for `dueAmount`; frontend shows individual plan chips + combined total in summary strip |
+| 5.11 | Payment receipt (print / PDF) | 💡 Backlog | — | Print-receipt button per payment row (fee collection, payment history, student detail); HTML template opens in new tab styled for `window.print()`; shows org logo, receipt no (RCT-...), student, fee plan, amount, method, reference, balance |
+| 5.12 | Student fee portal | 💡 Backlog | — | Student dashboard gets a Fees tab; shows linked fee plans (dues per plan), payment history, balance, and per-payment receipt download; new `GET /api/students/my-fees` endpoint scoped to logged-in student |
 
 ---
 
