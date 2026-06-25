@@ -11,7 +11,7 @@ import {
   StudentCreatedResult,
 } from '../models/student.models';
 import { ApiResponse } from '../models/academic.models';
-import { StudentDashboardData, StudentEnrollmentInfo } from '../models/student-dashboard.models';
+import { StudentDashboardData, StudentEnrollmentInfo, StudentFeesData } from '../models/student-dashboard.models';
 
 interface MessageResult {
   message: string;
@@ -101,6 +101,15 @@ export class StudentService {
     return this.http.get<ApiResponse<StudentDashboardData>>(`${this.baseUrl}/my-dashboard`).pipe(
       catchError(err => {
         const message = err?.error?.error ?? err?.message ?? 'Failed to load student dashboard.';
+        return throwError(() => new Error(message));
+      })
+    );
+  }
+
+  getMyFees(): Observable<ApiResponse<StudentFeesData>> {
+    return this.http.get<ApiResponse<StudentFeesData>>(`${this.baseUrl}/my-fees`).pipe(
+      catchError(err => {
+        const message = err?.error?.error ?? err?.message ?? 'Failed to load fee information.';
         return throwError(() => new Error(message));
       })
     );

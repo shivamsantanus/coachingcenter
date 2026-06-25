@@ -209,7 +209,7 @@
   td {
     border-bottom: 1px solid var(--p-surface-border);
     color: var(--p-text-color);
-    vertical-align: middle;
+    vertical-align: top;
   }
 
   tr:last-child td { border-bottom: none; }
@@ -218,8 +218,11 @@
 .text-right   { text-align: right; }
 .mono         { font-family: monospace; font-size: 0.8125rem; }
 .date-cell    { white-space: nowrap; }
-.plan-name    { display: block; font-size: 0.875rem; font-weight: 500; }
-.plan-category { display: block; font-size: 0.75rem; color: var(--p-text-muted-color); }
+.plan-line { display: flex; align-items: baseline; gap: 0.375rem; }
+.plan-line + .plan-line { margin-top: 0.2rem; padding-top: 0.2rem; border-top: 1px dotted var(--p-surface-border); }
+.plan-name    { font-size: 0.875rem; font-weight: 500; }
+.plan-category { font-size: 0.75rem; color: var(--p-text-muted-color); }
+.line-item-amount { margin-left: auto; font-size: 0.75rem; font-weight: 600; color: var(--p-text-muted-color); white-space: nowrap; }
 .amount-cell  { font-variant-numeric: tabular-nums; font-weight: 600; color: #16a34a; }
 .receipt-id   { font-size: 0.75rem; color: var(--p-text-muted-color); }
 .no-value     { color: var(--p-text-muted-color); }
@@ -234,6 +237,7 @@
   font-weight: 500;
 }
 
+.row-actions { display: flex; align-items: flex-start; gap: 0.125rem; padding-top: 0.1rem; }
 .action-btn--delete { color: var(--p-red-500); }
 
 .loading-state,

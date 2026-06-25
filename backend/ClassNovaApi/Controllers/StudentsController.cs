@@ -421,6 +421,122 @@ namespace ClassNovaApi.Controllers
             return Ok(new { success = true, data = enrollments, error = (string?)null });
         }
 
+        // GET /api/students/my-fees — STUDENT role only
+        // Returns fee plans linked to the student's enrolled batches (or historical payments)
+        // plus the student's full payment history and per-plan totals.
+        [HttpGet("my-fees")]
+        public IActionResult GetMyFees()
+        {
+            if (User.GetRole() != "STUDENT")
+                return Forbid();
+
+            var tenantId = User.GetTenantId();
+            var userId   = User.GetUserId();
+
+            var student = _context.Students
+                .Where(s => s.TenantId == tenantId && s.UserId == userId)
+                .Select(s => new { s.Id, s.FullName, s.AdmissionNo })
+                .FirstOrDefault();
+
+            if (student == null)
+                return NotFound(new { success = false, data = (object?)null, error = "Student record not found." });
+
+            var enrolledBatchIds = _context.StudentEnrollments
+                .Where(e => e.TenantId == tenantId && e.StudentId == student.Id && e.IsActive && e.BatchId != null)
+                .Select(e => e.BatchId!.Value)
+                .ToList();
+
+            // Per-plan totals via line items
+            var planTotals = _context.PaymentLineItems
+                .Where(li => li.Payment.TenantId == tenantId && li.Payment.StudentId == student.Id)
+                .GroupBy(li => li.FeePlanId)
+                .Select(g => new
+                {
+                    FeePlanId       = g.Key,
+                    TotalPaid       = g.Sum(li => li.AmountPaid),
+                    PaymentCount    = g.Select(li => li.PaymentId).Distinct().Count(),
+                    LastPaymentDate = g.Max(li => (DateOnly?)li.Payment.PaymentDate),
+                })
+                .ToList();
+
+            var paidPlanIds = planTotals.Select(pt => pt.FeePlanId).ToHashSet();
+
+            var feePlans = _context.FeePlans
+                .Where(fp => fp.TenantId == tenantId
+                    && ((fp.BatchId != null && enrolledBatchIds.Contains(fp.BatchId.Value))
+                        || paidPlanIds.Contains(fp.Id)))
+                .Select(fp => new
+                {
+                    fp.Id,
+                    fp.Name,
+                    fp.Category,
+                    fp.Frequency,
+                    fp.Amount,
+                    BatchName = fp.Batch != null ? fp.Batch.Name : null,
+                })
+                .OrderBy(fp => fp.Category)
+                .ThenBy(fp => fp.Name)
+                .ToList();
+
+            var planTotalsDict = planTotals.ToDictionary(pt => pt.FeePlanId);
+
+            var feePlanSummaries = feePlans.Select(fp =>
+            {
+                planTotalsDict.TryGetValue(fp.Id, out var stats);
+                return new
+                {
+                    FeePlanId       = fp.Id,
+                    FeePlanName     = fp.Name,
+                    fp.Category,
+                    fp.Frequency,
+                    fp.Amount,
+                    fp.BatchName,
+                    TotalPaid       = stats?.TotalPaid ?? 0m,
+                    PaymentCount    = stats?.PaymentCount ?? 0,
+                    LastPaymentDate = stats?.LastPaymentDate,
+                };
+            }).ToList();
+
+            var paymentDtos = _context.Payments
+                .Where(p => p.TenantId == tenantId && p.StudentId == student.Id)
+                .OrderByDescending(p => p.PaymentDate)
+                .ThenByDescending(p => p.CreatedAt)
+                .Select(p => new
+                {
+                    Id            = p.Id,
+                    SystemId      = p.SystemId,
+                    StudentId     = student.Id,
+                    StudentName   = student.FullName,
+                    AdmissionNo   = student.AdmissionNo,
+                    TotalAmount   = p.TotalAmount,
+                    p.PaymentDate,
+                    p.PaymentMethod,
+                    p.ReferenceNo,
+                    p.Notes,
+                    p.CreatedAt,
+                    LineItems     = p.LineItems.Select(li => new
+                    {
+                        FeePlanId       = li.FeePlanId,
+                        FeePlanName     = li.FeePlan.Name,
+                        FeePlanCategory = li.FeePlan.Category,
+                        AmountPaid      = li.AmountPaid,
+                    }).ToList(),
+                })
+                .ToList();
+
+            return Ok(new
+            {
+                success = true,
+                data    = new
+                {
+                    FeePlans         = feePlanSummaries,
+                    Payments         = paymentDtos,
+                    TotalPaidOverall = planTotals.Sum(pt => pt.TotalPaid)
+                },
+                error = (string?)null
+            });
+        }
+
         [HttpPost("{id:guid}/photo")]
         public async Task<IActionResult> UploadPhoto(Guid id, IFormFile file)
         {

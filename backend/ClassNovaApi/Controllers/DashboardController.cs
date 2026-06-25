@@ -38,7 +38,7 @@ namespace ClassNovaApi.Controllers
 
             var feesThisMonth = _context.Payments
                 .Where(p => p.TenantId == tenantId && p.PaymentDate >= monthStart && p.PaymentDate <= monthEnd)
-                .Sum(p => (decimal?)p.AmountPaid) ?? 0m;
+                .Sum(p => (decimal?)p.TotalAmount) ?? 0m;
 
             var stats = new DashboardStatsDto
             {

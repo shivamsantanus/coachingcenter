@@ -38,31 +38,40 @@ export interface UpdateFeePlanRequest {
   batchId?: string | null;
 }
 
+export interface PaymentLineItem {
+  feePlanId: string;
+  feePlanName: string;
+  feePlanCategory: string;
+  amountPaid: number;
+}
+
 export interface PaymentRecord {
   id: string;
   systemId: string;
   studentId: string;
   studentName: string;
   admissionNo: string;
-  feePlanId: string;
-  feePlanName: string;
-  feePlanCategory: string;
-  amountPaid: number;
+  totalAmount: number;
   paymentDate: string;
   paymentMethod: PaymentMethod;
   referenceNo: string | null;
   notes: string | null;
   createdAt: string;
+  lineItems: PaymentLineItem[];
+}
+
+export interface CreatePaymentPlanItem {
+  feePlanId: string;
+  amountPaid: number;
 }
 
 export interface CreatePaymentRequest {
   studentId: string;
-  feePlanId: string;
-  amountPaid: number;
   paymentDate: string;
   paymentMethod: PaymentMethod;
   referenceNo: string | null;
   notes: string | null;
+  plans: CreatePaymentPlanItem[];
 }
 
 export interface PaymentListResponse {

@@ -1,3 +1,5 @@
+import { PaymentRecord } from './fee.models';
+
 export interface StudentMonthlyAttendance {
   readonly totalDays: number;
   readonly presentDays: number;
@@ -28,6 +30,24 @@ export interface StudentDashboardData {
   readonly branchName: string | null;
   readonly enrolledBatches: StudentBatchCard[];
   readonly stats: StudentDashboardStats;
+}
+
+export interface StudentFeePlanSummary {
+  readonly feePlanId: string;
+  readonly feePlanName: string;
+  readonly category: string;
+  readonly frequency: string;
+  readonly amount: number;
+  readonly batchName: string | null;
+  readonly totalPaid: number;
+  readonly paymentCount: number;
+  readonly lastPaymentDate: string | null;
+}
+
+export interface StudentFeesData {
+  readonly feePlans: StudentFeePlanSummary[];
+  readonly payments: PaymentRecord[];
+  readonly totalPaidOverall: number;
 }
 
 export interface StudentEnrollmentInfo {

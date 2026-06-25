@@ -14,7 +14,7 @@
     </div>
   } @else {
 
-    <!-- Welcome bar -->
+    <!-- Welcome bar (always visible, outside tabs) -->
     <div class="sd-welcome-bar">
       <div class="sd-avatar">
         @if (resolvePhoto(dashboard()!.photoUrl)) {
@@ -33,74 +33,248 @@
       </div>
     </div>
 
-    <!-- Stats strip -->
-    <div class="sd-stats-strip">
-      <div class="sd-stat">
-        <span class="sd-stat-value">{{ dashboard()!.stats.totalBatches }}</span>
-        <span class="sd-stat-label">Enrolled Batch{{ dashboard()!.stats.totalBatches !== 1 ? 'es' : '' }}</span>
-      </div>
-      <div class="sd-stat-divider"></div>
-      <div class="sd-stat">
-        <span class="sd-stat-value" [class.sd-stat-value--low]="dashboard()!.stats.overallPercent < 75">
-          {{ dashboard()!.stats.overallPercent }}%
-        </span>
-        <span class="sd-stat-label">Attendance This Month</span>
-      </div>
-    </div>
+    <!-- Tabs -->
+    <p-tabs [value]="activeTab()" (valueChange)="onTabChange($event)">
+      <p-tablist>
+        <p-tab value="overview"><i class="pi pi-home"></i> Overview</p-tab>
+        <p-tab value="fees"><i class="pi pi-wallet"></i> My Fees</p-tab>
+      </p-tablist>
 
-    <!-- Enrolled batches -->
-    <section class="sd-section">
-      <h2 class="sd-section-title"><i class="pi pi-book"></i> My Batches</h2>
+      <p-tabpanels>
 
-      @if (dashboard()!.enrolledBatches.length === 0) {
-        <div class="sd-empty-section">
-          Not enrolled in any batch yet. Contact your administrator.
-        </div>
-      } @else {
-        <div class="sd-batch-grid">
-          @for (batch of dashboard()!.enrolledBatches; track batch.batchId) {
-            <div class="sd-batch-card">
-              <div class="sd-batch-header">
-                <span class="sd-batch-name">{{ batch.batchName }}</span>
-                @if (batch.className) {
-                  <span class="sd-batch-class">{{ batch.className }}</span>
+        <!-- ── Overview tab ──────────────────────────────────────────────── -->
+        <p-tabpanel value="overview">
+
+          <!-- Stats strip -->
+          <div class="sd-stats-strip">
+            <div class="sd-stat">
+              <span class="sd-stat-value">{{ dashboard()!.stats.totalBatches }}</span>
+              <span class="sd-stat-label">Enrolled Batch{{ dashboard()!.stats.totalBatches !== 1 ? 'es' : '' }}</span>
+            </div>
+            <div class="sd-stat-divider"></div>
+            <div class="sd-stat">
+              <span class="sd-stat-value" [class.sd-stat-value--low]="dashboard()!.stats.overallPercent < 75">
+                {{ dashboard()!.stats.overallPercent }}%
+              </span>
+              <span class="sd-stat-label">Attendance This Month</span>
+            </div>
+          </div>
+
+          <!-- Enrolled batches -->
+          <section class="sd-section">
+            <h2 class="sd-section-title"><i class="pi pi-book"></i> My Batches</h2>
+
+            @if (dashboard()!.enrolledBatches.length === 0) {
+              <div class="sd-empty-section">
+                Not enrolled in any batch yet. Contact your administrator.
+              </div>
+            } @else {
+              <div class="sd-batch-grid">
+                @for (batch of dashboard()!.enrolledBatches; track batch.batchId) {
+                  <div class="sd-batch-card">
+                    <div class="sd-batch-header">
+                      <span class="sd-batch-name">{{ batch.batchName }}</span>
+                      @if (batch.className) {
+                        <span class="sd-batch-class">{{ batch.className }}</span>
+                      }
+                    </div>
+                    <p class="sd-batch-ay">{{ batch.academicYearName }}</p>
+                    @if (batch.startTime) {
+                      <p class="sd-batch-time">
+                        <i class="pi pi-clock"></i> {{ batch.startTime }} – {{ batch.endTime }}
+                      </p>
+                    }
+
+                    <!-- Attendance progress -->
+                    <div class="sd-att-row">
+                      <div class="sd-att-bar-wrap">
+                        <div
+                          class="sd-att-bar"
+                          [style.width.%]="batch.attendanceThisMonth.percentage"
+                          [class.sd-att-bar--good]="batch.attendanceThisMonth.percentage >= 75"
+                          [class.sd-att-bar--mid]="batch.attendanceThisMonth.percentage >= 50 && batch.attendanceThisMonth.percentage < 75"
+                          [class.sd-att-bar--low]="batch.attendanceThisMonth.percentage < 50">
+                        </div>
+                      </div>
+                      <span class="sd-att-pct"
+                        [class.sd-att-pct--low]="batch.attendanceThisMonth.percentage < 75">
+                        {{ batch.attendanceThisMonth.percentage }}%
+                      </span>
+                    </div>
+                    <p class="sd-att-detail">
+                      {{ batch.attendanceThisMonth.presentDays }} / {{ batch.attendanceThisMonth.totalDays }} days this month
+                    </p>
+
+                    <a [routerLink]="['../attendance']" class="sd-view-btn">
+                      <i class="pi pi-calendar"></i> View Attendance
+                    </a>
+                  </div>
                 }
               </div>
-              <p class="sd-batch-ay">{{ batch.academicYearName }}</p>
-              @if (batch.startTime) {
-                <p class="sd-batch-time">
-                  <i class="pi pi-clock"></i> {{ batch.startTime }} – {{ batch.endTime }}
-                </p>
-              }
+            }
+          </section>
 
-              <!-- Attendance progress -->
-              <div class="sd-att-row">
-                <div class="sd-att-bar-wrap">
-                  <div
-                    class="sd-att-bar"
-                    [style.width.%]="batch.attendanceThisMonth.percentage"
-                    [class.sd-att-bar--good]="batch.attendanceThisMonth.percentage >= 75"
-                    [class.sd-att-bar--mid]="batch.attendanceThisMonth.percentage >= 50 && batch.attendanceThisMonth.percentage < 75"
-                    [class.sd-att-bar--low]="batch.attendanceThisMonth.percentage < 50">
-                  </div>
-                </div>
-                <span class="sd-att-pct"
-                  [class.sd-att-pct--low]="batch.attendanceThisMonth.percentage < 75">
-                  {{ batch.attendanceThisMonth.percentage }}%
-                </span>
+        </p-tabpanel>
+
+        <!-- ── Fees tab ──────────────────────────────────────────────────── -->
+        <p-tabpanel value="fees">
+          <div class="sd-fees-tab">
+
+            @if (isLoadingFees()) {
+              <div class="sd-fees-loading">
+                <i class="pi pi-spin pi-spinner"></i>
+                <span>Loading fee information…</span>
               </div>
-              <p class="sd-att-detail">
-                {{ batch.attendanceThisMonth.presentDays }} / {{ batch.attendanceThisMonth.totalDays }} days this month
-              </p>
+            } @else if (feesError()) {
+              <div class="sd-fees-error">
+                <i class="pi pi-exclamation-triangle"></i>
+                <p>{{ feesError() }}</p>
+              </div>
+            } @else if (feesData()) {
 
-              <a [routerLink]="['../attendance']" class="sd-view-btn">
-                <i class="pi pi-calendar"></i> View Attendance
-              </a>
-            </div>
-          }
-        </div>
-      }
-    </section>
+              <!-- Fee plan summary cards -->
+              <section class="sd-section">
+                <h2 class="sd-section-title"><i class="pi pi-receipt"></i> Fee Plans</h2>
+
+                @if (feesData()!.feePlans.length === 0) {
+                  <div class="sd-empty-section">
+                    No fee plans linked to your enrolled batches yet.
+                  </div>
+                } @else {
+                  <div class="sd-fee-plans-grid">
+                    @for (plan of feesData()!.feePlans; track plan.feePlanId) {
+                      <div class="sd-fee-plan-card" [class.sd-fee-plan-card--paid]="planHasPayments(plan)">
+                        <div class="sd-fp-header">
+                          <div class="sd-fp-title-wrap">
+                            <span class="sd-fp-name">{{ plan.feePlanName }}</span>
+                            <span class="sd-fp-category">{{ categoryLabel(plan.category) }}</span>
+                          </div>
+                          <span class="sd-fp-freq">{{ frequencyLabel(plan.frequency) }}</span>
+                        </div>
+
+                        @if (plan.batchName) {
+                          <p class="sd-fp-batch"><i class="pi pi-users"></i> {{ plan.batchName }}</p>
+                        }
+
+                        <div class="sd-fp-amounts">
+                          <div class="sd-fp-amount-item">
+                            <span class="sd-fp-amount-label">Plan Amount</span>
+                            <span class="sd-fp-amount-value">₹{{ plan.amount | number:'1.2-2' }}</span>
+                          </div>
+                          <div class="sd-fp-amount-divider"></div>
+                          <div class="sd-fp-amount-item">
+                            <span class="sd-fp-amount-label">Total Paid</span>
+                            <span class="sd-fp-amount-value sd-fp-amount-value--paid">₹{{ plan.totalPaid | number:'1.2-2' }}</span>
+                          </div>
+                        </div>
+
+                        @if (plan.paymentCount > 0) {
+                          <p class="sd-fp-last-payment">
+                            {{ plan.paymentCount }} payment{{ plan.paymentCount !== 1 ? 's' : '' }}
+                            @if (plan.lastPaymentDate) {
+                              · Last on {{ plan.lastPaymentDate }}
+                            }
+                          </p>
+                        } @else {
+                          <p class="sd-fp-no-payment">No payments recorded yet</p>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+              </section>
+
+              <!-- Payment history -->
+              <section class="sd-section">
+                <div class="sd-payments-header">
+                  <h2 class="sd-section-title"><i class="pi pi-history"></i> Payment History</h2>
+                  @if (feesData()!.payments.length > 0) {
+                    <div class="sd-payments-summary">
+                      <span class="sd-payments-count">{{ feesData()!.payments.length }} transaction{{ feesData()!.payments.length !== 1 ? 's' : '' }}</span>
+                      <span class="sd-payments-total">₹{{ totalPaidOverall() | number:'1.2-2' }} total</span>
+                    </div>
+                  }
+                </div>
+
+                @if (feesData()!.payments.length === 0) {
+                  <div class="sd-empty-section">
+                    <i class="pi pi-wallet" style="font-size: 1.5rem; display: block; margin-bottom: 0.5rem; opacity: 0.4;"></i>
+                    No payments recorded yet.
+                  </div>
+                } @else {
+                  <div class="sd-payments-table-card">
+                    <div class="sd-table-scroll">
+                      <table class="sd-payments-table">
+                        <thead>
+                          <tr>
+                            <th>Date</th>
+                            <th>Fee Plan(s)</th>
+                            <th class="text-right">Total (₹)</th>
+                            <th>Method</th>
+                            <th>Reference</th>
+                            <th>Receipt ID</th>
+                            <th class="actions-col"></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (payment of (feesData()?.payments ?? []); track payment.id) {
+                            <tr>
+                              <td class="mono date-cell">{{ payment.paymentDate }}</td>
+                              <td>
+                                @for (li of payment.lineItems; track li.feePlanId) {
+                                  <div class="plan-line">
+                                    <span class="plan-name">{{ li.feePlanName }}</span>
+                                    @if (payment.lineItems.length > 1) {
+                                      <span class="line-item-amount">₹{{ li.amountPaid | number:'1.2-2' }}</span>
+                                    }
+                                  </div>
+                                }
+                                @if (payment.lineItems.length === 0) {
+                                  <span class="no-value">—</span>
+                                }
+                              </td>
+                              <td class="text-right amount-cell">{{ payment.totalAmount | number:'1.2-2' }}</td>
+                              <td><span class="method-chip">{{ methodLabel(payment.paymentMethod) }}</span></td>
+                              <td>
+                                @if (payment.referenceNo) {
+                                  <span class="mono">{{ payment.referenceNo }}</span>
+                                } @else {
+                                  <span class="no-value">—</span>
+                                }
+                              </td>
+                              <td class="mono receipt-id">{{ payment.systemId }}</td>
+                              <td class="row-actions">
+                                <button
+                                  pButton
+                                  icon="pi pi-print"
+                                  pTooltip="Print receipt"
+                                  tooltipPosition="top"
+                                  class="p-button-text p-button-sm"
+                                  (click)="printReceipt(payment)">
+                                </button>
+                              </td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                }
+              </section>
+
+            } @else {
+              <!-- Not yet loaded (before first tab activation) -->
+              <div class="sd-fees-loading">
+                <i class="pi pi-wallet"></i>
+                <span>Select this tab to view your fee information.</span>
+              </div>
+            }
+
+          </div>
+        </p-tabpanel>
+
+      </p-tabpanels>
+    </p-tabs>
 
   }
 </div>

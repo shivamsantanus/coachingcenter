@@ -13,7 +13,8 @@ import { TooltipModule } from 'primeng/tooltip';
 import { MessageService } from 'primeng/api';
 import { StudentService } from '../../../services/student.service';
 import { FeeService } from '../../../services/fee.service';
-import { ExportService, CsvColumn } from '../../../services/export.service';
+import { ExportService } from '../../../services/export.service';
+import { ReceiptService } from '../../../services/receipt.service';
 import { StudentDetail } from '../../../models/student.models';
 import { PaymentRecord, FeePlan } from '../../../models/fee.models';
 import { environment } from '../../../../environments/environment';
@@ -42,8 +43,9 @@ interface SelectOption { label: string; value: string; }
 export class StudentDetailComponent implements OnInit, OnDestroy {
   private route          = inject(ActivatedRoute);
   private studentService = inject(StudentService);
-  private feeService     = inject(FeeService);
-  private exportService  = inject(ExportService);
+  private feeService      = inject(FeeService);
+  private exportService   = inject(ExportService);
+  private receiptService  = inject(ReceiptService);
   private messageService = inject(MessageService);
   private destroy$       = new Subject<void>();
 
@@ -73,7 +75,7 @@ export class StudentDetailComponent implements OnInit, OnDestroy {
   readonly deletingId   = signal<string | null>(null);
 
   readonly totalPaid = computed(() =>
-    this.payments().reduce((sum, p) => sum + p.amountPaid, 0)
+    this.payments().reduce((sum, p) => sum + p.totalAmount, 0)
   );
 
   ngOnInit(): void {
@@ -131,6 +133,10 @@ export class StudentDetailComponent implements OnInit, OnDestroy {
     });
   }
 
+  printReceipt(payment: PaymentRecord): void {
+    this.receiptService.printReceipt(payment);
+  }
+
   deletePayment(payment: PaymentRecord): void {
     if (this.deletingId()) return;
     this.deletingId.set(payment.id);
@@ -147,23 +153,19 @@ export class StudentDetailComponent implements OnInit, OnDestroy {
     });
   }
 
-  private readonly exportColumns: CsvColumn<PaymentRecord>[] = [
-    { header: 'Date',        value: p => p.paymentDate },
-    { header: 'Fee Plan',    value: p => p.feePlanName },
-    { header: 'Category',    value: p => p.feePlanCategory },
-    { header: 'Amount (₹)', value: p => p.amountPaid },
-    { header: 'Method',      value: p => p.paymentMethod },
-    { header: 'Reference',   value: p => p.referenceNo ?? '' },
-    { header: 'Receipt ID',  value: p => p.systemId },
-  ];
-
   async exportExcel(): Promise<void> {
     const s = this.student();
-    await this.exportService.exportXlsx(
+    const headers = ['Date', 'Fee Plan', 'Category', 'Amount (₹)', 'Method', 'Reference', 'Receipt ID'];
+    const rows = this.payments().flatMap(p =>
+      p.lineItems.length > 0
+        ? p.lineItems.map(li => [p.paymentDate, li.feePlanName, li.feePlanCategory, li.amountPaid, this.methodLabel(p.paymentMethod), p.referenceNo ?? '', p.systemId])
+        : [[p.paymentDate, '—', '—', p.totalAmount, this.methodLabel(p.paymentMethod), p.referenceNo ?? '', p.systemId]]
+    );
+    await this.exportService.downloadXlsx(
       `Payments_${s?.admissionNo ?? this.studentId()}_${new Date().toISOString().slice(0, 10)}`,
       `Payment History – ${s?.fullName ?? 'Student'}`,
-      this.exportColumns,
-      this.payments(),
+      headers,
+      rows,
     );
   }
 

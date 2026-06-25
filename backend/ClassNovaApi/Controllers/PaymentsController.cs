@@ -37,12 +37,13 @@ namespace ClassNovaApi.Controllers
 
             var query = _context.Payments.Where(p => p.TenantId == tenantId);
 
-            if (studentId.HasValue) query = query.Where(p => p.StudentId  == studentId);
-            if (feePlanId.HasValue) query = query.Where(p => p.FeePlanId  == feePlanId);
+            if (studentId.HasValue) query = query.Where(p => p.StudentId == studentId);
             if (fromDate.HasValue)  query = query.Where(p => p.PaymentDate >= fromDate);
             if (toDate.HasValue)    query = query.Where(p => p.PaymentDate <= toDate);
 
-            // batchId is the most specific — classId and academicYearId broaden the scope
+            if (feePlanId.HasValue)
+                query = query.Where(p => p.LineItems.Any(li => li.FeePlanId == feePlanId));
+
             if (batchId.HasValue)
             {
                 var studentIds = _context.StudentEnrollments
@@ -80,20 +81,24 @@ namespace ClassNovaApi.Controllers
                 .Take(pageSize)
                 .Select(p => new PaymentDto
                 {
-                    Id              = p.Id,
-                    SystemId        = p.SystemId ?? string.Empty,
-                    StudentId       = p.StudentId,
-                    StudentName     = p.Student.FullName,
-                    AdmissionNo     = p.Student.AdmissionNo,
-                    FeePlanId       = p.FeePlanId,
-                    FeePlanName     = p.FeePlan.Name,
-                    FeePlanCategory = p.FeePlan.Category,
-                    AmountPaid      = p.AmountPaid,
-                    PaymentDate     = p.PaymentDate,
-                    PaymentMethod   = p.PaymentMethod,
-                    ReferenceNo     = p.ReferenceNo,
-                    Notes           = p.Notes,
-                    CreatedAt       = p.CreatedAt,
+                    Id            = p.Id,
+                    SystemId      = p.SystemId ?? string.Empty,
+                    StudentId     = p.StudentId,
+                    StudentName   = p.Student.FullName,
+                    AdmissionNo   = p.Student.AdmissionNo,
+                    TotalAmount   = p.TotalAmount,
+                    PaymentDate   = p.PaymentDate,
+                    PaymentMethod = p.PaymentMethod,
+                    ReferenceNo   = p.ReferenceNo,
+                    Notes         = p.Notes,
+                    CreatedAt     = p.CreatedAt,
+                    LineItems     = p.LineItems.Select(li => new PaymentLineItemDto
+                    {
+                        FeePlanId       = li.FeePlanId,
+                        FeePlanName     = li.FeePlan.Name,
+                        FeePlanCategory = li.FeePlan.Category,
+                        AmountPaid      = li.AmountPaid,
+                    }).ToList(),
                 })
                 .ToList();
 
@@ -113,15 +118,27 @@ namespace ClassNovaApi.Controllers
             if (request.PaymentDate > DateOnly.FromDateTime(DateTime.UtcNow))
                 return BadRequest(new ApiResponse<object>(null, "Payment date cannot be in the future."));
 
+            if (request.Plans == null || request.Plans.Count == 0)
+                return BadRequest(new ApiResponse<object>(null, "At least one fee plan is required."));
+
             var tenantId = User.GetTenantId();
 
             var student = _context.Students.FirstOrDefault(s => s.TenantId == tenantId && s.Id == request.StudentId);
             if (student == null)
                 return BadRequest(new ApiResponse<object>(null, "Student not found in this tenant."));
 
-            var feePlan = _context.FeePlans.FirstOrDefault(fp => fp.TenantId == tenantId && fp.Id == request.FeePlanId);
-            if (feePlan == null)
-                return BadRequest(new ApiResponse<object>(null, "Fee plan not found in this tenant."));
+            var planIds  = request.Plans.Select(p => p.FeePlanId).ToList();
+            var feePlans = _context.FeePlans
+                .Where(fp => fp.TenantId == tenantId && planIds.Contains(fp.Id))
+                .ToDictionary(fp => fp.Id);
+
+            foreach (var planItem in request.Plans)
+            {
+                if (!feePlans.ContainsKey(planItem.FeePlanId))
+                    return BadRequest(new ApiResponse<object>(null, $"Fee plan not found in this tenant."));
+                if (planItem.AmountPaid <= 0)
+                    return BadRequest(new ApiResponse<object>(null, "Each payment amount must be greater than zero."));
+            }
 
             var tenantCode = _context.Tenants
                 .Where(t => t.Id == tenantId)
@@ -130,13 +147,14 @@ namespace ClassNovaApi.Controllers
 
             var now       = DateTime.UtcNow;
             var paymentId = Guid.NewGuid();
-            var payment   = new Payment
+            var total     = request.Plans.Sum(p => p.AmountPaid);
+
+            var payment = new Payment
             {
                 Id            = paymentId,
                 TenantId      = tenantId,
                 StudentId     = request.StudentId,
-                FeePlanId     = request.FeePlanId,
-                AmountPaid    = request.AmountPaid,
+                TotalAmount   = total,
                 PaymentDate   = request.PaymentDate,
                 PaymentMethod = methodUpper,
                 ReferenceNo   = string.IsNullOrWhiteSpace(request.ReferenceNo) ? null : request.ReferenceNo.Trim(),
@@ -146,25 +164,38 @@ namespace ClassNovaApi.Controllers
                 UpdatedAt     = now,
             };
 
+            var lineItems = request.Plans.Select(planItem => new PaymentLineItem
+            {
+                Id        = Guid.NewGuid(),
+                PaymentId = paymentId,
+                FeePlanId = planItem.FeePlanId,
+                AmountPaid = planItem.AmountPaid,
+            }).ToList();
+
             _context.Payments.Add(payment);
+            _context.PaymentLineItems.AddRange(lineItems);
             _context.SaveChanges();
 
             var dto = new PaymentDto
             {
-                Id              = payment.Id,
-                SystemId        = payment.SystemId ?? string.Empty,
-                StudentId       = payment.StudentId,
-                StudentName     = student.FullName,
-                AdmissionNo     = student.AdmissionNo,
-                FeePlanId       = payment.FeePlanId,
-                FeePlanName     = feePlan.Name,
-                FeePlanCategory = feePlan.Category,
-                AmountPaid      = payment.AmountPaid,
-                PaymentDate     = payment.PaymentDate,
-                PaymentMethod   = payment.PaymentMethod,
-                ReferenceNo     = payment.ReferenceNo,
-                Notes           = payment.Notes,
-                CreatedAt       = payment.CreatedAt,
+                Id            = payment.Id,
+                SystemId      = payment.SystemId ?? string.Empty,
+                StudentId     = payment.StudentId,
+                StudentName   = student.FullName,
+                AdmissionNo   = student.AdmissionNo,
+                TotalAmount   = payment.TotalAmount,
+                PaymentDate   = payment.PaymentDate,
+                PaymentMethod = payment.PaymentMethod,
+                ReferenceNo   = payment.ReferenceNo,
+                Notes         = payment.Notes,
+                CreatedAt     = payment.CreatedAt,
+                LineItems     = lineItems.Select(li => new PaymentLineItemDto
+                {
+                    FeePlanId       = li.FeePlanId,
+                    FeePlanName     = feePlans[li.FeePlanId].Name,
+                    FeePlanCategory = feePlans[li.FeePlanId].Category,
+                    AmountPaid      = li.AmountPaid,
+                }).ToList(),
             };
 
             return Ok(new ApiResponse<PaymentDto>(dto));
@@ -227,25 +258,26 @@ namespace ClassNovaApi.Controllers
                 }));
             }
 
-            // Payment sums per student — scope to all linked fee plans + optional month filter
-            var paymentsQuery = _context.Payments
-                .Where(p => p.TenantId == tenantId && enrolledStudentIds.Contains(p.StudentId));
+            // Query through line items to get per-student payment totals
+            var lineItemsQuery = _context.PaymentLineItems
+                .Where(li => li.Payment.TenantId == tenantId
+                          && enrolledStudentIds.Contains(li.Payment.StudentId));
 
             if (linkedFeePlanIds.Count > 0)
-                paymentsQuery = paymentsQuery.Where(p => linkedFeePlanIds.Contains(p.FeePlanId));
+                lineItemsQuery = lineItemsQuery.Where(li => linkedFeePlanIds.Contains(li.FeePlanId));
 
             if (month.HasValue && year.HasValue)
-                paymentsQuery = paymentsQuery.Where(p =>
-                    p.PaymentDate.Month == month.Value && p.PaymentDate.Year == year.Value);
+                lineItemsQuery = lineItemsQuery.Where(li =>
+                    li.Payment.PaymentDate.Month == month.Value && li.Payment.PaymentDate.Year == year.Value);
 
-            var paymentSummaries = paymentsQuery
-                .GroupBy(p => p.StudentId)
+            var paymentSummaries = lineItemsQuery
+                .GroupBy(li => li.Payment.StudentId)
                 .Select(g => new
                 {
                     StudentId       = g.Key,
-                    TotalPaid       = g.Sum(p => p.AmountPaid),
-                    LastPaymentDate = g.Max(p => (DateOnly?)p.PaymentDate),
-                    PaymentCount    = g.Count()
+                    TotalPaid       = g.Sum(li => li.AmountPaid),
+                    LastPaymentDate = g.Max(li => (DateOnly?)li.Payment.PaymentDate),
+                    PaymentCount    = g.Select(li => li.PaymentId).Distinct().Count(),
                 })
                 .ToList();
 
@@ -255,7 +287,6 @@ namespace ClassNovaApi.Controllers
                 .Select(s => new { s.Id, s.FullName, s.AdmissionNo })
                 .ToList();
 
-            // DueAmount is the sum of all linked plans' amounts, or null when no plans are linked
             var dueAmount = linkedFeePlans.Count > 0
                 ? linkedFeePlans.Sum(fp => fp.Amount)
                 : (decimal?)null;
@@ -296,6 +327,9 @@ namespace ClassNovaApi.Controllers
             if (payment == null)
                 return NotFound(new ApiResponse<object>(null, "Payment not found."));
 
+            // Delete line items first — Restrict FK prevents cascade
+            var lineItems = _context.PaymentLineItems.Where(li => li.PaymentId == id).ToList();
+            _context.PaymentLineItems.RemoveRange(lineItems);
             _context.Payments.Remove(payment);
             _context.SaveChanges();
 

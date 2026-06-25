@@ -24,6 +24,7 @@ namespace ClassNovaApi.Data
         public DbSet<StudentEnrollment> StudentEnrollments { get; set; }
         public DbSet<FeePlan> FeePlans { get; set; }
         public DbSet<Payment> Payments { get; set; }
+        public DbSet<PaymentLineItem> PaymentLineItems { get; set; }
         public DbSet<Exam> Exams { get; set; }
         public DbSet<ExamSubject> ExamSubjects { get; set; }
         public DbSet<Mark> Marks { get; set; }
@@ -101,11 +102,22 @@ namespace ClassNovaApi.Data
 
             // Payment — decimal precision + indexes
             modelBuilder.Entity<Payment>()
-                .Property(p => p.AmountPaid)
+                .Property(p => p.TotalAmount)
                 .HasPrecision(10, 2);
 
             modelBuilder.Entity<Payment>()
                 .HasIndex(p => new { p.TenantId, p.StudentId, p.PaymentDate });
+
+            // PaymentLineItem — decimal precision + indexes
+            modelBuilder.Entity<PaymentLineItem>()
+                .Property(li => li.AmountPaid)
+                .HasPrecision(10, 2);
+
+            modelBuilder.Entity<PaymentLineItem>()
+                .HasIndex(li => li.PaymentId);
+
+            modelBuilder.Entity<PaymentLineItem>()
+                .HasIndex(li => li.FeePlanId);
 
             // ExamSubject — composite unique
             modelBuilder.Entity<ExamSubject>()

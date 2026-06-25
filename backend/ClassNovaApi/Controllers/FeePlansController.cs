@@ -210,7 +210,7 @@ namespace ClassNovaApi.Controllers
             if (feePlan == null)
                 return NotFound(new ApiResponse<object>(null, "Fee plan not found."));
 
-            var hasPayments = _context.Payments.Any(p => p.TenantId == tenantId && p.FeePlanId == id);
+            var hasPayments = _context.PaymentLineItems.Any(li => li.Payment.TenantId == tenantId && li.FeePlanId == id);
             if (hasPayments)
                 return Conflict(new ApiResponse<object>(null, "Cannot delete a fee plan that has associated payments."));
 

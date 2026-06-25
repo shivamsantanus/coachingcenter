@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Observable, Subject, forkJoin, takeUntil } from 'rxjs';
+import { Subject, takeUntil } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
 import { MultiSelectModule } from 'primeng/multiselect';
@@ -25,7 +25,6 @@ import {
   CreatePaymentRequest,
   FeePlan,
   PaymentMethod,
-  PaymentRecord,
   PaymentStatus,
 } from '../../../models/fee.models';
 
@@ -364,27 +363,21 @@ export class FeeCollectionTabComponent implements OnInit, OnDestroy {
     const isoDate        = `${paymentDateObj.getFullYear()}-${String(paymentDateObj.getMonth() + 1).padStart(2, '0')}-${String(paymentDateObj.getDate()).padStart(2, '0')}`;
     const student        = this.dialogStudent()!;
 
-    const requests: Observable<PaymentRecord>[] = selectedIds.map(planId =>
-      this.feeService.recordPayment({
-        studentId:     student.studentId,
-        feePlanId:     planId,
-        amountPaid:    amounts[planId],
-        paymentDate:   isoDate,
-        paymentMethod: formValue.paymentMethod as PaymentMethod,
-        referenceNo:   (formValue.referenceNo as string)?.trim() || null,
-        notes:         (formValue.notes        as string)?.trim() || null,
-      } satisfies CreatePaymentRequest)
-    );
+    const paymentRequest: CreatePaymentRequest = {
+      studentId:     student.studentId,
+      paymentDate:   isoDate,
+      paymentMethod: formValue.paymentMethod as PaymentMethod,
+      referenceNo:   (formValue.referenceNo as string)?.trim() || null,
+      notes:         (formValue.notes        as string)?.trim() || null,
+      plans:         selectedIds.map(planId => ({ feePlanId: planId, amountPaid: amounts[planId] })),
+    };
 
     this.isSaving.set(true);
 
-    forkJoin(requests).pipe(takeUntil(this.destroy$)).subscribe({
-      next: recordedPayments => {
+    this.feeService.recordPayment(paymentRequest).pipe(takeUntil(this.destroy$)).subscribe({
+      next: payment => {
         this.isSaving.set(false);
         this.closeDialog();
-
-        const totalAdded = recordedPayments.reduce((sum, p) => sum + p.amountPaid, 0);
-        const lastDate   = recordedPayments[recordedPayments.length - 1].paymentDate;
 
         this.collectionData.update(data => {
           if (!data) return data;
@@ -392,14 +385,13 @@ export class FeeCollectionTabComponent implements OnInit, OnDestroy {
             ...data,
             students: data.students.map(s =>
               s.studentId === student.studentId
-                ? { ...s, totalPaid: s.totalPaid + totalAdded, lastPaymentDate: lastDate, paymentCount: s.paymentCount + recordedPayments.length }
+                ? { ...s, totalPaid: s.totalPaid + payment.totalAmount, lastPaymentDate: payment.paymentDate, paymentCount: s.paymentCount + 1 }
                 : s
             ),
           };
         });
 
-        const label = recordedPayments.length === 1 ? 'Payment' : `${recordedPayments.length} payments`;
-        this.messageService.add({ severity: 'success', summary: 'Recorded', detail: `${label} recorded for ${student.studentName}.` });
+        this.messageService.add({ severity: 'success', summary: 'Recorded', detail: `Payment recorded for ${student.studentName}.` });
       },
       error: (err: Error) => {
         this.isSaving.set(false);

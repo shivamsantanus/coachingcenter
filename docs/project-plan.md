@@ -4,7 +4,7 @@
 > Never start a feature without a row in the plan. Never finish one without marking it done
 > and linking the feature doc. This is the single source of truth for project state.
 
-**Last updated:** 2026-06-18 (Phase 5 complete — Export CSV to Teachers list via shared ExportService; responsive design on fee-collection-tab, payments-tab, student-detail (filter stacks, full-width buttons, summary strip dividers hidden on mobile); fees.md updated.)
+**Last updated:** 2026-06-25 (Payment junction table refactor done — `payments` + `payment_line_items`; single `POST /api/payments` endpoint; receipt auto-detects single vs combined layout; all payment views show one row per payment with line items stacked in Fee Plan cell.)
 
 ---
 
@@ -116,9 +116,13 @@
 | 5.7 | Student detail page + payment history | ✅ Done | — | `/students/:id`; Profile tab (personal/guardian/system info); Payments tab (fee plan + date filter, Search, Export CSV); View button on student list |
 | 5.8 | Shared ExportService + CSV exports | ✅ Done | [fees.md](features/fees.md) | `ExportService` with `exportCsv<T>()` + `downloadCsv()`; CSV on Fee Collection, Payment History, Student Detail, Students list, Teachers list |
 | 5.9 | Phase 5 responsive design | ✅ Done | — | Filters stack full-width on mobile (≤640px); load/search buttons full-width; summary strip hides dividers + export button stretches; fee collection dialog `maxWidth: calc(100vw - 2rem)`; student info-list single-column at 480px |
-| 5.10 | Multiple fee plans per batch | 💡 Backlog | — | Backend sums ALL active fee plans linked to a batch for `dueAmount`; frontend shows individual plan chips + combined total in summary strip |
-| 5.11 | Payment receipt (print / PDF) | 💡 Backlog | — | Print-receipt button per payment row (fee collection, payment history, student detail); HTML template opens in new tab styled for `window.print()`; shows org logo, receipt no (RCT-...), student, fee plan, amount, method, reference, balance |
-| 5.12 | Student fee portal | 💡 Backlog | — | Student dashboard gets a Fees tab; shows linked fee plans (dues per plan), payment history, balance, and per-payment receipt download; new `GET /api/students/my-fees` endpoint scoped to logged-in student |
+| 5.10 | Multiple fee plans per batch | ✅ Done | [fees.md](features/fees.md) | Backend: `ToList()` + `Sum()` across all linked plans; frontend: `p-multiselect` with per-plan editable amounts; `forkJoin` creates one payment record per plan; plan chips in summary strip |
+| 5.11 | Payment receipt (print / PDF) | ✅ Done | [payment-receipt.md](features/payment-receipt.md) | `ReceiptService.printReceipt()` writes a self-contained HTML page in a new tab; auto-triggers `window.print()`; Print button added to Payment History tab + Student Detail payments tab |
+| 5.12 | Student fee portal | ✅ Done | [student-fee-portal.md](features/student-fee-portal.md) | Student dashboard gains Overview + Fees tabs; Fees tab: fee plan summary cards (total paid per plan, count, last date) + full payment history table with per-row Print Receipt; `GET /api/students/my-fees` scoped to logged-in student; lazy-loaded on first tab activation |
+| 5.13 | Payment junction table refactor | ✅ Done | [payment-junction-table.md](features/payment-junction-table.md) | `payments` table split into `payments` + `payment_line_items`; single `POST /api/payments` records N plans in one atomic transaction; `totalAmount` on payment; receipt auto-detects single vs combined layout from `lineItems.length`; all three payment views (Fee Collection, Payment History, Student Detail, Student Dashboard) show one row per payment with line items stacked |
+
+**DB migrations applied (Phase 5):**
+- `20260625133218_RefactorPaymentToJunctionTable` — creates `payment_line_items` table; migrates existing flat payment data; drops `fee_plan_id` + `session_id` from `payments`; renames `amount_paid` → `total_amount`
 
 ---
 

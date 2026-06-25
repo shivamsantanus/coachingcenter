@@ -149,8 +149,8 @@
             <tr>
               <th>Date</th>
               <th>Student</th>
-              <th>Fee Plan</th>
-              <th class="text-right">Amount (₹)</th>
+              <th>Fee Plan(s)</th>
+              <th class="text-right">Total (₹)</th>
               <th>Method</th>
               <th>Reference</th>
               <th>Receipt ID</th>
@@ -166,10 +166,19 @@
                   <span class="student-meta">{{ payment.admissionNo }}</span>
                 </td>
                 <td>
-                  <span class="plan-name">{{ payment.feePlanName }}</span>
-                  <span class="plan-category">{{ payment.feePlanCategory }}</span>
+                  @for (li of payment.lineItems; track li.feePlanId) {
+                    <div class="plan-line">
+                      <span class="plan-name">{{ li.feePlanName }}</span>
+                      @if (payment.lineItems.length > 1) {
+                        <span class="line-item-amount">₹{{ li.amountPaid | number:'1.2-2' }}</span>
+                      }
+                    </div>
+                  }
+                  @if (payment.lineItems.length === 0) {
+                    <span class="no-value">—</span>
+                  }
                 </td>
-                <td class="text-right amount-cell">{{ payment.amountPaid | number:'1.2-2' }}</td>
+                <td class="text-right amount-cell">{{ payment.totalAmount | number:'1.2-2' }}</td>
                 <td>
                   <span class="method-chip">{{ methodLabel(payment.paymentMethod) }}</span>
                 </td>
@@ -181,7 +190,15 @@
                   }
                 </td>
                 <td class="mono receipt-id">{{ payment.systemId }}</td>
-                <td>
+                <td class="row-actions">
+                  <button
+                    pButton
+                    icon="pi pi-print"
+                    pTooltip="Print receipt"
+                    tooltipPosition="top"
+                    class="p-button-text p-button-sm"
+                    (click)="printReceipt(payment)">
+                  </button>
                   <button
                     pButton
                     [icon]="deletingId() === payment.id ? 'pi pi-spin pi-spinner' : 'pi pi-trash'"

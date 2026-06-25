@@ -10,7 +10,8 @@ import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { MessageService } from 'primeng/api';
 import { FeeService } from '../../../services/fee.service';
-import { ExportService, CsvColumn } from '../../../services/export.service';
+import { ExportService } from '../../../services/export.service';
+import { ReceiptService } from '../../../services/receipt.service';
 import { AcademicYearService } from '../../../services/academic-year.service';
 import { ClassService } from '../../../services/class.service';
 import { BatchService } from '../../../services/batch.service';
@@ -39,6 +40,7 @@ interface SelectOption { label: string; value: string; }
 export class PaymentsTabComponent implements OnInit, OnDestroy {
   private feeService          = inject(FeeService);
   private exportService       = inject(ExportService);
+  private receiptService      = inject(ReceiptService);
   private academicYearService = inject(AcademicYearService);
   private classService        = inject(ClassService);
   private batchService        = inject(BatchService);
@@ -81,7 +83,7 @@ export class PaymentsTabComponent implements OnInit, OnDestroy {
   readonly canSearch = computed(() => !!this.selectedAyId());
 
   readonly totalAmount = computed(() =>
-    this.payments().reduce((sum, p) => sum + p.amountPaid, 0)
+    this.payments().reduce((sum, p) => sum + p.totalAmount, 0)
   );
 
   ngOnInit(): void {
@@ -170,6 +172,10 @@ export class PaymentsTabComponent implements OnInit, OnDestroy {
     });
   }
 
+  printReceipt(payment: PaymentRecord): void {
+    this.receiptService.printReceipt(payment);
+  }
+
   deletePayment(payment: PaymentRecord): void {
     if (this.deletingId()) return;
     this.deletingId.set(payment.id);
@@ -187,24 +193,18 @@ export class PaymentsTabComponent implements OnInit, OnDestroy {
     });
   }
 
-  private readonly exportColumns: CsvColumn<PaymentRecord>[] = [
-    { header: 'Date',         value: p => p.paymentDate },
-    { header: 'Student',      value: p => p.studentName },
-    { header: 'Admission No', value: p => p.admissionNo },
-    { header: 'Fee Plan',     value: p => p.feePlanName },
-    { header: 'Category',     value: p => p.feePlanCategory },
-    { header: 'Amount (₹)',   value: p => p.amountPaid },
-    { header: 'Method',       value: p => this.methodLabel(p.paymentMethod) },
-    { header: 'Reference',    value: p => p.referenceNo ?? '' },
-    { header: 'Receipt ID',   value: p => p.systemId },
-  ];
-
   async exportExcel(): Promise<void> {
-    await this.exportService.exportXlsx(
+    const headers = ['Date', 'Student', 'Admission No', 'Fee Plan', 'Category', 'Amount (₹)', 'Method', 'Reference', 'Receipt ID'];
+    const rows = this.payments().flatMap(p =>
+      p.lineItems.length > 0
+        ? p.lineItems.map(li => [p.paymentDate, p.studentName, p.admissionNo, li.feePlanName, li.feePlanCategory, li.amountPaid, this.methodLabel(p.paymentMethod), p.referenceNo ?? '', p.systemId])
+        : [[p.paymentDate, p.studentName, p.admissionNo, '—', '—', p.totalAmount, this.methodLabel(p.paymentMethod), p.referenceNo ?? '', p.systemId]]
+    );
+    await this.exportService.downloadXlsx(
       `PaymentHistory_${new Date().toISOString().slice(0, 10)}`,
       'Payment History',
-      this.exportColumns,
-      this.payments(),
+      headers,
+      rows,
     );
   }
 

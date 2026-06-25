@@ -3,6 +3,7 @@ using System;
 using ClassNovaApi.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ClassNovaApi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260625125512_AddPaymentSessionId")]
+    partial class AddPaymentSessionId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -862,9 +865,18 @@ namespace ClassNovaApi.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<decimal>("AmountPaid")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("amount_paid");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
+
+                    b.Property<Guid>("FeePlanId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("fee_plan_id");
 
                     b.Property<string>("Notes")
                         .HasColumnType("text")
@@ -883,6 +895,10 @@ namespace ClassNovaApi.Migrations
                         .HasColumnType("text")
                         .HasColumnName("reference_no");
 
+                    b.Property<Guid?>("SessionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("session_id");
+
                     b.Property<Guid>("StudentId")
                         .HasColumnType("uuid")
                         .HasColumnName("student_id");
@@ -895,17 +911,15 @@ namespace ClassNovaApi.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("tenant_id");
 
-                    b.Property<decimal>("TotalAmount")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("numeric(10,2)")
-                        .HasColumnName("total_amount");
-
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
                     b.HasKey("Id")
                         .HasName("pk_payments");
+
+                    b.HasIndex("FeePlanId")
+                        .HasDatabaseName("ix_payments_fee_plan_id");
 
                     b.HasIndex("StudentId")
                         .HasDatabaseName("ix_payments_student_id");
@@ -919,38 +933,6 @@ namespace ClassNovaApi.Migrations
                         .HasDatabaseName("ix_payments_tenant_id_student_id_payment_date");
 
                     b.ToTable("payments", (string)null);
-                });
-
-            modelBuilder.Entity("ClassNovaApi.Models.PaymentLineItem", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<decimal>("AmountPaid")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("numeric(10,2)")
-                        .HasColumnName("amount_paid");
-
-                    b.Property<Guid>("FeePlanId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("fee_plan_id");
-
-                    b.Property<Guid>("PaymentId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("payment_id");
-
-                    b.HasKey("Id")
-                        .HasName("pk_payment_line_items");
-
-                    b.HasIndex("FeePlanId")
-                        .HasDatabaseName("ix_payment_line_items_fee_plan_id");
-
-                    b.HasIndex("PaymentId")
-                        .HasDatabaseName("ix_payment_line_items_payment_id");
-
-                    b.ToTable("payment_line_items", (string)null);
                 });
 
             modelBuilder.Entity("ClassNovaApi.Models.PendingRegistration", b =>
@@ -2125,6 +2107,13 @@ namespace ClassNovaApi.Migrations
 
             modelBuilder.Entity("ClassNovaApi.Models.Payment", b =>
                 {
+                    b.HasOne("ClassNovaApi.Models.FeePlan", "FeePlan")
+                        .WithMany()
+                        .HasForeignKey("FeePlanId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_payments_fee_plans_fee_plan_id");
+
                     b.HasOne("ClassNovaApi.Models.Student", "Student")
                         .WithMany()
                         .HasForeignKey("StudentId")
@@ -2139,30 +2128,11 @@ namespace ClassNovaApi.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_payments_tenants_tenant_id");
 
+                    b.Navigation("FeePlan");
+
                     b.Navigation("Student");
 
                     b.Navigation("Tenant");
-                });
-
-            modelBuilder.Entity("ClassNovaApi.Models.PaymentLineItem", b =>
-                {
-                    b.HasOne("ClassNovaApi.Models.FeePlan", "FeePlan")
-                        .WithMany()
-                        .HasForeignKey("FeePlanId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_payment_line_items_fee_plans_fee_plan_id");
-
-                    b.HasOne("ClassNovaApi.Models.Payment", "Payment")
-                        .WithMany("LineItems")
-                        .HasForeignKey("PaymentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_payment_line_items_payments_payment_id");
-
-                    b.Navigation("FeePlan");
-
-                    b.Navigation("Payment");
                 });
 
             modelBuilder.Entity("ClassNovaApi.Models.PendingRegistration", b =>
@@ -2412,11 +2382,6 @@ namespace ClassNovaApi.Migrations
             modelBuilder.Entity("ClassNovaApi.Models.ExamSubject", b =>
                 {
                     b.Navigation("Marks");
-                });
-
-            modelBuilder.Entity("ClassNovaApi.Models.Payment", b =>
-                {
-                    b.Navigation("LineItems");
                 });
 
             modelBuilder.Entity("ClassNovaApi.Models.Tenant", b =>
