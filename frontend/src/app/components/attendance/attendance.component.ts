@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
-import { CommonModule, NgTemplateOutlet } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
@@ -15,6 +15,7 @@ import { BatchService } from '../../services/batch.service';
 import { AuthService } from '../../services/auth.service';
 import { BrandingService } from '../../services/branding.service';
 import { StudentService } from '../../services/student.service';
+import { ExportService } from '../../services/export.service';
 import { AcademicYearSummary, BatchSummary } from '../../models/academic.models';
 import { StudentEnrollmentInfo } from '../../models/student-dashboard.models';
 import {
@@ -26,6 +27,22 @@ import {
 } from '../../models/attendance.models';
 
 interface SelectOption { label: string; value: string; }
+
+interface MonthDateColumn {
+  readonly dateStr: string;
+  readonly isMarked: boolean;
+  readonly isFuture: boolean;
+}
+
+type CalendarDayStatus = AttendanceStatus | 'NOT_MARKED' | null;
+
+interface CalendarDay {
+  readonly day: number;
+  readonly dateStr: string;
+  readonly isCurrentMonth: boolean;
+  readonly isFuture: boolean;
+  readonly status: CalendarDayStatus;
+}
 
 interface StudentAttendanceRow {
   studentId: string;
@@ -46,7 +63,6 @@ const MONTH_NAMES = [
   standalone: true,
   imports: [
     CommonModule,
-    NgTemplateOutlet,
     FormsModule,
     ButtonModule,
     SelectModule,
@@ -65,6 +81,7 @@ export class AttendanceComponent implements OnInit, OnDestroy {
   private readonly authService         = inject(AuthService);
   private readonly brandingService     = inject(BrandingService);
   private readonly studentService      = inject(StudentService);
+  private readonly exportService       = inject(ExportService);
   private readonly messageService      = inject(MessageService);
   private readonly destroy$            = new Subject<void>();
 
@@ -146,18 +163,86 @@ export class AttendanceComponent implements OnInit, OnDestroy {
     return `${data.batchName} — ${MONTH_NAMES[data.month - 1]} ${data.year}`;
   });
 
-  // Split marked dates roughly in half for 2-page layout
-  readonly splitIndex = computed(() =>
-    Math.ceil((this.reportData()?.markedDates.length ?? 0) / 2)
-  );
+  // ── Student calendar view computed ────────────────────────────────────────
+  readonly studentRecord = computed<MonthlyReportStudent | null>(() => {
+    const data = this.reportData();
+    if (!data || data.students.length === 0) return null;
+    return data.students[0];
+  });
 
-  readonly firstPageDates = computed(() =>
-    (this.reportData()?.markedDates ?? []).slice(0, this.splitIndex())
-  );
+  readonly calendarWeeks = computed<CalendarDay[][]>(() => {
+    const data = this.reportData();
+    if (!data) return [];
 
-  readonly secondPageDates = computed(() =>
-    (this.reportData()?.markedDates ?? []).slice(this.splitIndex())
-  );
+    const student     = this.studentRecord();
+    const markedSet   = new Set(data.markedDates);
+    const todayStart  = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const { year, month } = data;
+    const daysInMonth     = new Date(year, month, 0).getDate();
+
+    const firstDayOfWeek  = new Date(year, month - 1, 1).getDay(); // 0=Sun
+    const startOffset     = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1; // Mon-based grid
+    const totalCells      = startOffset + daysInMonth <= 35 ? 35 : 42;
+
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const cells: CalendarDay[] = [];
+
+    for (let i = 0; i < totalCells; i++) {
+      const dayNum         = i - startOffset + 1;
+      const isCurrentMonth = dayNum >= 1 && dayNum <= daysInMonth;
+
+      if (!isCurrentMonth) {
+        cells.push({ day: 0, dateStr: '', isCurrentMonth: false, isFuture: false, status: null });
+        continue;
+      }
+
+      const dateStr  = `${year}-${pad(month)}-${pad(dayNum)}`;
+      const cellDate = new Date(year, month - 1, dayNum);
+      const isFuture = cellDate > todayStart;
+
+      let status: CalendarDayStatus = null;
+      if (markedSet.has(dateStr)) {
+        status = student ? ((student.dailyStatus[dateStr] as AttendanceStatus) ?? null) : null;
+      } else if (!isFuture) {
+        status = 'NOT_MARKED';
+      }
+
+      cells.push({ day: dayNum, dateStr, isCurrentMonth: true, isFuture, status });
+    }
+
+    const weeks: CalendarDay[][] = [];
+    for (let i = 0; i < cells.length; i += 7) {
+      weeks.push(cells.slice(i, i + 7));
+    }
+    return weeks;
+  });
+
+  // All calendar days of the selected month — used by the admin/teacher matrix.
+  // Every day is shown; days with no attendance record are flagged isMarked=false.
+  readonly allMonthDates = computed<MonthDateColumn[]>(() => {
+    const data = this.reportData();
+    if (!data) return [];
+
+    const { year, month } = data;
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const markedSet   = new Set(data.markedDates);
+    const todayStart  = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const pad = (n: number) => n.toString().padStart(2, '0');
+
+    return Array.from({ length: daysInMonth }, (_, i) => {
+      const dayNum   = i + 1;
+      const dateStr  = `${year}-${pad(month)}-${pad(dayNum)}`;
+      const cellDate = new Date(year, month - 1, dayNum);
+      return {
+        dateStr,
+        isMarked: markedSet.has(dateStr),
+        isFuture: cellDate > todayStart,
+      };
+    });
+  });
 
   ngOnInit(): void {
     if (this.isStudent) {
@@ -298,11 +383,12 @@ export class AttendanceComponent implements OnInit, OnDestroy {
 
     const batch = batchId ? this.markBatches().find(b => b.id === batchId) : null;
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-    this.markMinDate.set(batch?.startDate ? new Date(batch.startDate) : undefined);
+    this.markMinDate.set(batch?.startDate ? this.parseDateLocal(batch.startDate) : undefined);
 
     if (batch?.endDate) {
-      const batchEnd = new Date(batch.endDate);
+      const batchEnd = this.parseDateLocal(batch.endDate);
       this.markMaxDate.set(batchEnd < today ? batchEnd : today);
     } else {
       this.markMaxDate.set(today);
@@ -496,15 +582,59 @@ export class AttendanceComponent implements OnInit, OnDestroy {
       });
   }
 
-  printReport(): void {
+  async exportExcel(): Promise<void> {
     const data = this.reportData();
     if (!data) return;
 
-    const monthName     = MONTH_NAMES[data.month - 1];
-    const originalTitle = document.title;
-    document.title      = `${this.orgName} - ${data.batchName} - ${monthName} ${data.year}`;
-    window.print();
-    document.title = originalTitle;
+    const { year, month, batchName, students } = data;
+    const monthName = MONTH_NAMES[month - 1];
+    const pad       = (n: number) => n.toString().padStart(2, '0');
+    const dowLabels = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+
+    const allDays = this.allMonthDates();
+
+    const dayHeaders = allDays.map(col => {
+      const dayNum  = parseInt(col.dateStr.substring(8, 10), 10);
+      const dayDate = new Date(year, month - 1, dayNum);
+      return `${dayNum} ${dowLabels[dayDate.getDay()]}`;
+    });
+
+    const headers = ['#', 'Student Name', 'Adm. No', ...dayHeaders, 'Total', 'P', 'A', 'L', 'E', '%'];
+
+    const rows = students.map((student, index) => {
+      const dayCells: (string | number)[] = allDays.map(col => {
+        if (col.isFuture)  return '';
+        if (!col.isMarked) return 'N';
+        const status = student.dailyStatus[col.dateStr];
+        if (!status) return 'N';
+        return status === 'PRESENT' ? 'P' : status === 'ABSENT' ? 'A' : status === 'LATE' ? 'L' : 'E';
+      });
+      return [
+        index + 1,
+        student.studentName,
+        student.admissionNo,
+        ...dayCells,
+        student.totalDays,
+        student.present,
+        student.absent,
+        student.late,
+        student.excused,
+        `${student.presentPercentage}%`,
+      ];
+    });
+
+    try {
+      await this.exportService.downloadXlsx(
+        `Attendance_${batchName.replace(/\s+/g, '_')}_${year}-${pad(month)}`,
+        `Attendance Report — ${batchName} — ${monthName} ${year}`,
+        headers,
+        rows,
+        3,  // freeze #, Student Name, Adm. No columns
+      );
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Export failed';
+      this.messageService.add({ severity: 'error', summary: 'Export Error', detail: message });
+    }
   }
 
   getStudentDayStatus(student: MonthlyReportStudent, dateStr: string): AttendanceStatus | null {
@@ -530,6 +660,16 @@ export class AttendanceComponent implements OnInit, OnDestroy {
   }
 
   private toDateString(date: Date): string {
-    return date.toISOString().substring(0, 10);
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  // Parses "YYYY-MM-DD" as local midnight, avoiding the UTC-midnight shift
+  // that new Date("YYYY-MM-DD") produces for ISO date strings.
+  private parseDateLocal(dateStr: string): Date {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day);
   }
 }

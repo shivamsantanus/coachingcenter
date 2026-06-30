@@ -36,16 +36,18 @@ export class ExportService {
     await this.downloadXlsx(filename, title, headers, rows);
   }
 
-  /** Low-level: use when columns are conditional (e.g. fee-collection Due/Balance). */
+  /** Low-level: use when columns are conditional (e.g. fee-collection Due/Balance).
+   *  `frozenColumns` optionally freezes the first N columns (left-side freeze pane). */
   async downloadXlsx(
     filename: string,
     title: string,
     headers: string[],
     rows: (string | number | null | undefined)[][],
+    frozenColumns = 0,
   ): Promise<void> {
     if (!isPlatformBrowser(this.platformId)) return;
 
-    const workbook = this.buildWorkbook(title, headers, rows);
+    const workbook = this.buildWorkbook(title, headers, rows, frozenColumns);
     const buffer   = await workbook.xlsx.writeBuffer();
     const blob     = new Blob([buffer], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -66,6 +68,7 @@ export class ExportService {
     title: string,
     headers: string[],
     rows: (string | number | null | undefined)[][],
+    frozenColumns = 0,
   ): Workbook {
     const orgName   = this.authService.getContext()?.tenantName ?? '';
     const generated = new Intl.DateTimeFormat('en-IN', {
@@ -151,8 +154,8 @@ export class ExportService {
       );
     });
 
-    // Freeze the 4 meta rows + header row so data scrolls beneath them
-    sheet.views = [{ state: 'frozen', ySplit: 5, xSplit: 0 }];
+    // Freeze the 4 meta rows + header row (ySplit) and optional left columns (xSplit)
+    sheet.views = [{ state: 'frozen', ySplit: 5, xSplit: frozenColumns }];
 
     return workbook;
   }

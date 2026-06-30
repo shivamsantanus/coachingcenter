@@ -25,7 +25,7 @@
         class="tab-btn"
         [class.active]="activeTab() === 'report'"
         (click)="switchTab('report')">
-        <i class="pi pi-file-pdf"></i> Monthly Report
+        <i class="pi pi-table"></i> Monthly Report
       </button>
     </div>
   }
@@ -218,14 +218,14 @@
         (click)="loadReport()">
       </button>
 
-      @if (reportData()) {
+      @if (reportData() && !isStudent) {
         <button
           pButton
-          label="Print"
-          icon="pi pi-print"
+          label="Export Excel"
+          icon="pi pi-download"
           severity="secondary"
           outlined
-          (click)="printReport()">
+          (click)="exportExcel()">
         </button>
       }
     </div>
@@ -249,160 +249,207 @@
           <p>No enrolled students</p>
           <span>This batch has no active enrollments.</span>
         </div>
-      } @else if (reportData()!.markedDates.length === 0) {
-        <div class="empty-state">
-          <i class="pi pi-calendar-times"></i>
-          <p>No attendance recorded</p>
-          <span>No attendance has been marked for this batch in {{ reportTitle() }}.</span>
-        </div>
       } @else {
 
-        <!-- Print region: only this div is rendered during window.print() -->
-        <div class="print-region">
+        <!-- ══════════════════════════════════════════════════════════════ -->
+        <!-- STUDENT VIEW — calendar grid                                  -->
+        <!-- ══════════════════════════════════════════════════════════════ -->
+        @if (isStudent && studentRecord()) {
+          @let sr = studentRecord()!;
 
-          <!-- Reusable print header — rendered on both pages -->
-          <ng-template #printHeader>
-            <div class="print-report-header">
-              <div class="print-header-row">
-                @if (logoUrl()) {
-                  <img class="print-logo" [src]="logoUrl()!" alt="{{ orgName }} logo" />
-                }
-                <div class="print-header-text">
-                  <div class="print-org">{{ orgName }}</div>
-                  <div class="print-meta">
-                    Academic Year: {{ selectedReportBatch()?.academicYearName ?? '' }}
-                    @if (selectedReportBatch()?.className) {
-                      &nbsp;|&nbsp; Class: {{ selectedReportBatch()!.className }}
-                    }
-                    &nbsp;|&nbsp; Batch: {{ reportData()!.batchName }}
-                  </div>
+          <div class="print-region">
+
+          <!-- Print header (hidden on screen, visible on print) -->
+          <div class="sc-print-header print-report-header">
+            <div class="print-header-row">
+              @if (logoUrl()) {
+                <img class="print-logo" [src]="logoUrl()!" alt="{{ orgName }} logo" />
+              }
+              <div class="print-header-text">
+                <div class="print-title">Attendance — {{ reportTitle() }}</div>
+                <div class="sc-print-student-meta">
+                  {{ sr.studentName }}&nbsp;&nbsp;|&nbsp;&nbsp;Adm. No: {{ sr.admissionNo }}
                 </div>
               </div>
-              <div class="print-title">Attendance Register — {{ reportTitle() }}</div>
-            </div>
-          </ng-template>
-
-          <!-- ════════ PAGE 1 — first half of dates ════════ -->
-          <div class="print-page">
-            <ng-container *ngTemplateOutlet="printHeader" />
-            <p class="print-page-label no-print">Page 1 — Days {{ getDayLabel(firstPageDates()[0]) }} to {{ getDayLabel(firstPageDates()[firstPageDates().length - 1]) }}</p>
-
-            <div class="report-table-wrap">
-              <table class="report-table">
-                <thead>
-                  <tr class="row-dow">
-                    <th class="col-sno" rowspan="2">#</th>
-                    <th class="col-name" rowspan="2">Student</th>
-                    <th class="col-adm" rowspan="2">Adm. No</th>
-                    @for (dateStr of firstPageDates(); track trackByDate($index, dateStr)) {
-                      <th class="col-day">{{ getDayOfWeek(dateStr) }}</th>
-                    }
-                  </tr>
-                  <tr class="row-date">
-                    @for (dateStr of firstPageDates(); track trackByDate($index, dateStr)) {
-                      <th class="col-day">{{ getDayLabel(dateStr) }}</th>
-                    }
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (student of reportData()!.students; track trackByStudentId($index, student); let i = $index) {
-                    <tr>
-                      <td class="col-sno">{{ i + 1 }}</td>
-                      <td class="col-name">{{ student.studentName }}</td>
-                      <td class="col-adm">{{ student.admissionNo }}</td>
-                      @for (dateStr of firstPageDates(); track trackByDate($index, dateStr)) {
-                        <td class="col-day">
-                          @let s1 = getStudentDayStatus(student, dateStr);
-                          @if (s1) {
-                            <span class="status-cell" [attr.data-status]="s1">
-                              {{ s1 === 'PRESENT' ? 'P' : s1 === 'ABSENT' ? 'A' : s1 === 'LATE' ? 'L' : 'E' }}
-                            </span>
-                          } @else {
-                            <span class="status-cell status-cell--none">—</span>
-                          }
-                        </td>
-                      }
-                    </tr>
-                  }
-                </tbody>
-              </table>
             </div>
           </div>
 
-          <!-- Page break -->
-          <div class="print-page-break"></div>
+          <!-- Summary strip -->
+          <div class="sc-summary">
+            <div class="sc-stat">
+              <span class="sc-stat-value sc-stat-value--total">{{ sr.totalDays }}</span>
+              <span class="sc-stat-label">Total Days</span>
+            </div>
+            <div class="sc-stat">
+              <span class="sc-stat-value sc-stat-value--present">{{ sr.present }}</span>
+              <span class="sc-stat-label">Present</span>
+            </div>
+            <div class="sc-stat">
+              <span class="sc-stat-value sc-stat-value--absent">{{ sr.absent }}</span>
+              <span class="sc-stat-label">Absent</span>
+            </div>
+            <div class="sc-stat">
+              <span class="sc-stat-value sc-stat-value--late">{{ sr.late }}</span>
+              <span class="sc-stat-label">Late</span>
+            </div>
+            <div class="sc-stat">
+              <span class="sc-stat-value sc-stat-value--excused">{{ sr.excused }}</span>
+              <span class="sc-stat-label">Excused</span>
+            </div>
+            <div class="sc-stat" [class.sc-stat--low]="sr.presentPercentage < 75">
+              <span class="sc-stat-value" [class.sc-stat-value--low]="sr.presentPercentage < 75">{{ sr.presentPercentage }}%</span>
+              <span class="sc-stat-label">Attendance</span>
+            </div>
+          </div>
 
-          <!-- ════════ PAGE 2 — second half + summary ════════ -->
-          <div class="print-page">
-            <ng-container *ngTemplateOutlet="printHeader" />
-            <p class="print-page-label no-print">Page 2 — Days {{ getDayLabel(secondPageDates()[0]) }} to {{ getDayLabel(secondPageDates()[secondPageDates().length - 1]) }} + Summary</p>
+          <!-- Calendar grid -->
+          <div class="sc-calendar">
+            <!-- Day-of-week header -->
+            <div class="sc-dow-row">
+              @for (dow of ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']; track dow) {
+                <div class="sc-dow">{{ dow }}</div>
+              }
+            </div>
 
-            <div class="report-table-wrap">
-              <table class="report-table">
-                <thead>
-                  <tr class="row-dow">
-                    <th class="col-sno" rowspan="2">#</th>
-                    <th class="col-name" rowspan="2">Student</th>
-                    <th class="col-adm" rowspan="2">Adm. No</th>
-                    @for (dateStr of secondPageDates(); track trackByDate($index, dateStr)) {
-                      <th class="col-day">{{ getDayOfWeek(dateStr) }}</th>
+            <!-- Weeks -->
+            @for (week of calendarWeeks(); track $index) {
+              <div class="sc-week">
+                @for (cell of week; track $index) {
+                  <div class="sc-cell"
+                    [class.sc-cell--outside]="!cell.isCurrentMonth"
+                    [class.sc-cell--future]="cell.isCurrentMonth && cell.isFuture"
+                    [class.sc-cell--present]="cell.status === 'PRESENT'"
+                    [class.sc-cell--absent]="cell.status === 'ABSENT'"
+                    [class.sc-cell--late]="cell.status === 'LATE'"
+                    [class.sc-cell--excused]="cell.status === 'EXCUSED'"
+                    [class.sc-cell--unmarked]="cell.status === 'NOT_MARKED'">
+                    @if (cell.isCurrentMonth) {
+                      <span class="sc-day-num">{{ cell.day }}</span>
+                      <span class="sc-day-body">
+                        @switch (cell.status) {
+                          @case ('PRESENT')    { <span class="sc-badge sc-badge--present">P</span> }
+                          @case ('ABSENT')     { <span class="sc-badge sc-badge--absent">A</span> }
+                          @case ('LATE')       { <span class="sc-badge sc-badge--late">L</span> }
+                          @case ('EXCUSED')    { <span class="sc-badge sc-badge--excused">E</span> }
+                          @case ('NOT_MARKED') { <span class="sc-badge sc-badge--unmarked">N</span> }
+                          @default             { }
+                        }
+                      </span>
                     }
-                    <th class="col-summary" rowspan="2">Total</th>
-                    <th class="col-summary col-p" rowspan="2">P</th>
-                    <th class="col-summary col-a" rowspan="2">A</th>
-                    <th class="col-summary col-l" rowspan="2">L</th>
-                    <th class="col-summary col-e" rowspan="2">E</th>
-                    <th class="col-pct" rowspan="2">%</th>
-                  </tr>
-                  <tr class="row-date">
-                    @for (dateStr of secondPageDates(); track trackByDate($index, dateStr)) {
-                      <th class="col-day">{{ getDayLabel(dateStr) }}</th>
-                    }
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (student of reportData()!.students; track trackByStudentId($index, student); let i = $index) {
-                    <tr>
-                      <td class="col-sno">{{ i + 1 }}</td>
-                      <td class="col-name">{{ student.studentName }}</td>
-                      <td class="col-adm">{{ student.admissionNo }}</td>
-                      @for (dateStr of secondPageDates(); track trackByDate($index, dateStr)) {
-                        <td class="col-day">
-                          @let s2 = getStudentDayStatus(student, dateStr);
-                          @if (s2) {
-                            <span class="status-cell" [attr.data-status]="s2">
-                              {{ s2 === 'PRESENT' ? 'P' : s2 === 'ABSENT' ? 'A' : s2 === 'LATE' ? 'L' : 'E' }}
-                            </span>
-                          } @else {
-                            <span class="status-cell status-cell--none">—</span>
-                          }
-                        </td>
-                      }
-                      <td class="col-summary">{{ student.totalDays }}</td>
-                      <td class="col-summary col-p">{{ student.present }}</td>
-                      <td class="col-summary col-a">{{ student.absent }}</td>
-                      <td class="col-summary col-l">{{ student.late }}</td>
-                      <td class="col-summary col-e">{{ student.excused }}</td>
-                      <td class="col-pct" [class.pct--low]="student.presentPercentage < 75">
-                        {{ student.presentPercentage }}%
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Legend -->
+          <div class="sc-legend">
+            <span class="sc-legend-item"><span class="sc-badge sc-badge--present">P</span> Present</span>
+            <span class="sc-legend-item"><span class="sc-badge sc-badge--absent">A</span> Absent</span>
+            <span class="sc-legend-item"><span class="sc-badge sc-badge--late">L</span> Late</span>
+            <span class="sc-legend-item"><span class="sc-badge sc-badge--excused">E</span> Excused</span>
+            <span class="sc-legend-item"><span class="sc-badge sc-badge--unmarked">N</span> Not Marked</span>
+          </div>
+
+          </div><!-- /.print-region -->
+        }
+
+        <!-- ══════════════════════════════════════════════════════════════ -->
+        <!-- ADMIN / TEACHER VIEW — single scrollable attendance matrix   -->
+        <!-- ══════════════════════════════════════════════════════════════ -->
+        @if (!isStudent) {
+
+          <!-- Info bar: batch context + day count -->
+          <div class="report-info-bar">
+            <div class="report-info-left">
+              <span class="report-batch-name">{{ reportData()!.batchName }}</span>
+              <span class="report-info-meta">
+                {{ selectedReportBatch()?.academicYearName ?? '' }}
+                @if (selectedReportBatch()?.className) {
+                  · {{ selectedReportBatch()!.className }}
+                }
+              </span>
+            </div>
+            <span class="report-day-count">
+              {{ reportData()!.markedDates.length }} day{{ reportData()!.markedDates.length !== 1 ? 's' : '' }} recorded
+            </span>
+          </div>
+
+          <!-- Scrollable matrix -->
+          <div class="report-table-wrap">
+            <table class="report-table">
+              <thead>
+                <tr class="row-dow">
+                  <th class="col-sno  sticky-col sticky-col--1" rowspan="2">#</th>
+                  <th class="col-name sticky-col sticky-col--2" rowspan="2">Student</th>
+                  <th class="col-adm  sticky-col sticky-col--3" rowspan="2">Adm. No</th>
+                  @for (col of allMonthDates(); track trackByDate($index, col.dateStr)) {
+                    <th class="col-day"
+                        [class.col-day--unmarked]="!col.isMarked && !col.isFuture"
+                        [class.col-day--future]="col.isFuture">
+                      {{ getDayOfWeek(col.dateStr) }}
+                    </th>
+                  }
+                  <th class="col-summary" rowspan="2">Total</th>
+                  <th class="col-summary col-p" rowspan="2">P</th>
+                  <th class="col-summary col-a" rowspan="2">A</th>
+                  <th class="col-summary col-l" rowspan="2">L</th>
+                  <th class="col-summary col-e" rowspan="2">E</th>
+                  <th class="col-pct" rowspan="2">%</th>
+                </tr>
+                <tr class="row-date">
+                  @for (col of allMonthDates(); track trackByDate($index, col.dateStr)) {
+                    <th class="col-day"
+                        [class.col-day--unmarked]="!col.isMarked && !col.isFuture"
+                        [class.col-day--future]="col.isFuture">
+                      {{ getDayLabel(col.dateStr) }}
+                    </th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                @for (student of reportData()!.students; track trackByStudentId($index, student); let i = $index) {
+                  <tr>
+                    <td class="col-sno  sticky-col sticky-col--1">{{ i + 1 }}</td>
+                    <td class="col-name sticky-col sticky-col--2">{{ student.studentName }}</td>
+                    <td class="col-adm  sticky-col sticky-col--3">{{ student.admissionNo }}</td>
+                    @for (col of allMonthDates(); track trackByDate($index, col.dateStr)) {
+                      <td class="col-day">
+                        @let statusVal = col.isMarked ? getStudentDayStatus(student, col.dateStr) : null;
+                        @if (statusVal) {
+                          <span class="status-cell" [attr.data-status]="statusVal">
+                            {{ statusVal === 'PRESENT' ? 'P' : statusVal === 'ABSENT' ? 'A' : statusVal === 'LATE' ? 'L' : 'E' }}
+                          </span>
+                        } @else {
+                          <span class="status-cell" data-status="NOT_MARKED">N</span>
+                        }
                       </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
+                    }
+                    <td class="col-summary">{{ student.totalDays }}</td>
+                    <td class="col-summary col-p">{{ student.present }}</td>
+                    <td class="col-summary col-a">{{ student.absent }}</td>
+                    <td class="col-summary col-l">{{ student.late }}</td>
+                    <td class="col-summary col-e">{{ student.excused }}</td>
+                    <td class="col-pct" [class.pct--low]="student.presentPercentage < 75">
+                      {{ student.presentPercentage }}%
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
           </div>
 
-        </div><!-- /.print-region -->
+          <!-- Legend -->
+          <div class="report-legend">
+            <span class="legend-item"><span class="status-cell" data-status="PRESENT">P</span> Present</span>
+            <span class="legend-item"><span class="status-cell" data-status="ABSENT">A</span> Absent</span>
+            <span class="legend-item"><span class="status-cell" data-status="LATE">L</span> Late</span>
+            <span class="legend-item"><span class="status-cell" data-status="EXCUSED">E</span> Excused</span>
+            <span class="legend-item"><span class="status-cell" data-status="NOT_MARKED">N</span> Not Marked</span>
+            <span class="legend-item pct--low-sample">% &lt; 75 flagged red</span>
+          </div>
 
-        <!-- Legend (screen only) -->
-        <div class="report-legend no-print">
-          <span class="legend-item"><span class="status-cell" data-status="PRESENT">P</span> Present</span>
-          <span class="legend-item"><span class="status-cell" data-status="ABSENT">A</span> Absent</span>
-          <span class="legend-item"><span class="status-cell" data-status="LATE">L</span> Late</span>
-          <span class="legend-item"><span class="status-cell" data-status="EXCUSED">E</span> Excused</span>
-          <span class="legend-item pct--low-sample">% &lt; 75 flagged red</span>
-        </div>
+        } <!-- /@if (!isStudent) -->
       }
     </div>
   }
